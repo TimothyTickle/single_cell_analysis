@@ -1,0 +1,350 @@
+```{r setup, include=FALSE}
+opts_chunk$set(cache=TRUE)
+```
+
+scAnalysis
+========================================================
+author: Timothy Tickle and Brian Haas
+date: September 23, 2014
+
+Logistics
+===
+
+```{r}
+library(mclust) #
+library(vegan) # PCoA, distance metrics
+source("Modules.R")
+```
+
+Today's Data Set
+===
+
+- Describe data set
+
+How do we get it?
+===
+
+```{r}
+# Load tab delimted file
+data = read.delim( "data/GSE29087_L139_expression_tab.txt", row.names = 1 )
+
+# For convenience splitting the data frame in to metadata and data
+metadata = data[1:6]
+data = data[ -1 * 1:6 ]
+
+# Remove features without counts
+zero.features <- which( apply( data, 1, sum ) == 0 )
+length( zero.features )
+data = data[ -1 * zero.features, ]
+metadata = metadata[ -1 * zero.features, ]
+```
+
+Always look at your data
+===
+
+![Professor Corgi](images/professor_corgi.jpg)
+
+A quick look at the data
+===
+
+```{r}
+dim( data )
+names( data )
+summary(data)
+
+dim( metadata )
+names( metadata )
+summary(metadata)
+```
+
+Let's characterize this data.
+===
+
+- Is the data normal?
+- Sparsity / zero-inflation
+- Overdispersed
+
+Normality?
+===
+
+```{r}
+feature.sum = apply( data, 1, sum )
+feature.sum.sorted = sort( feature.sum )
+plot( log( feature.sum.sorted ), main = "Total gene counts throughout samples", ylab = "Log total counts", xlab = "Index after sorting" )
+abline( v = c(1, 3729,7457,11180,14913), col = c("red", "violet","cyan","violet","red"))
+# Min 1, 1st quartile 3729, Median 7457, 3rd quartile 11180, Max 14913
+```
+
+Normality?
+===
+
+```{r}
+feature.sum.order <- order( feature.sum )
+index_min <- feature.sum.order[ 1:10 ]
+index_q1 <- feature.sum.order[ 3724:3723 ]
+index_median <- feature.sum.order[ 7452:7461 ]
+index_q3 <- feature.sum.order[ 11175:11184 ]
+index_max <- feature.sum.order[ 14908:14913 ]
+plot( density( as.matrix( data[ index_min[1], ] ) ), col = "red" )
+```
+
+Zooming in to Gene Distributions
+===
+```{r, echo = FALSE}
+for( i_min_plot in index_min ){ plot( density( as.matrix( data[ i_min_plot, ])), col = "red", add = TRUE)}
+for( i_q1_plot in index_q1 ){ plot( density( as.matrix( data[ i_q1_plot, ])), col = "violet", add = TRUE)}
+for( i_median_plot in index_median ){ plot( density( as.matrix( data[ i_median_plot, ])), col = "cyan", add = TRUE)}
+for( i_q3_plot in index_q3 ){ plot( density( as.matrix( data[ i_q3_plot, ])), col = "violet", add = TRUE)}
+for( i_max_plot in index_max ){ plot( density( as.matrix( data[ i_max_plot, ])), col = "red", add = TRUE)}
+# TODO make a mulitple density plot
+```
+
+Sparsity
+===
+
+```{r}
+# Check samples for read depth
+sample.depth <- apply( data, 2, sum )
+summary(sample.depth )
+```
+---
+```{r}
+barplot( sort( sample.depth ), main = "Sample Depth ", xlab = "Sample", ylab = "Depth")
+```
+
+Sparsity
+===
+
+```{r}
+# Percent zero by feature expression
+feature.percent.zero <- apply( data, 1, function(x){ length( which(x==0))/length(x)})
+feature.mean.no.zero <- apply( data, 1, function(x){ mean( x[ which(x!=0) ] ) })
+plot( feature.percent.zero, log( feature.mean.no.zero ), xlab = "log mean", ylab = "Percent Zero", main = "Feature Sparsity by Expression" )
+```
+
+Overdispersion
+===
+```{r}
+# SD vs Mean
+feature.sd.with.zero <- apply( data, 1, sd )
+feature.mean.with.zero <- apply( data, 1, mean )
+feature.sd.no.zero <- apply( data, 1, function(x){ sd( x[ which(x !=0 )])})
+plot( log( feature.mean.no.zero ), log( feature.sd.no.zero ), xlab = "Mean (Log)", ylab = "SD (Log)", main = "SD vs mean (ignoring zeros)" )
+plot( log( feature.mean.with.zero ), log( feature.sd.with.zero ), xlab = "Mean (Log)", ylab = "SD (Log)", main = "SD vs mean (ignoring zeros)" )
+```
+
+Can QC Help?
+===
+
+- Removing very sparse features
+- Imputing outliers
+
+Removing Sparse Features
+===
+
+```{r}
+sample.percentile = apply( data, 2, function(x){ quantile(x[x !=0 ], .5)})
+feature.noise = which(apply( data, 1, func_min_occurence_at_min_value, sample.percentile ) <= 10)
+feature.noise.by.expression = order( apply( data[ feature.noise, ], 1, sum ), decreasing = TRUE)
+# What am I removing
+plot(density( as.matrix(data[ feature.noise[ feature.noise.by.expression[ 1 ]], ])))
+# TODO make a multiple density plot
+```
+
+Removing Sparse Features
+===
+
+```{r}
+dim( data )
+dim( metadata )
+data = data[ -1 * feature.noise, ]
+metadata = metadata[ -1 * feature.noise ]
+dim( data )
+dim( metadata )
+```
+
+Sample Read Depth: revisited
+===
+
+```{r}
+summary( apply( data, 2, sum ))
+```
+---
+```{r}
+barplot( sort(apply( data, 2, sum )))
+```
+
+Can Transforms / Normalization Help?
+===
+
+Challenge
+===
+
+- We have a large range of read depth per sample
+  - Is this a problem?
+
+Waste Not, Want Not
+===
+
+- Rarefy?
+
+Dimensionality Reduction and Ordination
+===
+
+- A frequently used method is PCA
+
+PCA: in quick theory
+===
+
+- Describe PCA
+
+PCA: in practice
+===
+
+- Things to be aware of
+
+PCA: in code
+===
+
+```{r, echo=TRUE}
+# Row center and log
+data.scaled = t( scale( t( as.matrix( log( data + 1 ) ) ), center=TRUE, scale=TRUE ) )
+# Remove constant rows
+data.scaled = data.scaled[ !is.na( data.scaled[, colnames( data.scaled )[ 1 ] ] ), ]
+# Perfrom PCA
+results.pca = prcomp( data.scaled, retx = TRUE )
+```
+
+PCA: in code
+===
+
+```{r, echo=TRUE}
+plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16 )
+```
+
+Alternatives?
+===
+
+- Principle Coordinates Analysis
+- Canonical Correspondance Analysis
+
+PCoA: in quick theory
+===
+
+PCoA: in practice
+===
+
+![Wizard Corgi](images/wizard_corgi.jpg)
+- The magic is in the metric
+- By default you only get 2 dimensions
+
+PCoA: in code
+===
+
+```{r}
+nmds.b.c.result = metaMDS( comm=data, distance="bray", k=2, autotransfer=FALSE, trymax=1)
+```
+
+CCA: in quick theory
+===
+
+CCA: in practice
+===
+
+CCA: in code
+===
+
+Next Steps in Ordination
+===
+
+Other options to explore
+- Sparse PCA
+
+Unsupervised Substructure Discovery
+===
+
+Often a goal of scProjects is to describe new structure to a group of cells:
+- Heterogeniety of tumor populations
+- Novel steps in development
+- Robust / dynamic cellular signalling
+
+mclust
+===
+
+```{r, echo=FALSE}
+plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16 )
+mclust.results = Mclust(results.pca$rotation[,c(1:2)])
+plot( mclust.results )
+```
+
+scOpportunities: cell cycle plot
+===
+
+
+
+Statistical Inference in scData
+===
+
+- Baysian analysis
+- Mixture Models
+- Bimodal assumptions
+
+SCDE: in quick theory
+===
+
+SCDE: in practice
+===
+
+SCDE: in code
+===
+
+
+Summary: of the data
+===
+
+We are still understanding scData and how to apply it
+
+- Not normal
+- Zero-inflated
+- Multimodal
+- Over-dispersed
+...
+
+Summary: of methods
+===
+
+
+Summary: of today
+===
+
+- Created expectations on scData
+- Explored filtering / normalization techniques
+- Applied 3 ordination techniques
+- Tried 2 methods to detect substructure
+- Applied 1 statistical inference method
+
+Thank you
+===
+
+- Aviv Regev
+- Alex
+- Rahul
+- Manik Kuchroo
+
+Questions?
+===
+
+![Answers Corgi](images/graduate_corgi.jpg)
+
+Notes: to make a pdf
+===
+
+- Create a pdf file before you plot ( can plot multiple plots )
+- Close the plotting
+
+```{r}
+pdf( "data/my_file.pdf", useDingbats = FALSE ) # Start pdf
+plot( 1:10, log(1:10 ) ) # plot in to the pdf file
+plot( seq(0,.9,.1), sin(0:9) ) # another plot for the pdf file
+dev.off() # Close pdf file ( very important )
+```
