@@ -57,7 +57,7 @@ metadata = metadata[ -1 * zero.features, ]
 Always look at your data
 ===
 
-![Professor Corgi](images/professor_corgi.jpg)
+# Add picture
 
 A quick look at the data
 ===
@@ -579,7 +579,7 @@ PCoA: in quick theory
 PCoA: in practice
 ===
 
-![Wizard Corgi](images/wizard_corgi.jpg)
+# Add picture
 - The magic is in the metric
 - By default you only get 2 dimensions
 
@@ -799,7 +799,7 @@ Thank you
 Questions?
 ===
 
-![Answers Corgi](images/graduate_corgi.jpg)
+# Add picture
 
 Notes: to make a pdf
 ===
