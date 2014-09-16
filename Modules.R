@@ -1,3 +1,4 @@
+
 # Constants
 C_STR_DENSITY_COLOR = "cyan" #"darkmagenta" # #BB00BB
 ### Color
@@ -8,6 +9,25 @@ STR_COLOR_BEFORE = "#DD640075" # orange
 ### Also used as the selection color for plots.
 STR_COLOR_STANDARD = "#00000075" # transparent black ( grey )
 ### Color to be used for normal plotting
+
+
+################################
+# Color palettes
+################################
+
+monochromatic_palette <- function(
+### Return the standard monochromatic color scheme
+i_number_colors = 100
+){
+  return( colorpanel( i_number_colors, "white", "violet", "purple" ) )
+}
+
+polychromatic_palette <- function(
+### Return the standard polychromatic color scheme
+i_number_colors = 100
+){
+  return( colorpanel( i_number_colors, "purple", "black", "yellow" ) )
+}
 
 
 # Key words for modules listed below
@@ -734,12 +754,10 @@ str_title = "Data Heatmap",
 ){
   ## TODO Tranform (center and such) should happen before this
 
-  loginfo( "Visualize data with heatmap " )
-
   # Get a consistent color scheme for the plotting
   if( is.null( plt_colors ) )
   {
-    plt_colors = func_polychromatic_palette( )
+    plt_colors = polychromatic_palette( )
   }
 
   # Get distance matrix

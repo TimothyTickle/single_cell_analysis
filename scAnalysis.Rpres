@@ -5,15 +5,23 @@ opts_chunk$set(cache=TRUE)
 scAnalysis
 ========================================================
 author: Timothy Tickle and Brian Haas
+css: 2014_scAnalysis.css
 date: September 23, 2014
 
 Logistics
 ===
 
-```{r}
-library(mclust) #
-library(vegan) # PCoA, distance metrics
+```{r, tidy=TRUE}
+library(caret) #Near-zero filter
+library(GMD) #Cluster selection on dendrograms
+library(gplots) #Colorpanel
+library(mclust) # Selection of clusters
+library(scde) #Statistical inference (bayesian mixed model)
+library(vegan) #PCoA, distance metrics
+source("heatmap.3b.R")
+source("cell_cycle_plot.R")
 source("Modules.R")
+# RcppArmadillo, flexmix, multicore, Cairo
 ```
 
 Today's Data Set
@@ -25,11 +33,11 @@ How do we get it?
 ===
 
 ```{r}
-# Load tab delimted file
+# Load tab delimited file
 data = read.delim( "data/GSE29087_L139_expression_tab.txt", row.names = 1 )
 
 # For convenience splitting the data frame in to metadata and data
-metadata = data[1:6]
+metadata = data[ 1:6 ]
 data = data[ -1 * 1:6 ]
 
 # Remove features without counts
@@ -71,7 +79,7 @@ Normality?
 feature.sum = apply( data, 1, sum )
 feature.sum.sorted = sort( feature.sum )
 plot( log( feature.sum.sorted ), main = "Total gene counts throughout samples", ylab = "Log total counts", xlab = "Index after sorting" )
-abline( v = c(1, 3729,7457,11180,14913), col = c("red", "violet","cyan","violet","red"))
+abline( v = c(1, 3729,7457,11180,14913), col = c("red", "violet","cyan","blue","green"))
 # Min 1, 1st quartile 3729, Median 7457, 3rd quartile 11180, Max 14913
 ```
 
@@ -90,13 +98,13 @@ plot( density( as.matrix( data[ index_min[1], ] ) ), col = "red" )
 
 Zooming in to Gene Distributions
 ===
-```{r, echo = FALSE}
-for( i_min_plot in index_min ){ plot( density( as.matrix( data[ i_min_plot, ])), col = "red", add = TRUE)}
-for( i_q1_plot in index_q1 ){ plot( density( as.matrix( data[ i_q1_plot, ])), col = "violet", add = TRUE)}
-for( i_median_plot in index_median ){ plot( density( as.matrix( data[ i_median_plot, ])), col = "cyan", add = TRUE)}
-for( i_q3_plot in index_q3 ){ plot( density( as.matrix( data[ i_q3_plot, ])), col = "violet", add = TRUE)}
-for( i_max_plot in index_max ){ plot( density( as.matrix( data[ i_max_plot, ])), col = "red", add = TRUE)}
-# TODO make a mulitple density plot
+```{r, echo = FALSE, fig.keep='last'}
+plot( x=0,y=0,type="p", xlim=c(0,100), ylim=c(0,.2) )
+for( i_min_plot in index_min ){ lines( density( as.matrix( data[ i_min_plot, ])), col = "red", add = TRUE)}
+for( i_q1_plot in index_q1 ){ lines( density( as.matrix( data[ i_q1_plot, ])), col = "violet", add = TRUE)}
+for( i_median_plot in index_median ){ lines( density( as.matrix( data[ i_median_plot, ])), col = "cyan", add = TRUE)}
+for( i_q3_plot in index_q3 ){ lines( density( as.matrix( data[ i_q3_plot, ])), col = "blue", add = TRUE)}
+for( i_max_plot in index_max ){ lines( density( as.matrix( data[ i_max_plot, ])), col = "green", add = TRUE)}
 ```
 
 Sparsity
@@ -167,7 +175,9 @@ Sample Read Depth: revisited
 ===
 
 ```{r}
-summary( apply( data, 2, sum ))
+sample.depth <- apply( data, 2, sum )
+depth.colors = polychromatic_palette( length( sample.depth ) )
+sample.depth
 ```
 ---
 ```{r}
@@ -210,7 +220,7 @@ PCA: in code
 # Row center and log
 data.scaled = t( scale( t( as.matrix( log( data + 1 ) ) ), center=TRUE, scale=TRUE ) )
 # Remove constant rows
-data.scaled = data.scaled[ !is.na( data.scaled[, colnames( data.scaled )[ 1 ] ] ), ]
+#TODO data.scaled = data.scaled[, -1 * nearZeroVar( data.scaled ) ]
 # Perfrom PCA
 results.pca = prcomp( data.scaled, retx = TRUE )
 ```
@@ -220,6 +230,24 @@ PCA: in code
 
 ```{r, echo=TRUE}
 plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16 )
+```
+
+PCA: by depth
+===
+```{r,echo=FALSE}
+min.pc1 = min( results.pca$rotation[,1] )
+min.index = which(sort(results.pca$rotation[,1]) == min.pc1 )[1]
+min.pc1 = round(min.pc1,4)
+median.pc1 = median(c(0,results.pca$rotation[,1]))
+median.index = which(sort(results.pca$rotation[,1]) == median.pc1 )[1]
+median.pc1 = round(median.pc1,4)
+max.pc1 = max( results.pca$rotation[,1] )
+max.index = which(sort(results.pca$rotation[,1]) == max.pc1 )[1]
+max.pc1 = round(max.pc1,4)
+```
+```{r, echo=TRUE}
+plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, col= depth.colors, xlab="PC1", ylab="PC2", main="PCA by Sample Depth" )
+legend( "topright", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), paste(min.pc1," (Min)")), fill=c(depth.colors[max.index], depth.colors[median.index], depth.colors[min.index]) )
 ```
 
 Alternatives?
@@ -238,12 +266,32 @@ PCoA: in practice
 - The magic is in the metric
 - By default you only get 2 dimensions
 
-PCoA: in code
+PCoA: in code (Bray-curtis)
 ===
 
-```{r}
-nmds.b.c.result = metaMDS( comm=data, distance="bray", k=2, autotransfer=FALSE, trymax=1)
+```{r, echo=FALSE}
+pcoa.data = data
+pcoa.data = sweep( pcoa.data, 2, colSums( pcoa.data ), "/")
+nmds.b.c.result = metaMDS( comm=t(pcoa.data), distance="bray", k=2, autotransfer=FALSE, trymax=10)
 ```
+```{r}
+plot( nmds.b.c.result$points[,1], nmds.b.c.result$points[,2], col=depth.colors, main="Ordination by Bray Curtis")
+legend( "topleft", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), paste(min.pc1," (Min)")), fill=c(depth.colors[max.index], depth.colors[median.index], depth.colors[min.index]) )
+```
+
+PCoA: in code (Jaccard)
+===
+
+```{r, echo=TRUE}
+nmds.j.result = metaMDS( comm=t(pcoa.data), distance="jaccard", k=2, autotransfer=FALSE, trymax=10)
+plot( nmds.j.result$points[,1], nmds.j.result$points[,2], col=depth.colors, main="Ordination by Jaccard")
+legend( "topleft", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), paste(min.pc1," (Min)")), fill=c(depth.colors[max.index], depth.colors[median.index], depth.colors[min.index]) )
+```
+
+PCoA: in code (Reciprocal)
+===
+
+TODAY
 
 CCA: in quick theory
 ===
@@ -268,6 +316,54 @@ Often a goal of scProjects is to describe new structure to a group of cells:
 - Novel steps in development
 - Robust / dynamic cellular signalling
 
+PCA + Anova: PCA
+===
+
+```{r}
+results.pca.features <- prcomp( scale( log( t(data) + 1 ), center=TRUE, scale=TRUE), retx=TRUE)
+plot( results.pca.features)
+```
+
+PCA + Anova: PCA
+===
+
+```{r}
+hist( abs( results.pca.features$rotation[,1] ), main="Feature Loadings (Abs)", xlab="Feature loadings (Abs)" )
+ordered.pca.loadings <- order( results.pca.features$rotation[,1],decreasing = TRUE )
+extreme.ends.pca <- c(ordered.pca.loadings[1:250], ordered.pca.loadings[5154:5654])
+abline( v=results.pca.features$rotation[,1][extreme.ends.pca], col="#ff000010")
+```
+
+PCA + Anova: visualize
+===
+
+```{r}
+data.scaled.subset = t( scale( t( as.matrix( log( data[ extreme.ends.pca, ] + 1 ) ) ), center=TRUE, scale=TRUE ) )
+func_heatmap( data.scaled.subset, str_cor ="euclidean")
+```
+
+PCA + Anova: select sample groups
+===
+
+```{r}
+#dist.col = dist( t( data.scaled.subset ), method="euclidean")
+#dendrogram.col = as.dendrogram( hclust( dist.col, method="average" ) )
+gmd.dist <- gmdm2dist( gmdm( t( data.scaled.subset ) ) )
+gmd.clust <- css.hclust( gmd.dist, hclust( gmd.dist ) )
+gmd.elbow.groups <- elbow.batch( gmd.clust, ev.thres=.9, inc.thres=.05 )
+```
+
+PCA + Anova: another view
+===
+
+```{r}
+results.pca.subset = prcomp( data.scaled.subset, retx = TRUE )
+plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Sample Depth", col = depth.colors )
+```
+
+PCA + Anova: select feature groups
+===
+
 mclust
 ===
 
@@ -277,10 +373,20 @@ mclust.results = Mclust(results.pca$rotation[,c(1:2)])
 plot( mclust.results )
 ```
 
-scOpportunities: cell cycle plot
+Compare Methods
 ===
 
 
+
+scOpportunities: cell cycle plot
+===
+
+TODAY
+
+scOppotunities: filter by apoptosis
+===
+
+TODAY
 
 Statistical Inference in scData
 ===
@@ -298,6 +404,7 @@ SCDE: in practice
 SCDE: in code
 ===
 
+TODAY
 
 Summary: of the data
 ===

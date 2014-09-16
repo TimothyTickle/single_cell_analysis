@@ -3,6 +3,7 @@
 scAnalysis
 ========================================================
 author: Timothy Tickle and Brian Haas
+css: 2014_scAnalysis.css
 date: September 23, 2014
 
 Logistics
@@ -10,9 +11,16 @@ Logistics
 
 
 ```r
-library(mclust) #
-library(vegan) # PCoA, distance metrics
+library(caret)  #Near-zero filter
+library(GMD)  #Cluster selection on dendrograms
+library(gplots)  #Colorpanel
+library(mclust)  # Selection of clusters
+library(scde)  #Statistical inference (bayesian mixed model)
+library(vegan)  #PCoA, distance metrics
+source("heatmap.3b.R")
+source("cell_cycle_plot.R")
 source("Modules.R")
+# RcppArmadillo, flexmix, multicore, Cairo
 ```
 
 Today's Data Set
@@ -25,11 +33,11 @@ How do we get it?
 
 
 ```r
-# Load tab delimted file
+# Load tab delimited file
 data = read.delim( "data/GSE29087_L139_expression_tab.txt", row.names = 1 )
 
 # For convenience splitting the data frame in to metadata and data
-metadata = data[1:6]
+metadata = data[ 1:6 ]
 data = data[ -1 * 1:6 ]
 
 # Remove features without counts
@@ -309,10 +317,10 @@ Normality?
 feature.sum = apply( data, 1, sum )
 feature.sum.sorted = sort( feature.sum )
 plot( log( feature.sum.sorted ), main = "Total gene counts throughout samples", ylab = "Log total counts", xlab = "Index after sorting" )
-abline( v = c(1, 3729,7457,11180,14913), col = c("red", "violet","cyan","violet","red"))
+abline( v = c(1, 3729,7457,11180,14913), col = c("red", "violet","cyan","blue","green"))
 ```
 
-![plot of chunk unnamed-chunk-4](ssAnalysis-figure/unnamed-chunk-4.png) 
+![plot of chunk unnamed-chunk-4](scAnalysis-figure/unnamed-chunk-4.png) 
 
 ```r
 # Min 1, 1st quartile 3729, Median 7457, 3rd quartile 11180, Max 14913
@@ -332,11 +340,11 @@ index_max <- feature.sum.order[ 14908:14913 ]
 plot( density( as.matrix( data[ index_min[1], ] ) ), col = "red" )
 ```
 
-![plot of chunk unnamed-chunk-5](ssAnalysis-figure/unnamed-chunk-5.png) 
+![plot of chunk unnamed-chunk-5](scAnalysis-figure/unnamed-chunk-5.png) 
 
 Zooming in to Gene Distributions
 ===
-![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-61.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-62.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-63.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-64.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-65.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-66.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-67.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-68.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-69.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-610.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-611.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-612.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-613.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-614.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-615.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-616.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-617.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-618.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-619.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-620.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-621.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-622.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-623.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-624.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-625.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-626.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-627.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-628.png) ![plot of chunk unnamed-chunk-6](ssAnalysis-figure/unnamed-chunk-629.png) 
+![plot of chunk unnamed-chunk-6](scAnalysis-figure/unnamed-chunk-6.png) 
 
 Sparsity
 ===
@@ -358,7 +366,7 @@ summary(sample.depth )
 barplot( sort( sample.depth ), main = "Sample Depth ", xlab = "Sample", ylab = "Depth")
 ```
 
-![plot of chunk unnamed-chunk-8](ssAnalysis-figure/unnamed-chunk-8.png) 
+![plot of chunk unnamed-chunk-8](scAnalysis-figure/unnamed-chunk-8.png) 
 
 Sparsity
 ===
@@ -371,7 +379,7 @@ feature.mean.no.zero <- apply( data, 1, function(x){ mean( x[ which(x!=0) ] ) })
 plot( feature.percent.zero, log( feature.mean.no.zero ), xlab = "log mean", ylab = "Percent Zero", main = "Feature Sparsity by Expression" )
 ```
 
-![plot of chunk unnamed-chunk-9](ssAnalysis-figure/unnamed-chunk-9.png) 
+![plot of chunk unnamed-chunk-9](scAnalysis-figure/unnamed-chunk-9.png) 
 
 Overdispersion
 ===
@@ -384,13 +392,13 @@ feature.sd.no.zero <- apply( data, 1, function(x){ sd( x[ which(x !=0 )])})
 plot( log( feature.mean.no.zero ), log( feature.sd.no.zero ), xlab = "Mean (Log)", ylab = "SD (Log)", main = "SD vs mean (ignoring zeros)" )
 ```
 
-![plot of chunk unnamed-chunk-10](ssAnalysis-figure/unnamed-chunk-101.png) 
+![plot of chunk unnamed-chunk-10](scAnalysis-figure/unnamed-chunk-101.png) 
 
 ```r
 plot( log( feature.mean.with.zero ), log( feature.sd.with.zero ), xlab = "Mean (Log)", ylab = "SD (Log)", main = "SD vs mean (ignoring zeros)" )
 ```
 
-![plot of chunk unnamed-chunk-10](ssAnalysis-figure/unnamed-chunk-102.png) 
+![plot of chunk unnamed-chunk-10](scAnalysis-figure/unnamed-chunk-102.png) 
 
 Can QC Help?
 ===
@@ -410,7 +418,7 @@ feature.noise.by.expression = order( apply( data[ feature.noise, ], 1, sum ), de
 plot(density( as.matrix(data[ feature.noise[ feature.noise.by.expression[ 1 ]], ])))
 ```
 
-![plot of chunk unnamed-chunk-11](ssAnalysis-figure/unnamed-chunk-11.png) 
+![plot of chunk unnamed-chunk-11](scAnalysis-figure/unnamed-chunk-11.png) 
 
 ```r
 # TODO make a multiple density plot
@@ -459,12 +467,34 @@ Sample Read Depth: revisited
 
 
 ```r
-summary( apply( data, 2, sum ))
+sample.depth <- apply( data, 2, sum )
+depth.colors = polychromatic_palette( length( sample.depth ) )
+sample.depth
 ```
 
 ```
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-  10000  177000  321000  522000  878000 2080000 
+    A01     B01     C01     D01     E01     F01     G01     H01     A02 
+ 187554   93659  202401   65410  192800   91399   99019   52991  201274 
+    B02     C02     D02     E02     F02     G02     H02     A03     B03 
+ 526507  342569  232204  177597  252770  215439  222060   56420  129296 
+    C03     D03     E03     F03     G03     H03     A04     B04     C04 
+ 245420  352991  666297  417858  464753  283792  614285  139734  510160 
+    D04     E04     F04     G04     H04     A05     B05     C05     D05 
+  41746  230661   76099  200566   29037  873041  249177  282084  275886 
+    E05     F05     G05     H05     A06     B06     C06     D06     E06 
+ 176234  379991  398765  102341  502027  132028  113541   66583  299967 
+    F06     G06     H06     A07     B07     C07     D07     E07     F07 
+  19785  742681  252405 1041355  181184 1271565  500164   71281  883816 
+    G07     H07     A08     B08     C08     D08     E08     F08     G08 
+ 877940 1316561  890892 1754609  747515 1076466 2084631  182158 1448336 
+    H08     A09     B09     C09     D09     E09     F09     G09     H09 
+1030883 1332581  160198 1069988 1012292 1367643 1161801  698682  914147 
+    A10     B10     C10     D10     E10     F10     G10     H10     A11 
+ 484067  515619  680259 1226040  965440  472539  148096  187972 1126487 
+    B11     C11     D11     E11     F11     G11     H11     A12     B12 
+ 240928  283019  608197  182873  429258 1212300  636418 1191180 1286476 
+    C12     D12     E12     F12     G12     H12 
+ 878098 1671428   49991   47838   24858   10043 
 ```
 ---
 
@@ -472,7 +502,7 @@ summary( apply( data, 2, sum ))
 barplot( sort(apply( data, 2, sum )))
 ```
 
-![plot of chunk unnamed-chunk-14](ssAnalysis-figure/unnamed-chunk-14.png) 
+![plot of chunk unnamed-chunk-14](scAnalysis-figure/unnamed-chunk-14.png) 
 
 Can Transforms / Normalization Help?
 ===
@@ -511,7 +541,7 @@ PCA: in code
 # Row center and log
 data.scaled = t( scale( t( as.matrix( log( data + 1 ) ) ), center=TRUE, scale=TRUE ) )
 # Remove constant rows
-data.scaled = data.scaled[ !is.na( data.scaled[, colnames( data.scaled )[ 1 ] ] ), ]
+#TODO data.scaled = data.scaled[, -1 * nearZeroVar( data.scaled ) ]
 # Perfrom PCA
 results.pca = prcomp( data.scaled, retx = TRUE )
 ```
@@ -524,7 +554,18 @@ PCA: in code
 plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16 )
 ```
 
-![plot of chunk unnamed-chunk-16](ssAnalysis-figure/unnamed-chunk-16.png) 
+![plot of chunk unnamed-chunk-16](scAnalysis-figure/unnamed-chunk-16.png) 
+
+PCA: by depth
+===
+
+
+```r
+plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, col= depth.colors, xlab="PC1", ylab="PC2", main="PCA by Sample Depth" )
+legend( "topright", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), paste(min.pc1," (Min)")), fill=c(depth.colors[max.index], depth.colors[median.index], depth.colors[min.index]) )
+```
+
+![plot of chunk unnamed-chunk-18](scAnalysis-figure/unnamed-chunk-18.png) 
 
 Alternatives?
 ===
@@ -542,20 +583,64 @@ PCoA: in practice
 - The magic is in the metric
 - By default you only get 2 dimensions
 
-PCoA: in code
+PCoA: in code (Bray-curtis)
+===
+
+
+```
+Run 0 stress 0.09202 
+Run 1 stress 0.09321 
+Run 2 stress 0.09257 
+Run 3 stress 0.09531 
+Run 4 stress 0.1011 
+Run 5 stress 0.09594 
+Run 6 stress 0.09417 
+Run 7 stress 0.09574 
+Run 8 stress 0.1986 
+Run 9 stress 0.09295 
+Run 10 stress 0.09438 
+```
+
+```r
+plot( nmds.b.c.result$points[,1], nmds.b.c.result$points[,2], col=depth.colors, main="Ordination by Bray Curtis")
+legend( "topleft", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), paste(min.pc1," (Min)")), fill=c(depth.colors[max.index], depth.colors[median.index], depth.colors[min.index]) )
+```
+
+![plot of chunk unnamed-chunk-20](scAnalysis-figure/unnamed-chunk-20.png) 
+
+PCoA: in code (Jaccard)
 ===
 
 
 ```r
-nmds.b.c.result = metaMDS( comm=data, distance="bray", k=2, autotransfer=FALSE, trymax=1)
+nmds.j.result = metaMDS( comm=t(pcoa.data), distance="jaccard", k=2, autotransfer=FALSE, trymax=10)
 ```
 
 ```
-Square root transformation
-Wisconsin double standardization
-Run 0 stress 0.2671 
-Run 1 stress 0.2739 
+Run 0 stress 0.09331 
+Run 1 stress 0.0956 
+Run 2 stress 0.09517 
+Run 3 stress 0.09718 
+Run 4 stress 0.09445 
+Run 5 stress 0.09493 
+Run 6 stress 0.0957 
+Run 7 stress 0.09435 
+Run 8 stress 0.09397 
+Run 9 stress 0.09714 
+Run 10 stress 0.09428 
 ```
+
+```r
+plot( nmds.j.result$points[,1], nmds.j.result$points[,2], col=depth.colors, main="Ordination by Jaccard")
+legend( "topleft", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), paste(min.pc1," (Min)")), fill=c(depth.colors[max.index], depth.colors[median.index], depth.colors[min.index]) )
+```
+
+![plot of chunk unnamed-chunk-21](scAnalysis-figure/unnamed-chunk-21.png) 
+
+PCoA: in code (Reciprocal)
+===
+
+TODAY
 
 CCA: in quick theory
 ===
@@ -580,15 +665,86 @@ Often a goal of scProjects is to describe new structure to a group of cells:
 - Novel steps in development
 - Robust / dynamic cellular signalling
 
+PCA + Anova: PCA
+===
+
+
+```r
+results.pca.features <- prcomp( scale( log( t(data) + 1 ), center=TRUE, scale=TRUE), retx=TRUE)
+plot( results.pca.features)
+```
+
+![plot of chunk unnamed-chunk-22](scAnalysis-figure/unnamed-chunk-22.png) 
+
+PCA + Anova: PCA
+===
+
+
+```r
+hist( abs( results.pca.features$rotation[,1] ), main="Feature Loadings (Abs)", xlab="Feature loadings (Abs)" )
+ordered.pca.loadings <- order( results.pca.features$rotation[,1],decreasing = TRUE )
+extreme.ends.pca <- c(ordered.pca.loadings[1:250], ordered.pca.loadings[5154:5654])
+abline( v=results.pca.features$rotation[,1][extreme.ends.pca], col="#ff000010")
+```
+
+![plot of chunk unnamed-chunk-23](scAnalysis-figure/unnamed-chunk-23.png) 
+
+PCA + Anova: visualize
+===
+
+
+```r
+data.scaled.subset = t( scale( t( as.matrix( log( data[ extreme.ends.pca, ] + 1 ) ) ), center=TRUE, scale=TRUE ) )
+func_heatmap( data.scaled.subset, str_cor ="euclidean")
+```
+
+![plot of chunk unnamed-chunk-24](scAnalysis-figure/unnamed-chunk-24.png) 
+
+PCA + Anova: select sample groups
+===
+
+
+```r
+#dist.col = dist( t( data.scaled.subset ), method="euclidean")
+#dendrogram.col = as.dendrogram( hclust( dist.col, method="average" ) )
+gmd.dist <- gmdm2dist( gmdm( t( data.scaled.subset ) ) )
+gmd.clust <- css.hclust( gmd.dist, hclust( gmd.dist ) )
+gmd.elbow.groups <- elbow.batch( gmd.clust, ev.thres=.9, inc.thres=.05 )
+```
+
+PCA + Anova: another view
+===
+
+
+```r
+results.pca.subset = prcomp( data.scaled.subset, retx = TRUE )
+plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Sample Depth", col = depth.colors )
+```
+
+![plot of chunk unnamed-chunk-26](scAnalysis-figure/unnamed-chunk-26.png) 
+
+PCA + Anova: select feature groups
+===
+
 mclust
 ===
 
-![plot of chunk unnamed-chunk-18](ssAnalysis-figure/unnamed-chunk-181.png) ![plot of chunk unnamed-chunk-18](ssAnalysis-figure/unnamed-chunk-182.png) ![plot of chunk unnamed-chunk-18](ssAnalysis-figure/unnamed-chunk-183.png) ![plot of chunk unnamed-chunk-18](ssAnalysis-figure/unnamed-chunk-184.png) ![plot of chunk unnamed-chunk-18](ssAnalysis-figure/unnamed-chunk-185.png) 
+![plot of chunk unnamed-chunk-27](scAnalysis-figure/unnamed-chunk-271.png) ![plot of chunk unnamed-chunk-27](scAnalysis-figure/unnamed-chunk-272.png) ![plot of chunk unnamed-chunk-27](scAnalysis-figure/unnamed-chunk-273.png) ![plot of chunk unnamed-chunk-27](scAnalysis-figure/unnamed-chunk-274.png) ![plot of chunk unnamed-chunk-27](scAnalysis-figure/unnamed-chunk-275.png) 
+
+Compare Methods
+===
+
+
 
 scOpportunities: cell cycle plot
 ===
 
+TODAY
 
+scOppotunities: filter by apoptosis
+===
+
+TODAY
 
 Statistical Inference in scData
 ===
@@ -606,6 +762,7 @@ SCDE: in practice
 SCDE: in code
 ===
 
+TODAY
 
 Summary: of the data
 ===

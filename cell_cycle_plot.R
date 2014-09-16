@@ -2,6 +2,12 @@
 # Get default ids for cell cycle markers
 #######################
 
+func_get_default_Apoptosis <- function(
+### Get default ids for Apoptosis
+){
+  return( c("") )
+}
+
 func_get_default_G0_Ids <- function(
 ### Get default ids
 ){
