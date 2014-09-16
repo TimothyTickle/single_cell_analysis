@@ -12,14 +12,16 @@ Logistics
 ===
 
 ```{r, tidy=TRUE}
+library(boot) #SCDE
 library(caret) #Near-zero filter
 library(GMD) #Cluster selection on dendrograms
 library(gplots) #Colorpanel
-library(mclust) # Selection of clusters
+library(mclust) #Selection of clusters
+library(scatterplot3d) #3D plotting
 library(scde) #Statistical inference (bayesian mixed model)
 library(vegan) #PCoA, distance metrics
-source("heatmap.3b.R")
-source("cell_cycle_plot.R")
+source("heatmap.3b.R") #Custom HCL
+source("cell_cycle_plot.R") #Custom plot for cell cycle
 source("Modules.R")
 # RcppArmadillo, flexmix, multicore, Cairo
 ```
@@ -34,7 +36,7 @@ How do we get it?
 
 ```{r}
 # Load tab delimited file
-data = read.delim( "data/GSE29087_L139_expression_tab.txt", row.names = 1 )
+data = read.delim( file.path("data","GSE29087_L139_expression_tab.txt"), row.names = 1 )
 
 # For convenience splitting the data frame in to metadata and data
 metadata = data[ 1:6 ]
@@ -45,7 +47,11 @@ zero.features <- which( apply( data, 1, sum ) == 0 )
 length( zero.features )
 data = data[ -1 * zero.features, ]
 metadata = metadata[ -1 * zero.features, ]
+
+# Get groupings
+data.groups=c("A01","B01","C01","D01","E01","E01","F01","G01","H01","A02","B02","C02","D02","E02","F02","G02","H02","A03","B03","C03","D03","E03","F03","G03","H03","A04","B04","C04","D04","E04","F04","G04","H04","A05","B05","C05","D05","E05","F05","G05","H05","A06","B06","C06","D06","E06","F06","G06","H06","A07","B07","C07","D07","E07","F07","G07","H07","A08","B08","C08","D08","E08","F08","G08","H08","A09","B09","C09","D09","E09","F09","G09","H09","A10","B10","C10","D10","E10","F10","G10","H10","A11","B11","C11","D11","E11","F11","G11","H11","A12","B12","C12","D12","E12","F12","G12","H12")
 ```
+TODO update
 
 Always look at your data
 ===
@@ -152,7 +158,7 @@ Removing Sparse Features
 
 ```{r}
 sample.percentile = apply( data, 2, function(x){ quantile(x[x !=0 ], .5)})
-feature.noise = which(apply( data, 1, func_min_occurence_at_min_value, sample.percentile ) <= 10)
+feature.noise = which(apply( data, 1, min_occurence_at_min_value, sample.percentile ) <= 10)
 feature.noise.by.expression = order( apply( data[ feature.noise, ], 1, sum ), decreasing = TRUE)
 # What am I removing
 plot(density( as.matrix(data[ feature.noise[ feature.noise.by.expression[ 1 ]], ])))
@@ -166,9 +172,12 @@ Removing Sparse Features
 dim( data )
 dim( metadata )
 data = data[ -1 * feature.noise, ]
+
 metadata = metadata[ -1 * feature.noise ]
 dim( data )
 dim( metadata )
+
+data.groups <- data.groups[ -1 * feature.noise ]
 ```
 
 Sample Read Depth: revisited
@@ -186,6 +195,8 @@ barplot( sort(apply( data, 2, sum )))
 
 Can Transforms / Normalization Help?
 ===
+
+NEED CODE
 
 Challenge
 ===
@@ -220,7 +231,7 @@ PCA: in code
 # Row center and log
 data.scaled = t( scale( t( as.matrix( log( data + 1 ) ) ), center=TRUE, scale=TRUE ) )
 # Remove constant rows
-#TODO data.scaled = data.scaled[, -1 * nearZeroVar( data.scaled ) ]
+# TODO data.scaled = data.scaled[, -1 * nearZeroVar( data.scaled ) ]
 # Perfrom PCA
 results.pca = prcomp( data.scaled, retx = TRUE )
 ```
@@ -250,6 +261,13 @@ plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, col= depth.col
 legend( "topright", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), paste(min.pc1," (Min)")), fill=c(depth.colors[max.index], depth.colors[median.index], depth.colors[min.index]) )
 ```
 
+PCA: 3D with caution
+===
+
+```{r}
+scatterplot3d( x=results.pca$rotation[,1], y=results.pca$rotation[,3], z=results.pca$rotation[,2], color = depth.colors, xlab="PC1", ylab="PC3", zlab="PC2", main="3D PCA using Components 1-3" )
+```
+
 Alternatives?
 ===
 
@@ -262,7 +280,7 @@ PCoA: in quick theory
 PCoA: in practice
 ===
 
-# Add picture
+#? Add picture
 - The magic is in the metric
 - By default you only get 2 dimensions
 
@@ -288,20 +306,6 @@ plot( nmds.j.result$points[,1], nmds.j.result$points[,2], col=depth.colors, main
 legend( "topleft", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), paste(min.pc1," (Min)")), fill=c(depth.colors[max.index], depth.colors[median.index], depth.colors[min.index]) )
 ```
 
-PCoA: in code (Reciprocal)
-===
-
-TODAY
-
-CCA: in quick theory
-===
-
-CCA: in practice
-===
-
-CCA: in code
-===
-
 Next Steps in Ordination
 ===
 
@@ -316,7 +320,7 @@ Often a goal of scProjects is to describe new structure to a group of cells:
 - Novel steps in development
 - Robust / dynamic cellular signalling
 
-PCA + Anova: PCA
+PCA + ANOVA: PCA
 ===
 
 ```{r}
@@ -324,7 +328,7 @@ results.pca.features <- prcomp( scale( log( t(data) + 1 ), center=TRUE, scale=TR
 plot( results.pca.features)
 ```
 
-PCA + Anova: PCA
+PCA + ANOVA: PCA
 ===
 
 ```{r}
@@ -334,26 +338,33 @@ extreme.ends.pca <- c(ordered.pca.loadings[1:250], ordered.pca.loadings[5154:565
 abline( v=results.pca.features$rotation[,1][extreme.ends.pca], col="#ff000010")
 ```
 
-PCA + Anova: visualize
+PCA + ANOVA: visualize
 ===
 
 ```{r}
 data.scaled.subset = t( scale( t( as.matrix( log( data[ extreme.ends.pca, ] + 1 ) ) ), center=TRUE, scale=TRUE ) )
-func_heatmap( data.scaled.subset, str_cor ="euclidean")
+heatmap( data.scaled.subset )
 ```
 
 PCA + Anova: select sample groups
 ===
 
 ```{r}
-#dist.col = dist( t( data.scaled.subset ), method="euclidean")
-#dendrogram.col = as.dendrogram( hclust( dist.col, method="average" ) )
 gmd.dist <- gmdm2dist( gmdm( t( data.scaled.subset ) ) )
-gmd.clust <- css.hclust( gmd.dist, hclust( gmd.dist ) )
-gmd.elbow.groups <- elbow.batch( gmd.clust, ev.thres=.9, inc.thres=.05 )
+hclust.aov <- hclust( gmd.dist )
+gmd.clust <- css.hclust( gmd.dist, hclust.aov )
+gmd.elbow.groups <- elbow.batch( gmd.clust, ev.thres=0.9, inc.thres=.05 )
+tree.groups <- cutree( hclust.aov, k=gmd.elbow.groups$k )
 ```
 
-PCA + Anova: another view
+PCA + ANOVA: select sample groups
+===
+
+```{r}
+heatmap( data.scaled.subset, vctr_grouping=tree.groups )
+```
+
+PCA + ANOVA: Another view
 ===
 
 ```{r}
@@ -361,8 +372,10 @@ results.pca.subset = prcomp( data.scaled.subset, retx = TRUE )
 plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Sample Depth", col = depth.colors )
 ```
 
-PCA + Anova: select feature groups
+PCA + ANOVA: select feature groups
 ===
+
+NEED CODE
 
 mclust
 ===
@@ -376,17 +389,12 @@ plot( mclust.results )
 Compare Methods
 ===
 
-
+NEED CODE
 
 scOpportunities: cell cycle plot
 ===
 
-TODAY
-
-scOppotunities: filter by apoptosis
-===
-
-TODAY
+NEED CODE
 
 Statistical Inference in scData
 ===
@@ -404,7 +412,19 @@ SCDE: in practice
 SCDE: in code
 ===
 
-TODAY
+NEED CODE
+
+scde.error.models( as.matrix( data ), groups = groups.discovered, n.cores=1 )
+
+PCoA: in code (Reciprocal)
+===
+
+NEED CODE
+```{r}
+dist.recip <- reciprocal_weighting( x=as.matrix(data), groups=data.groups )
+nmds.r.result = metaMDS( comm=dist.recip, k=2, autotransfer=FALSE, trymax=10)
+plot( nmds.r.result$points[,1], nmds.r.result$points[,2], col=depth.colors, main="Ordination by Reciprocal Weighting")
+```
 
 Summary: of the data
 ===
@@ -436,6 +456,7 @@ Thank you
 - Aviv Regev
 - Alex
 - Rahul
+- Itay
 - Manik Kuchroo
 
 Questions?

@@ -11,14 +11,16 @@ Logistics
 
 
 ```r
+library(boot)  #SCDE
 library(caret)  #Near-zero filter
 library(GMD)  #Cluster selection on dendrograms
 library(gplots)  #Colorpanel
-library(mclust)  # Selection of clusters
+library(mclust)  #Selection of clusters
+library(scatterplot3d)  #3D plotting
 library(scde)  #Statistical inference (bayesian mixed model)
 library(vegan)  #PCoA, distance metrics
-source("heatmap.3b.R")
-source("cell_cycle_plot.R")
+source("heatmap.3b.R")  #Custom HCL
+source("cell_cycle_plot.R")  #Custom plot for cell cycle
 source("Modules.R")
 # RcppArmadillo, flexmix, multicore, Cairo
 ```
@@ -34,7 +36,7 @@ How do we get it?
 
 ```r
 # Load tab delimited file
-data = read.delim( "data/GSE29087_L139_expression_tab.txt", row.names = 1 )
+data = read.delim( file.path("data","GSE29087_L139_expression_tab.txt"), row.names = 1 )
 
 # For convenience splitting the data frame in to metadata and data
 metadata = data[ 1:6 ]
@@ -52,7 +54,11 @@ length( zero.features )
 ```r
 data = data[ -1 * zero.features, ]
 metadata = metadata[ -1 * zero.features, ]
+
+# Get groupings
+data.groups=c("A01","B01","C01","D01","E01","E01","F01","G01","H01","A02","B02","C02","D02","E02","F02","G02","H02","A03","B03","C03","D03","E03","F03","G03","H03","A04","B04","C04","D04","E04","F04","G04","H04","A05","B05","C05","D05","E05","F05","G05","H05","A06","B06","C06","D06","E06","F06","G06","H06","A07","B07","C07","D07","E07","F07","G07","H07","A08","B08","C08","D08","E08","F08","G08","H08","A09","B09","C09","D09","E09","F09","G09","H09","A10","B10","C10","D10","E10","F10","G10","H10","A11","B11","C11","D11","E11","F11","G11","H11","A12","B12","C12","D12","E12","F12","G12","H12")
 ```
+TODO update
 
 Always look at your data
 ===
@@ -412,7 +418,7 @@ Removing Sparse Features
 
 ```r
 sample.percentile = apply( data, 2, function(x){ quantile(x[x !=0 ], .5)})
-feature.noise = which(apply( data, 1, func_min_occurence_at_min_value, sample.percentile ) <= 10)
+feature.noise = which(apply( data, 1, min_occurence_at_min_value, sample.percentile ) <= 10)
 feature.noise.by.expression = order( apply( data[ feature.noise, ], 1, sum ), decreasing = TRUE)
 # What am I removing
 plot(density( as.matrix(data[ feature.noise[ feature.noise.by.expression[ 1 ]], ])))
@@ -446,6 +452,7 @@ dim( metadata )
 
 ```r
 data = data[ -1 * feature.noise, ]
+
 metadata = metadata[ -1 * feature.noise ]
 dim( data )
 ```
@@ -460,6 +467,10 @@ dim( metadata )
 
 ```
 [1] 14913     6
+```
+
+```r
+data.groups <- data.groups[ -1 * feature.noise ]
 ```
 
 Sample Read Depth: revisited
@@ -507,6 +518,8 @@ barplot( sort(apply( data, 2, sum )))
 Can Transforms / Normalization Help?
 ===
 
+NEED CODE
+
 Challenge
 ===
 
@@ -541,7 +554,7 @@ PCA: in code
 # Row center and log
 data.scaled = t( scale( t( as.matrix( log( data + 1 ) ) ), center=TRUE, scale=TRUE ) )
 # Remove constant rows
-#TODO data.scaled = data.scaled[, -1 * nearZeroVar( data.scaled ) ]
+# TODO data.scaled = data.scaled[, -1 * nearZeroVar( data.scaled ) ]
 # Perfrom PCA
 results.pca = prcomp( data.scaled, retx = TRUE )
 ```
@@ -567,6 +580,16 @@ legend( "topright", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), pa
 
 ![plot of chunk unnamed-chunk-18](scAnalysis-figure/unnamed-chunk-18.png) 
 
+PCA: 3D with caution
+===
+
+
+```r
+scatterplot3d( x=results.pca$rotation[,1], y=results.pca$rotation[,3], z=results.pca$rotation[,2], color = depth.colors, xlab="PC1", ylab="PC3", zlab="PC2", main="3D PCA using Components 1-3" )
+```
+
+![plot of chunk unnamed-chunk-19](scAnalysis-figure/unnamed-chunk-19.png) 
+
 Alternatives?
 ===
 
@@ -579,7 +602,7 @@ PCoA: in quick theory
 PCoA: in practice
 ===
 
-# Add picture
+#? Add picture
 - The magic is in the metric
 - By default you only get 2 dimensions
 
@@ -589,16 +612,16 @@ PCoA: in code (Bray-curtis)
 
 ```
 Run 0 stress 0.09202 
-Run 1 stress 0.09321 
-Run 2 stress 0.09257 
-Run 3 stress 0.09531 
-Run 4 stress 0.1011 
-Run 5 stress 0.09594 
-Run 6 stress 0.09417 
-Run 7 stress 0.09574 
-Run 8 stress 0.1986 
-Run 9 stress 0.09295 
-Run 10 stress 0.09438 
+Run 1 stress 0.0931 
+Run 2 stress 0.09419 
+Run 3 stress 0.09375 
+Run 4 stress 0.09783 
+Run 5 stress 0.09875 
+Run 6 stress 0.09695 
+Run 7 stress 0.09427 
+Run 8 stress 0.09632 
+Run 9 stress 0.09568 
+Run 10 stress 0.09469 
 ```
 
 ```r
@@ -606,7 +629,7 @@ plot( nmds.b.c.result$points[,1], nmds.b.c.result$points[,2], col=depth.colors, 
 legend( "topleft", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), paste(min.pc1," (Min)")), fill=c(depth.colors[max.index], depth.colors[median.index], depth.colors[min.index]) )
 ```
 
-![plot of chunk unnamed-chunk-20](scAnalysis-figure/unnamed-chunk-20.png) 
+![plot of chunk unnamed-chunk-21](scAnalysis-figure/unnamed-chunk-21.png) 
 
 PCoA: in code (Jaccard)
 ===
@@ -618,16 +641,18 @@ nmds.j.result = metaMDS( comm=t(pcoa.data), distance="jaccard", k=2, autotransfe
 
 ```
 Run 0 stress 0.09331 
-Run 1 stress 0.0956 
-Run 2 stress 0.09517 
-Run 3 stress 0.09718 
-Run 4 stress 0.09445 
-Run 5 stress 0.09493 
-Run 6 stress 0.0957 
-Run 7 stress 0.09435 
-Run 8 stress 0.09397 
-Run 9 stress 0.09714 
-Run 10 stress 0.09428 
+Run 1 stress 0.09426 
+Run 2 stress 0.09507 
+Run 3 stress 0.09262 
+... New best solution
+... procrustes: rmse 0.02275  max resid 0.1887 
+Run 4 stress 0.09723 
+Run 5 stress 0.09352 
+Run 6 stress 0.09564 
+Run 7 stress 0.09761 
+Run 8 stress 0.09516 
+Run 9 stress 0.09892 
+Run 10 stress 0.09507 
 ```
 
 ```r
@@ -635,21 +660,7 @@ plot( nmds.j.result$points[,1], nmds.j.result$points[,2], col=depth.colors, main
 legend( "topleft", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), paste(min.pc1," (Min)")), fill=c(depth.colors[max.index], depth.colors[median.index], depth.colors[min.index]) )
 ```
 
-![plot of chunk unnamed-chunk-21](scAnalysis-figure/unnamed-chunk-21.png) 
-
-PCoA: in code (Reciprocal)
-===
-
-TODAY
-
-CCA: in quick theory
-===
-
-CCA: in practice
-===
-
-CCA: in code
-===
+![plot of chunk unnamed-chunk-22](scAnalysis-figure/unnamed-chunk-22.png) 
 
 Next Steps in Ordination
 ===
@@ -665,7 +676,7 @@ Often a goal of scProjects is to describe new structure to a group of cells:
 - Novel steps in development
 - Robust / dynamic cellular signalling
 
-PCA + Anova: PCA
+PCA + ANOVA: PCA
 ===
 
 
@@ -674,9 +685,9 @@ results.pca.features <- prcomp( scale( log( t(data) + 1 ), center=TRUE, scale=TR
 plot( results.pca.features)
 ```
 
-![plot of chunk unnamed-chunk-22](scAnalysis-figure/unnamed-chunk-22.png) 
+![plot of chunk unnamed-chunk-23](scAnalysis-figure/unnamed-chunk-23.png) 
 
-PCA + Anova: PCA
+PCA + ANOVA: PCA
 ===
 
 
@@ -687,135 +698,45 @@ extreme.ends.pca <- c(ordered.pca.loadings[1:250], ordered.pca.loadings[5154:565
 abline( v=results.pca.features$rotation[,1][extreme.ends.pca], col="#ff000010")
 ```
 
-![plot of chunk unnamed-chunk-23](scAnalysis-figure/unnamed-chunk-23.png) 
+![plot of chunk unnamed-chunk-24](scAnalysis-figure/unnamed-chunk-24.png) 
 
-PCA + Anova: visualize
+PCA + ANOVA: visualize
 ===
 
 
 ```r
 data.scaled.subset = t( scale( t( as.matrix( log( data[ extreme.ends.pca, ] + 1 ) ) ), center=TRUE, scale=TRUE ) )
-func_heatmap( data.scaled.subset, str_cor ="euclidean")
+heatmap( data.scaled.subset )
 ```
 
-![plot of chunk unnamed-chunk-24](scAnalysis-figure/unnamed-chunk-24.png) 
+![plot of chunk unnamed-chunk-25](scAnalysis-figure/unnamed-chunk-25.png) 
 
 PCA + Anova: select sample groups
 ===
 
 
 ```r
-#dist.col = dist( t( data.scaled.subset ), method="euclidean")
-#dendrogram.col = as.dendrogram( hclust( dist.col, method="average" ) )
 gmd.dist <- gmdm2dist( gmdm( t( data.scaled.subset ) ) )
-gmd.clust <- css.hclust( gmd.dist, hclust( gmd.dist ) )
-gmd.elbow.groups <- elbow.batch( gmd.clust, ev.thres=.9, inc.thres=.05 )
+hclust.aov <- hclust( gmd.dist )
+gmd.clust <- css.hclust( gmd.dist, hclust.aov )
+gmd.elbow.groups <- elbow.batch( gmd.clust, ev.thres=0.9, inc.thres=.05 )
+tree.groups <- cutree( hclust.aov, k=gmd.elbow.groups$k )
 ```
 
-PCA + Anova: another view
-===
-
-
-```r
-results.pca.subset = prcomp( data.scaled.subset, retx = TRUE )
-plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Sample Depth", col = depth.colors )
-```
-
-![plot of chunk unnamed-chunk-26](scAnalysis-figure/unnamed-chunk-26.png) 
-
-PCA + Anova: select feature groups
-===
-
-mclust
-===
-
-![plot of chunk unnamed-chunk-27](scAnalysis-figure/unnamed-chunk-271.png) ![plot of chunk unnamed-chunk-27](scAnalysis-figure/unnamed-chunk-272.png) ![plot of chunk unnamed-chunk-27](scAnalysis-figure/unnamed-chunk-273.png) ![plot of chunk unnamed-chunk-27](scAnalysis-figure/unnamed-chunk-274.png) ![plot of chunk unnamed-chunk-27](scAnalysis-figure/unnamed-chunk-275.png) 
-
-Compare Methods
+PCA + ANOVA: select sample groups
 ===
 
 
 
-scOpportunities: cell cycle plot
-===
-
-TODAY
-
-scOppotunities: filter by apoptosis
-===
-
-TODAY
-
-Statistical Inference in scData
-===
-
-- Baysian analysis
-- Mixture Models
-- Bimodal assumptions
-
-SCDE: in quick theory
-===
-
-SCDE: in practice
-===
-
-SCDE: in code
-===
-
-TODAY
-
-Summary: of the data
-===
-
-We are still understanding scData and how to apply it
-
-- Not normal
-- Zero-inflated
-- Multimodal
-- Over-dispersed
-...
-
-Summary: of methods
-===
 
 
-Summary: of today
-===
-
-- Created expectations on scData
-- Explored filtering / normalization techniques
-- Applied 3 ordination techniques
-- Tried 2 methods to detect substructure
-- Applied 1 statistical inference method
-
-Thank you
-===
-
-- Aviv Regev
-- Alex
-- Rahul
-- Manik Kuchroo
-
-Questions?
-===
-
-# Add picture
-
-Notes: to make a pdf
-===
-
-- Create a pdf file before you plot ( can plot multiple plots )
-- Close the plotting
 
 
-```r
-pdf( "data/my_file.pdf", useDingbats = FALSE ) # Start pdf
-plot( 1:10, log(1:10 ) ) # plot in to the pdf file
-plot( seq(0,.9,.1), sin(0:9) ) # another plot for the pdf file
-dev.off() # Close pdf file ( very important )
-```
+
+
+
 
 ```
-pdf 
-  2 
+Error in func_factor_to_metadata_color(vctr_grouping) : 
+  could not find function "func_metadata_palette"
 ```
