@@ -22,8 +22,7 @@ library(scde) #Statistical inference (bayesian mixed model)
 library(vegan) #PCoA, distance metrics
 source("heatmap.3b.R") #Custom HCL
 source("cell_cycle_plot.R") #Custom plot for cell cycle
-source("Modules.R")
-# RcppArmadillo, flexmix, multicore, Cairo
+source("Modules.R") #
 ```
 
 Today's Data Set
@@ -272,7 +271,8 @@ Alternatives?
 ===
 
 - Principle Coordinates Analysis
-- Canonical Correspondance Analysis
+- Wieghted PCA
+  - Different than Sparse PCA
 
 PCoA: in quick theory
 ===
@@ -310,7 +310,7 @@ Next Steps in Ordination
 ===
 
 Other options to explore
-- Sparse PCA
+- Wieghted PCA
 
 Unsupervised Substructure Discovery
 ===
@@ -354,7 +354,13 @@ gmd.dist <- gmdm2dist( gmdm( t( data.scaled.subset ) ) )
 hclust.aov <- hclust( gmd.dist )
 gmd.clust <- css.hclust( gmd.dist, hclust.aov )
 gmd.elbow.groups <- elbow.batch( gmd.clust, ev.thres=0.9, inc.thres=.05 )
-tree.groups <- cutree( hclust.aov, k=gmd.elbow.groups$k )
+tree.groups <- as.factor( cutree( hclust.aov, k=gmd.elbow.groups$k ) )
+```
+
+blarg
+===
+```{r}
+tree.groups
 ```
 
 PCA + ANOVA: select sample groups
@@ -372,10 +378,20 @@ results.pca.subset = prcomp( data.scaled.subset, retx = TRUE )
 plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Sample Depth", col = depth.colors )
 ```
 
+PCA + ANOVA: Another view
+===
+
+```{r}
+tree.group.colors = func_factor_to_metadata_color( tree.groups )$vctr_grouping_colors
+tree.group.colors
+#plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Grouping (Dendrogram)", col = tree.group.colors )
+```
+
 PCA + ANOVA: select feature groups
 ===
 
 NEED CODE
+data.scaled.subset
 
 mclust
 ===
@@ -399,7 +415,7 @@ NEED CODE
 Statistical Inference in scData
 ===
 
-- Baysian analysis
+- Bayesian analysis
 - Mixture Models
 - Bimodal assumptions
 
@@ -426,16 +442,40 @@ nmds.r.result = metaMDS( comm=dist.recip, k=2, autotransfer=FALSE, trymax=10)
 plot( nmds.r.result$points[,1], nmds.r.result$points[,2], col=depth.colors, main="Ordination by Reciprocal Weighting")
 ```
 
+What did we find ?
+===
+
+- We discovered groups of cells
+- We found significantly associated features
+- How do we connect this to biology?
+
+Gene Set Enrichment Analysis: GSEA
+===
+
+- Not specifically related to scAnalysis
+- Does help round out the story
+- Many options
+  - DAVID (online or R library RDAVIDWebService)
+  - GSEA (online or many libraries)
+    - wilcoxGST from the limma library
+    - GSEABase
+    
+GSEA: briefly described
+===
+
+What did we find ???
+===
+
+
 Summary: of the data
 ===
 
-We are still understanding scData and how to apply it
-
-- Not normal
-- Zero-inflated
-- Multimodal
-- Over-dispersed
-...
+- We are still understanding scData and how to apply it
+  - Not normal
+  - Zero-inflated
+  - Multimodal
+  - Over-dispersed
+- Keeping these characteristics in analysis assumptions
 
 Summary: of methods
 ===
@@ -454,10 +494,10 @@ Thank you
 ===
 
 - Aviv Regev
-- Alex
-- Rahul
-- Itay
+- Alex Shalek
 - Manik Kuchroo
+- Rahul Satija
+- Itay Tirosh
 
 Questions?
 ===

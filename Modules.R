@@ -29,6 +29,13 @@ i_number_colors = 100
   return( colorpanel( i_number_colors, "purple", "black", "yellow" ) )
 }
 
+metadata_palette <- function(
+### Return the standard color scheme for metadata
+i_number_colors = 100
+){
+  return( rainbow( i_number_colors ) )
+}
+
 min_occurence_at_min_value <- function(
 ### Returns if a vector has a minimum occurence of values at or equal to the given min value
 ### This is a helper function for func_filter_by_percentile_percentage
@@ -125,7 +132,7 @@ vctr_grouping = NULL,
 str_output_dir = NULL,
 ### The directory to output figure and such
 plt_colors = NULL,
-### Color pallette, if not given ploychromatic default will be used
+### Color pallette, if not given polychromatic default will be used
 str_title = "Data Heatmap",
 ### Title of plot
 ...
@@ -270,7 +277,7 @@ vctr_factors
   vctr_grouping_colors = rep("NA", length( vctr_factors ) )
   names( vctr_grouping_colors ) = as.character( vctr_factors )
   vctr_levels = levels( vctr_factors )
-  vctr_colors = func_metadata_palette( length( vctr_levels ) )
+  vctr_colors = metadata_palette( length( vctr_levels ) )
   for( i_color_index in 1:length( vctr_levels ) )
   {
     vctr_grouping_colors[ which( vctr_factors == vctr_levels[ i_color_index ] ) ] = vctr_colors[ i_color_index ]

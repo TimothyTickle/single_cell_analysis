@@ -21,8 +21,7 @@ library(scde)  #Statistical inference (bayesian mixed model)
 library(vegan)  #PCoA, distance metrics
 source("heatmap.3b.R")  #Custom HCL
 source("cell_cycle_plot.R")  #Custom plot for cell cycle
-source("Modules.R")
-# RcppArmadillo, flexmix, multicore, Cairo
+source("Modules.R")  #
 ```
 
 Today's Data Set
@@ -594,7 +593,8 @@ Alternatives?
 ===
 
 - Principle Coordinates Analysis
-- Canonical Correspondance Analysis
+- Wieghted PCA
+  - Different than Sparse PCA
 
 PCoA: in quick theory
 ===
@@ -612,16 +612,18 @@ PCoA: in code (Bray-curtis)
 
 ```
 Run 0 stress 0.09202 
-Run 1 stress 0.0931 
-Run 2 stress 0.09419 
-Run 3 stress 0.09375 
-Run 4 stress 0.09783 
-Run 5 stress 0.09875 
-Run 6 stress 0.09695 
-Run 7 stress 0.09427 
-Run 8 stress 0.09632 
-Run 9 stress 0.09568 
-Run 10 stress 0.09469 
+Run 1 stress 0.09242 
+... procrustes: rmse 0.02265  max resid 0.1892 
+Run 2 stress 0.09557 
+Run 3 stress 0.098 
+Run 4 stress 0.09384 
+Run 5 stress 0.09526 
+Run 6 stress 0.09441 
+Run 7 stress 0.09369 
+Run 8 stress 0.09577 
+Run 9 stress 0.09214 
+... procrustes: rmse 0.0207  max resid 0.1903 
+Run 10 stress 0.09612 
 ```
 
 ```r
@@ -641,18 +643,20 @@ nmds.j.result = metaMDS( comm=t(pcoa.data), distance="jaccard", k=2, autotransfe
 
 ```
 Run 0 stress 0.09331 
-Run 1 stress 0.09426 
-Run 2 stress 0.09507 
-Run 3 stress 0.09262 
-... New best solution
-... procrustes: rmse 0.02275  max resid 0.1887 
-Run 4 stress 0.09723 
-Run 5 stress 0.09352 
-Run 6 stress 0.09564 
-Run 7 stress 0.09761 
-Run 8 stress 0.09516 
-Run 9 stress 0.09892 
-Run 10 stress 0.09507 
+Run 1 stress 0.09357 
+... procrustes: rmse 0.02449  max resid 0.1879 
+Run 2 stress 0.2034 
+Run 3 stress 0.09369 
+... procrustes: rmse 0.02887  max resid 0.1873 
+Run 4 stress 0.0946 
+Run 5 stress 0.09525 
+Run 6 stress 0.09806 
+Run 7 stress 0.09345 
+... procrustes: rmse 0.02369  max resid 0.1889 
+Run 8 stress 0.09344 
+... procrustes: rmse 0.01601  max resid 0.09763 
+Run 9 stress 0.09641 
+Run 10 stress 0.09721 
 ```
 
 ```r
@@ -666,7 +670,7 @@ Next Steps in Ordination
 ===
 
 Other options to explore
-- Sparse PCA
+- Wieghted PCA
 
 Unsupervised Substructure Discovery
 ===
@@ -720,23 +724,132 @@ gmd.dist <- gmdm2dist( gmdm( t( data.scaled.subset ) ) )
 hclust.aov <- hclust( gmd.dist )
 gmd.clust <- css.hclust( gmd.dist, hclust.aov )
 gmd.elbow.groups <- elbow.batch( gmd.clust, ev.thres=0.9, inc.thres=.05 )
-tree.groups <- cutree( hclust.aov, k=gmd.elbow.groups$k )
+tree.groups <- as.factor( cutree( hclust.aov, k=gmd.elbow.groups$k ) )
+```
+
+blarg
+===
+
+```r
+tree.groups
+```
+
+```
+A01 B01 C01 D01 E01 F01 G01 H01 A02 B02 C02 D02 E02 F02 G02 H02 A03 B03 
+  1   1   1   1   1   1   1   1   1   1   2   1   1   1   1   1   1   1 
+C03 D03 E03 F03 G03 H03 A04 B04 C04 D04 E04 F04 G04 H04 A05 B05 C05 D05 
+  3   1   1   1   1   1   4   1   1   1   1   1   1   1   1   1   2   1 
+E05 F05 G05 H05 A06 B06 C06 D06 E06 F06 G06 H06 A07 B07 C07 D07 E07 F07 
+  1   2   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1 
+G07 H07 A08 B08 C08 D08 E08 F08 G08 H08 A09 B09 C09 D09 E09 F09 G09 H09 
+  1   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1 
+A10 B10 C10 D10 E10 F10 G10 H10 A11 B11 C11 D11 E11 F11 G11 H11 A12 B12 
+  3   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1 
+C12 D12 E12 F12 G12 H12 
+  1   1   1   1   1   1 
 ```
 
 PCA + ANOVA: select sample groups
 ===
 
 
+```r
+heatmap( data.scaled.subset, vctr_grouping=tree.groups )
+```
+
+![plot of chunk unnamed-chunk-28](scAnalysis-figure/unnamed-chunk-28.png) 
+
+PCA + ANOVA: Another view
+===
 
 
+```r
+results.pca.subset = prcomp( data.scaled.subset, retx = TRUE )
+plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Sample Depth", col = depth.colors )
+```
+
+![plot of chunk unnamed-chunk-29](scAnalysis-figure/unnamed-chunk-29.png) 
+
+PCA + ANOVA: Another view
+===
 
 
+```r
+tree.group.colors = func_factor_to_metadata_color( tree.groups )$vctr_grouping_colors
+tree.group.colors
+```
 
+```
+   1    1    1    1    1    1    1    1    1    1    2    1    1    1    1 
+"NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" 
+   1    1    1    3    1    1    1    1    1    4    1    1    1    1    1 
+"NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" 
+   1    1    1    1    2    1    1    2    1    1    1    1    1    1    1 
+"NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" 
+   1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
+"NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" 
+   1    1    1    1    1    1    1    1    1    1    1    1    3    1    1 
+"NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" 
+   1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
+"NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" 
+   1    1    1    1    1    1 
+"NA" "NA" "NA" "NA" "NA" "NA" 
+```
+
+```r
+#plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Grouping (Dendrogram)", col = tree.group.colors )
+```
+
+PCA + ANOVA: select feature groups
+===
+
+NEED CODE
+data.scaled.subset
+
+mclust
+===
+
+![plot of chunk unnamed-chunk-31](scAnalysis-figure/unnamed-chunk-311.png) ![plot of chunk unnamed-chunk-31](scAnalysis-figure/unnamed-chunk-312.png) ![plot of chunk unnamed-chunk-31](scAnalysis-figure/unnamed-chunk-313.png) ![plot of chunk unnamed-chunk-31](scAnalysis-figure/unnamed-chunk-314.png) ![plot of chunk unnamed-chunk-31](scAnalysis-figure/unnamed-chunk-315.png) 
+
+Compare Methods
+===
+
+NEED CODE
+
+scOpportunities: cell cycle plot
+===
+
+NEED CODE
+
+Statistical Inference in scData
+===
+
+- Bayesian analysis
+- Mixture Models
+- Bimodal assumptions
+
+SCDE: in quick theory
+===
+
+SCDE: in practice
+===
+
+SCDE: in code
+===
+
+NEED CODE
+
+scde.error.models( as.matrix( data ), groups = groups.discovered, n.cores=1 )
+
+PCoA: in code (Reciprocal)
+===
+
+NEED CODE
 
 
 
 
 ```
-Error in func_factor_to_metadata_color(vctr_grouping) : 
-  could not find function "func_metadata_palette"
+Error in names(groups) <- colnames(counts) : 
+  'names' attribute [96] must be the same length as the vector [35]
 ```
