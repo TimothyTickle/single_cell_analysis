@@ -357,12 +357,6 @@ gmd.elbow.groups <- elbow.batch( gmd.clust, ev.thres=0.9, inc.thres=.05 )
 tree.groups <- as.factor( cutree( hclust.aov, k=gmd.elbow.groups$k ) )
 ```
 
-blarg
-===
-```{r}
-tree.groups
-```
-
 PCA + ANOVA: select sample groups
 ===
 
@@ -383,8 +377,7 @@ PCA + ANOVA: Another view
 
 ```{r}
 tree.group.colors = func_factor_to_metadata_color( tree.groups )$vctr_grouping_colors
-tree.group.colors
-#plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Grouping (Dendrogram)", col = tree.group.colors )
+plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Grouping (Dendrogram)", col = tree.group.colors )
 ```
 
 PCA + ANOVA: select feature groups

@@ -727,28 +727,6 @@ gmd.elbow.groups <- elbow.batch( gmd.clust, ev.thres=0.9, inc.thres=.05 )
 tree.groups <- as.factor( cutree( hclust.aov, k=gmd.elbow.groups$k ) )
 ```
 
-blarg
-===
-
-```r
-tree.groups
-```
-
-```
-A01 B01 C01 D01 E01 F01 G01 H01 A02 B02 C02 D02 E02 F02 G02 H02 A03 B03 
-  1   1   1   1   1   1   1   1   1   1   2   1   1   1   1   1   1   1 
-C03 D03 E03 F03 G03 H03 A04 B04 C04 D04 E04 F04 G04 H04 A05 B05 C05 D05 
-  3   1   1   1   1   1   4   1   1   1   1   1   1   1   1   1   2   1 
-E05 F05 G05 H05 A06 B06 C06 D06 E06 F06 G06 H06 A07 B07 C07 D07 E07 F07 
-  1   2   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1 
-G07 H07 A08 B08 C08 D08 E08 F08 G08 H08 A09 B09 C09 D09 E09 F09 G09 H09 
-  1   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1 
-A10 B10 C10 D10 E10 F10 G10 H10 A11 B11 C11 D11 E11 F11 G11 H11 A12 B12 
-  3   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1   1 
-C12 D12 E12 F12 G12 H12 
-  1   1   1   1   1   1 
-```
-
 PCA + ANOVA: select sample groups
 ===
 
@@ -757,7 +735,7 @@ PCA + ANOVA: select sample groups
 heatmap( data.scaled.subset, vctr_grouping=tree.groups )
 ```
 
-![plot of chunk unnamed-chunk-28](scAnalysis-figure/unnamed-chunk-28.png) 
+![plot of chunk unnamed-chunk-27](scAnalysis-figure/unnamed-chunk-27.png) 
 
 PCA + ANOVA: Another view
 ===
@@ -768,7 +746,7 @@ results.pca.subset = prcomp( data.scaled.subset, retx = TRUE )
 plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Sample Depth", col = depth.colors )
 ```
 
-![plot of chunk unnamed-chunk-29](scAnalysis-figure/unnamed-chunk-29.png) 
+![plot of chunk unnamed-chunk-28](scAnalysis-figure/unnamed-chunk-28.png) 
 
 PCA + ANOVA: Another view
 ===
@@ -776,29 +754,10 @@ PCA + ANOVA: Another view
 
 ```r
 tree.group.colors = func_factor_to_metadata_color( tree.groups )$vctr_grouping_colors
-tree.group.colors
+plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Grouping (Dendrogram)", col = tree.group.colors )
 ```
 
-```
-   1    1    1    1    1    1    1    1    1    1    2    1    1    1    1 
-"NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" 
-   1    1    1    3    1    1    1    1    1    4    1    1    1    1    1 
-"NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" 
-   1    1    1    1    2    1    1    2    1    1    1    1    1    1    1 
-"NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" 
-   1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
-"NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" 
-   1    1    1    1    1    1    1    1    1    1    1    1    3    1    1 
-"NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" 
-   1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
-"NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" "NA" 
-   1    1    1    1    1    1 
-"NA" "NA" "NA" "NA" "NA" "NA" 
-```
-
-```r
-#plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Grouping (Dendrogram)", col = tree.group.colors )
-```
+![plot of chunk unnamed-chunk-29](scAnalysis-figure/unnamed-chunk-29.png) 
 
 PCA + ANOVA: select feature groups
 ===
@@ -809,7 +768,7 @@ data.scaled.subset
 mclust
 ===
 
-![plot of chunk unnamed-chunk-31](scAnalysis-figure/unnamed-chunk-311.png) ![plot of chunk unnamed-chunk-31](scAnalysis-figure/unnamed-chunk-312.png) ![plot of chunk unnamed-chunk-31](scAnalysis-figure/unnamed-chunk-313.png) ![plot of chunk unnamed-chunk-31](scAnalysis-figure/unnamed-chunk-314.png) ![plot of chunk unnamed-chunk-31](scAnalysis-figure/unnamed-chunk-315.png) 
+![plot of chunk unnamed-chunk-30](scAnalysis-figure/unnamed-chunk-301.png) ![plot of chunk unnamed-chunk-30](scAnalysis-figure/unnamed-chunk-302.png) ![plot of chunk unnamed-chunk-30](scAnalysis-figure/unnamed-chunk-303.png) ![plot of chunk unnamed-chunk-30](scAnalysis-figure/unnamed-chunk-304.png) ![plot of chunk unnamed-chunk-30](scAnalysis-figure/unnamed-chunk-305.png) 
 
 Compare Methods
 ===
