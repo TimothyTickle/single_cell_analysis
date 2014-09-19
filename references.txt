@@ -1,0 +1,10 @@
+Text References:
+
+Tutorial on SCDE:
+http://pklab.med.harvard.edu/scde/Tutorials
+
+Characterization of the single-cell transcriptional landscape by highly multiplex RNA-seq
+http://genome.cshlp.org/content/21/7/1160
+
+Embryonic fibroblasts represent a connecting link between mesenchymal and embryonic stem cells.
+http://www.ncbi.nlm.nih.gov/pubmed/23441817

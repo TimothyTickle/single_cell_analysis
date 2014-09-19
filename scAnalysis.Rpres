@@ -10,6 +10,7 @@ date: September 23, 2014
 
 Logistics
 ===
+class:small-code
 
 ```{r, tidy=TRUE}
 library(boot) #SCDE
@@ -32,6 +33,7 @@ Today's Data Set
 
 How do we get it?
 ===
+class:small-code
 
 ```{r}
 # Load tab delimited file
@@ -48,7 +50,10 @@ data = data[ -1 * zero.features, ]
 metadata = metadata[ -1 * zero.features, ]
 
 # Get groupings
-data.groups=c("A01","B01","C01","D01","E01","E01","F01","G01","H01","A02","B02","C02","D02","E02","F02","G02","H02","A03","B03","C03","D03","E03","F03","G03","H03","A04","B04","C04","D04","E04","F04","G04","H04","A05","B05","C05","D05","E05","F05","G05","H05","A06","B06","C06","D06","E06","F06","G06","H06","A07","B07","C07","D07","E07","F07","G07","H07","A08","B08","C08","D08","E08","F08","G08","H08","A09","B09","C09","D09","E09","F09","G09","H09","A10","B10","C10","D10","E10","F10","G10","H10","A11","B11","C11","D11","E11","F11","G11","H11","A12","B12","C12","D12","E12","F12","G12","H12")
+data.groups=c("ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF")
+data.groups = c( rep("ES",48),rep("MEF",48))
+# Get colors to plot with
+data.groups.colors <- func_factor_to_metadata_color( as.factor( data.groups) )$vctr_grouping_colors
 ```
 TODO update
 
@@ -59,6 +64,7 @@ Always look at your data
 
 A quick look at the data
 ===
+class:small-code
 
 ```{r}
 dim( data )
@@ -79,6 +85,7 @@ Let's characterize this data.
 
 Normality?
 ===
+class:small-code
 
 ```{r}
 feature.sum = apply( data, 1, sum )
@@ -90,6 +97,7 @@ abline( v = c(1, 3729,7457,11180,14913), col = c("red", "violet","cyan","blue","
 
 Normality?
 ===
+class:small-code
 
 ```{r}
 feature.sum.order <- order( feature.sum )
@@ -103,6 +111,8 @@ plot( density( as.matrix( data[ index_min[1], ] ) ), col = "red" )
 
 Zooming in to Gene Distributions
 ===
+class:small-code
+
 ```{r, echo = FALSE, fig.keep='last'}
 plot( x=0,y=0,type="p", xlim=c(0,100), ylim=c(0,.2) )
 for( i_min_plot in index_min ){ lines( density( as.matrix( data[ i_min_plot, ])), col = "red", add = TRUE)}
@@ -114,6 +124,7 @@ for( i_max_plot in index_max ){ lines( density( as.matrix( data[ i_max_plot, ]))
 
 Sparsity
 ===
+class:small-code
 
 ```{r}
 # Check samples for read depth
@@ -127,6 +138,7 @@ barplot( sort( sample.depth ), main = "Sample Depth ", xlab = "Sample", ylab = "
 
 Sparsity
 ===
+class:small-code
 
 ```{r}
 # Percent zero by feature expression
@@ -137,6 +149,8 @@ plot( feature.percent.zero, log( feature.mean.no.zero ), xlab = "log mean", ylab
 
 Overdispersion
 ===
+class:small-code
+
 ```{r}
 # SD vs Mean
 feature.sd.with.zero <- apply( data, 1, sd )
@@ -154,6 +168,7 @@ Can QC Help?
 
 Removing Sparse Features
 ===
+class:small-code
 
 ```{r}
 sample.percentile = apply( data, 2, function(x){ quantile(x[x !=0 ], .5)})
@@ -166,21 +181,21 @@ plot(density( as.matrix(data[ feature.noise[ feature.noise.by.expression[ 1 ]], 
 
 Removing Sparse Features
 ===
+class:small-code
 
 ```{r}
 dim( data )
 dim( metadata )
 data = data[ -1 * feature.noise, ]
 
-metadata = metadata[ -1 * feature.noise ]
+metadata = metadata[ -1 * feature.noise, ]
 dim( data )
 dim( metadata )
-
-data.groups <- data.groups[ -1 * feature.noise ]
 ```
 
 Sample Read Depth: revisited
 ===
+class:small-code
 
 ```{r}
 sample.depth <- apply( data, 2, sum )
@@ -195,7 +210,7 @@ barplot( sort(apply( data, 2, sum )))
 Can Transforms / Normalization Help?
 ===
 
-NEED CODE
+TODO NEED CODE
 
 Challenge
 ===
@@ -225,6 +240,7 @@ PCA: in practice
 
 PCA: in code
 ===
+class:small-code
 
 ```{r, echo=TRUE}
 # Row center and log
@@ -237,6 +253,7 @@ results.pca = prcomp( data.scaled, retx = TRUE )
 
 PCA: in code
 ===
+class:small-code
 
 ```{r, echo=TRUE}
 plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16 )
@@ -244,6 +261,8 @@ plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16 )
 
 PCA: by depth
 ===
+class:small-code
+
 ```{r,echo=FALSE}
 min.pc1 = min( results.pca$rotation[,1] )
 min.index = which(sort(results.pca$rotation[,1]) == min.pc1 )[1]
@@ -262,6 +281,7 @@ legend( "topright", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), pa
 
 PCA: 3D with caution
 ===
+class:small-code
 
 ```{r}
 scatterplot3d( x=results.pca$rotation[,1], y=results.pca$rotation[,3], z=results.pca$rotation[,2], color = depth.colors, xlab="PC1", ylab="PC3", zlab="PC2", main="3D PCA using Components 1-3" )
@@ -271,7 +291,7 @@ Alternatives?
 ===
 
 - Principle Coordinates Analysis
-- Wieghted PCA
+- Weighted PCA
   - Different than Sparse PCA
 
 PCoA: in quick theory
@@ -286,6 +306,7 @@ PCoA: in practice
 
 PCoA: in code (Bray-curtis)
 ===
+class:small-code
 
 ```{r, echo=FALSE}
 pcoa.data = data
@@ -299,6 +320,7 @@ legend( "topleft", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), pas
 
 PCoA: in code (Jaccard)
 ===
+class:small-code
 
 ```{r, echo=TRUE}
 nmds.j.result = metaMDS( comm=t(pcoa.data), distance="jaccard", k=2, autotransfer=FALSE, trymax=10)
@@ -322,6 +344,7 @@ Often a goal of scProjects is to describe new structure to a group of cells:
 
 PCA + ANOVA: PCA
 ===
+class:small-code
 
 ```{r}
 results.pca.features <- prcomp( scale( log( t(data) + 1 ), center=TRUE, scale=TRUE), retx=TRUE)
@@ -330,6 +353,7 @@ plot( results.pca.features)
 
 PCA + ANOVA: PCA
 ===
+class:small-code
 
 ```{r}
 hist( abs( results.pca.features$rotation[,1] ), main="Feature Loadings (Abs)", xlab="Feature loadings (Abs)" )
@@ -340,6 +364,7 @@ abline( v=results.pca.features$rotation[,1][extreme.ends.pca], col="#ff000010")
 
 PCA + ANOVA: visualize
 ===
+class:small-code
 
 ```{r}
 data.scaled.subset = t( scale( t( as.matrix( log( data[ extreme.ends.pca, ] + 1 ) ) ), center=TRUE, scale=TRUE ) )
@@ -348,24 +373,27 @@ heatmap( data.scaled.subset )
 
 PCA + Anova: select sample groups
 ===
+class:small-code
 
 ```{r}
-gmd.dist <- gmdm2dist( gmdm( t( data.scaled.subset ) ) )
+gmd.dist <- dist( t( data.scaled.subset ) )
 hclust.aov <- hclust( gmd.dist )
 gmd.clust <- css.hclust( gmd.dist, hclust.aov )
-gmd.elbow.groups <- elbow.batch( gmd.clust, ev.thres=0.9, inc.thres=.05 )
+gmd.elbow.groups <- elbow.batch( gmd.clust, ev.thres=0.3, inc.thres=0.1 )
 tree.groups <- as.factor( cutree( hclust.aov, k=gmd.elbow.groups$k ) )
 ```
 
 PCA + ANOVA: select sample groups
 ===
+class:small-code
 
 ```{r}
-heatmap( data.scaled.subset, vctr_grouping=tree.groups )
+heatmap( data.scaled.subset, vctr_grouping=tree.groups ) 
 ```
 
 PCA + ANOVA: Another view
 ===
+class:small-code
 
 ```{r}
 results.pca.subset = prcomp( data.scaled.subset, retx = TRUE )
@@ -374,36 +402,79 @@ plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, 
 
 PCA + ANOVA: Another view
 ===
+class:small-code
 
 ```{r}
 tree.group.colors = func_factor_to_metadata_color( tree.groups )$vctr_grouping_colors
-plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Grouping (Dendrogram)", col = tree.group.colors )
+plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Grouping (GMD)", col = tree.group.colors )
 ```
 
-PCA + ANOVA: select feature groups
+PCA + ANOVA: select genes
 ===
+class:small-code
 
-NEED CODE
-data.scaled.subset
+```{r}
+do_aov <- function(x, tree.groups){
+ret_aov = aov( x ~ tree.groups )
+return( summary(ret_aov)[[1]][["Pr(>F)"]][1] ) }
+pca.list.p = apply( data.scaled.subset, 1, do_aov, tree.groups=tree.groups )
+pca.list.q = p.adjust( pca.list.p )
+pca.list.names = names( pca.list.q[ pca.list.q <= 0.05 ] )
+```
 
 mclust
 ===
+class:small-code
 
 ```{r, echo=FALSE}
 plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16 )
 mclust.results = Mclust(results.pca$rotation[,c(1:2)])
+mclust.groups = mclust.results$classification
 plot( mclust.results )
 ```
 
-Compare Methods
+PCA + ANOVA: Select Gene Groups
 ===
+class:small-code
+
+```{r}
+data.scaled.subset = data.scaled.subset[ pca.list.names, ]
+heatmap( data.scaled.subset )
+gmd.dist.genes <- dist( data.scaled.subset )
+hclust.aov.genes <- hclust( gmd.dist.genes )
+gmd.clust.genes <- css.hclust( gmd.dist.genes, hclust.aov.genes )
+gmd.elbow.genes <- elbow.batch( gmd.clust.genes, ev.thres=0.4, inc.thres=0.1 )
+tree.genes <- as.factor( cutree( hclust.aov.genes, k=gmd.elbow.genes$k ) )
+```
+
+Supervised Analysis: Known gene groups
+===
+class:small-code
 
 NEED CODE
+# Read in data
+gbm_data <- read.delim("data/GBM_data_matrix.txt", row.names=1)
+# Reduce to genes of interest
+gbm_group_ <- read.delim("data/.txt")
+gbm_group_ <- read.delim("data/.txt")
+gbm_group_ <- read.delim("data/.txt")
+gbm_group_ <- read.delim("data/.txt")
+
+# Reduce to genes of interest
+gbm_group_all <- unique( gbm_group_, gbm_group_, gbm_group_, gbm_group_)
+gbm_data <- gbm_data[ gbm_group_all, ]
+# Visualize before
+heatmap( as.matrix( gbm_matrix) )
+
+# Make average
+
+# View after
+heatmap( gbm_averaged )
 
 scOpportunities: cell cycle plot
 ===
 
-NEED CODE
+# Add in picture
 
 Statistical Inference in scData
 ===
@@ -420,26 +491,54 @@ SCDE: in practice
 
 SCDE: in code
 ===
+class:small-code
 
-NEED CODE
+```{r}
+names( data.groups ) = data.groups
+data.groups <- as.factor( data.groups )
+o.ifm <- scde.error.models( as.matrix( data ), groups = data.groups, n.cores=1, threshold.segmentation=TRUE, save.crossfit.plot=FALSE, save.model.plots=FALSE, verbose=1 )
+# Filter out cell (QC)
+o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
+```
 
-scde.error.models( as.matrix( data ), groups = groups.discovered, n.cores=1 )
+SCDE: in code
+===
+class:small-code
+
+```{r}
+o.prior <- scde.expression.prior(models=o.ifm,counts=as.matrix(data),length.out=400,show.plot=FALSE)
+# Perform T-test like analysis
+ediff <- scde.expression.difference(o.ifm,as.matrix(data),o.prior,groups=as.factor(data.groups),n.randomizations=100,n.cores=1,verbose=1)
+write.table(ediff[order(abs(ediff$Z),decreasing=T),],file="scde_results.txt",row.names=T,col.names=T,sep="\t",quote=F)
+```
 
 PCoA: in code (Reciprocal)
 ===
+class:small-code
 
-NEED CODE
 ```{r}
+names(data.groups) = data.groups
 dist.recip <- reciprocal_weighting( x=as.matrix(data), groups=data.groups )
-nmds.r.result = metaMDS( comm=dist.recip, k=2, autotransfer=FALSE, trymax=10)
-plot( nmds.r.result$points[,1], nmds.r.result$points[,2], col=depth.colors, main="Ordination by Reciprocal Weighting")
+nmds.r.result = metaMDS( comm=dist.recip, k=2, autotransfer=FALSE )
+plot( nmds.r.result$points[,1], nmds.r.result$points[,2], col=data.group.colors, main="Ordination by Reciprocal Weighting")
+```
+
+PCoA: in code (Reciprocal)
+===
+class:small-code
+
+Attempting with 7 dimensions
+```{r}
+names(data.groups) = data.groups
+nmds.r.result = metaMDS( comm=dist.recip, k=7, autotransfer=FALSE )
+plot( nmds.r.result$points[,1], nmds.r.result$points[,2], col=data.group.colors, main="Ordination by Reciprocal Weighting")
 ```
 
 What did we find ?
 ===
 
-- We discovered groups of cells
-- We found significantly associated features
+- Unsupervised discovery of substructure
+- Inference on known structure
 - How do we connect this to biology?
 
 Gene Set Enrichment Analysis: GSEA
@@ -447,6 +546,7 @@ Gene Set Enrichment Analysis: GSEA
 
 - Not specifically related to scAnalysis
 - Does help round out the story
+- Covered in other section
 - Many options
   - DAVID (online or R library RDAVIDWebService)
   - GSEA (online or many libraries)
@@ -466,8 +566,8 @@ Summary: of the data
 - We are still understanding scData and how to apply it
   - Not normal
   - Zero-inflated
-  - Multimodal
   - Over-dispersed
+  - Very noisey
 - Keeping these characteristics in analysis assumptions
 
 Summary: of methods
@@ -478,9 +578,9 @@ Summary: of today
 ===
 
 - Created expectations on scData
-- Explored filtering / normalization techniques
 - Applied 3 ordination techniques
 - Tried 2 methods to detect substructure
+- Applied known structure to a data set
 - Applied 1 statistical inference method
 
 Thank you
@@ -491,6 +591,12 @@ Thank you
 - Manik Kuchroo
 - Rahul Satija
 - Itay Tirosh
+
+References
+===
+
+Please note this is a collection of many peoples ideas.
+Included in the download is a references.txt to document sources.
 
 Questions?
 ===

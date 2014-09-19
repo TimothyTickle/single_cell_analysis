@@ -305,6 +305,9 @@ n.cores = 1
   # Filter out poor fits
   o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
 
+  # Get expression maginitude estimates
+  o.fpm <- scde.expression.magnitude(o.ifm,counts=x)
+
   # Get cell names to iterate through
   cell.names = names( x )
   require(boot)
