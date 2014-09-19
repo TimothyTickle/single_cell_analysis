@@ -13,17 +13,20 @@ Logistics
 class:small-code
 
 ```{r, tidy=TRUE}
-library(boot) #SCDE
+# Load libraries
+library(boot) #For SCDE
 library(caret) #Near-zero filter
 library(GMD) #Cluster selection on dendrograms
 library(gplots) #Colorpanel
 library(mclust) #Selection of clusters
 library(scatterplot3d) #3D plotting
-library(scde) #Statistical inference (bayesian mixed model)
+library(scde) #Single cell differential expression
 library(vegan) #PCoA, distance metrics
+
+# Source code
 source("heatmap.3b.R") #Custom HCL
 source("cell_cycle_plot.R") #Custom plot for cell cycle
-source("Modules.R") #
+source("Modules.R") #Helper functions
 ```
 
 Today's Data Set
@@ -31,7 +34,7 @@ Today's Data Set
 
 - Describe data set
 
-How do we get it?
+Data: Ready, Start, Load!
 ===
 class:small-code
 
@@ -39,19 +42,25 @@ class:small-code
 # Load tab delimited file
 data = read.delim( file.path("data","GSE29087_L139_expression_tab.txt"), row.names = 1 )
 
-# For convenience splitting the data frame in to metadata and data
-metadata = data[ 1:6 ]
-data = data[ -1 * 1:6 ]
+# For convenience splitting in to metadata and data
+metadata <- data[ 1:6 ]
+data <- data[ -1 * 1:6 ]
 
 # Remove features without counts
 zero.features <- which( apply( data, 1, sum ) == 0 )
+data <- data[ -1 * zero.features, ]
+metadata <- metadata[ -1 * zero.features, ]
 length( zero.features )
-data = data[ -1 * zero.features, ]
-metadata = metadata[ -1 * zero.features, ]
+```
 
+Data: Ready, Start, Load!
+===
+class:small-code
+
+```{r}
 # Get groupings
-data.groups=c("ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF","ES","ES","ES","ES","MEF","MEF","MEF","MEF")
-data.groups = c( rep("ES",48),rep("MEF",48))
+data.groups <- c( rep("ES",48),rep("MEF",48))
+
 # Get colors to plot with
 data.groups.colors <- func_factor_to_metadata_color( as.factor( data.groups) )$vctr_grouping_colors
 ```
@@ -67,12 +76,26 @@ A quick look at the data
 class:small-code
 
 ```{r}
+# Get dimensions
 dim( data )
-names( data )
-summary(data)
 
+# See first couple column names
+names( data )[1:10]
+```
+```{r, eval=FALSE}
+# Summary per column
+summary(data)
+```
+
+A quick look at the data
+===
+class:small-code
+
+```{r}
 dim( metadata )
 names( metadata )
+```
+```{r, eval=FALSE}
 summary(metadata)
 ```
 
@@ -83,43 +106,93 @@ Let's characterize this data.
 - Sparsity / zero-inflation
 - Overdispersed
 
-Normality?
+Gene Sparsity
 ===
 class:small-code
 
-```{r}
-feature.sum = apply( data, 1, sum )
-feature.sum.sorted = sort( feature.sum )
+```{r, eval=FALSE}
+# Sum each gene
+feature.sum <- apply( data, 1, sum )
+
+# Sort sums
+feature.sum.sorted <- sort( feature.sum )
+
+# Plot with quartiles
+plot( log( feature.sum.sorted ), main = "Total gene counts throughout samples", ylab = "Log total counts", xlab = "Sorted Order" )
+
+# Add quartile lines
+# Min 1, 1st quartile 3729, Median 7457, 3rd quartile 11180, Max 14913
+abline( v = c(1, 3729,7457,11180,14913), col = c("red", "violet","cyan","blue","green"))
+```
+
+Gene Sparsity
+===
+class: midcenter
+
+```{r, echo=FALSE}
+feature.sum <- apply( data, 1, sum )
+feature.sum.sorted <- sort( feature.sum )
 plot( log( feature.sum.sorted ), main = "Total gene counts throughout samples", ylab = "Log total counts", xlab = "Index after sorting" )
 abline( v = c(1, 3729,7457,11180,14913), col = c("red", "violet","cyan","blue","green"))
 # Min 1, 1st quartile 3729, Median 7457, 3rd quartile 11180, Max 14913
 ```
 
-Normality?
+Normality?: at different sparsity levels
 ===
 class:small-code
 
 ```{r}
+# Get the sorted order for the genes
 feature.sum.order <- order( feature.sum )
+
+# Get the 10 most sparse genes
 index_min <- feature.sum.order[ 1:10 ]
+
+# 1 quartile sparsity genes
 index_q1 <- feature.sum.order[ 3724:3723 ]
+
+# Median sparsity genes
 index_median <- feature.sum.order[ 7452:7461 ]
+
+# 3rd quartile sparsity genes
 index_q3 <- feature.sum.order[ 11175:11184 ]
+
+# Get the least sparse genes
 index_max <- feature.sum.order[ 14908:14913 ]
-plot( density( as.matrix( data[ index_min[1], ] ) ), col = "red" )
 ```
 
 Zooming in to Gene Distributions
 ===
 class:small-code
 
-```{r, echo = FALSE, fig.keep='last'}
+```{r, eval=FALSE}
+# Start plot
 plot( x=0,y=0,type="p", xlim=c(0,100), ylim=c(0,.2) )
+
+# Plot from least to most sparse genes
+for( i_min_plot in index_min ){ lines( density( as.matrix( data[ i_min_plot, ])), col="red", add=TRUE)}
+
+for( i_q1_plot in index_q1 ){ lines( density( as.matrix( data[ i_q1_plot, ])), col="violet", add=TRUE)}
+
+for( i_median_plot in index_median ){ lines( density( as.matrix( data[ i_median_plot, ])), col="cyan", add=TRUE)}
+
+for( i_q3_plot in index_q3 ){ lines( density( as.matrix( data[ i_q3_plot, ])), col="blue", add=TRUE)}
+
+for( i_max_plot in index_max ){ lines( density( as.matrix( data[ i_max_plot, ])), col="green", add=TRUE)}
+```
+
+Zooming in to Gene Distributions
+===
+class:midcenter
+
+```{r, echo = FALSE, fig.keep='last'}
+plot( x=0,y=0,type="p", xlim=c(0,100), ylim=c(0,.2), main="Gene Count Distributions by Sparsity", xlab="Density of counts", ylab="Count value" )
 for( i_min_plot in index_min ){ lines( density( as.matrix( data[ i_min_plot, ])), col = "red", add = TRUE)}
 for( i_q1_plot in index_q1 ){ lines( density( as.matrix( data[ i_q1_plot, ])), col = "violet", add = TRUE)}
 for( i_median_plot in index_median ){ lines( density( as.matrix( data[ i_median_plot, ])), col = "cyan", add = TRUE)}
 for( i_q3_plot in index_q3 ){ lines( density( as.matrix( data[ i_q3_plot, ])), col = "blue", add = TRUE)}
 for( i_max_plot in index_max ){ lines( density( as.matrix( data[ i_max_plot, ])), col = "green", add = TRUE)}
+legend( "topright", c("Min","Q1","Median","Q3","MAX"), fill=c("red","violet","cyan","blue","green"), title="Sparsity group" )
 ```
 
 Sparsity
@@ -131,8 +204,20 @@ class:small-code
 sample.depth <- apply( data, 2, sum )
 summary(sample.depth )
 ```
----
-```{r}
+
+Sparsity
+===
+class:small-code
+
+```{r, eval=FALSE}
+barplot( sort( sample.depth ), main = "Sample Depth ", xlab = "Sample", ylab = "Depth")
+```
+
+Sparsity
+===
+class:midcenter
+
+```{r, echo=FALSE}
 barplot( sort( sample.depth ), main = "Sample Depth ", xlab = "Sample", ylab = "Depth")
 ```
 
@@ -140,11 +225,32 @@ Sparsity
 ===
 class:small-code
 
-```{r}
-# Percent zero by feature expression
+```{r,eval=FALSE}
+# Get Percent zero per gene
 feature.percent.zero <- apply( data, 1, function(x){ length( which(x==0))/length(x)})
+
+# Get mean per gene (excluding zeros)
 feature.mean.no.zero <- apply( data, 1, function(x){ mean( x[ which(x!=0) ] ) })
-plot( feature.percent.zero, log( feature.mean.no.zero ), xlab = "log mean", ylab = "Percent Zero", main = "Feature Sparsity by Expression" )
+
+#Plot with loess line
+plot( feature.percent.zero, log( feature.mean.no.zero ), xlab = "log mean", ylab = "percent zero", main = "Feature Sparsity by Expression" )
+
+lines(loess.smooth( feature.percent.zero, log(feature.mean.no.zero),degree=2,span=.2),col="cyan")
+```
+
+Sparsity
+===
+class:midcenter
+
+```{r,echo=FALSE}
+# Get Percent zero per gene
+feature.percent.zero <- apply( data, 1, function(x){ length( which(x==0))/length(x)})
+
+# Get mean per gene (excluding zeros)
+feature.mean.no.zero <- apply( data, 1, function(x){ mean( x[ which(x!=0) ] ) })
+
+plot( feature.percent.zero, log( feature.mean.no.zero ), xlab = "log mean", ylab = "percent zero", main = "Feature Sparsity by Expression" )
+lines(loess.smooth( feature.percent.zero, log(feature.mean.no.zero),degree=2,span=.2),col="cyan")
 ```
 
 Overdispersion
@@ -152,12 +258,32 @@ Overdispersion
 class:small-code
 
 ```{r}
-# SD vs Mean
-feature.sd.with.zero <- apply( data, 1, sd )
-feature.mean.with.zero <- apply( data, 1, mean )
+# Get SD without zeros
 feature.sd.no.zero <- apply( data, 1, function(x){ sd( x[ which(x !=0 )])})
+
+# Remove NAs and zeros SD
+remove.no.zero <- which( is.na( feature.sd.no.zero ))
+remove.no.zero <- c( remove.no.zero, which( feature.sd.no.zero == 0 ))
+
+# Remove NAs and zeros mean
+remove.no.zero <- c( remove.no.zero, which( is.na( feature.mean.no.zero )))
+remove.no.zero <- unique( c( remove.no.zero, which( feature.mean.no.zero == 0 )))
+
+# Reduce the lists
+feature.sd.no.zero <- feature.sd.no.zero[-1*remove.no.zero]
+feature.mean.no.zero <- feature.mean.no.zero[-1*remove.no.zero]
+```
+
+Overdispersion
+===
+class:midcenter
+
+```{r,echo=FALSE}
 plot( log( feature.mean.no.zero ), log( feature.sd.no.zero ), xlab = "Mean (Log)", ylab = "SD (Log)", main = "SD vs mean (ignoring zeros)" )
-plot( log( feature.mean.with.zero ), log( feature.sd.with.zero ), xlab = "Mean (Log)", ylab = "SD (Log)", main = "SD vs mean (ignoring zeros)" )
+lines(loess.smooth(log(feature.mean.no.zero),log(feature.sd.no.zero),degree=2,span=.2),col="cyan")
+ret_lm <- lm( log(feature.sd.no.zero) ~ log(feature.mean.no.zero) )
+abline( a=coef( ret_lm)[[1]], b=coef( ret_lm)[[2]], col="orange")
+legend( "bottomright", c("Best-Fit","Loess"), fill=c("orange","cyan"), title="Main")
 ```
 
 Can QC Help?
@@ -171,10 +297,27 @@ Removing Sparse Features
 class:small-code
 
 ```{r}
-sample.percentile = apply( data, 2, function(x){ quantile(x[x !=0 ], .5)})
-feature.noise = which(apply( data, 1, min_occurence_at_min_value, sample.percentile ) <= 10)
-feature.noise.by.expression = order( apply( data[ feature.noise, ], 1, sum ), decreasing = TRUE)
-# What am I removing
+# Get the percentile at 50% for each sample
+sample.percentile <- apply( data, 2, function(x){ quantile(x[x !=0 ], .5)})
+# Select noise features
+feature.noise <- which(apply( data, 1, min_occurence_at_min_value, sample.percentile ) <= 10)
+# Order the feauture by their total expression
+feature.noise.by.expression <- order( apply( data[ feature.noise, ], 1, sum ), decreasing = TRUE)
+```
+
+Removing Sparse Features
+===
+class:small-code
+
+```{r, eval=FALSE}
+plot(density( as.matrix(data[ feature.noise[ feature.noise.by.expression[ 1 ]], ])))
+```
+
+Removing Sparse Features
+===
+class:midcenter
+
+```{r,echo=FALSE}
 plot(density( as.matrix(data[ feature.noise[ feature.noise.by.expression[ 1 ]], ])))
 # TODO make a multiple density plot
 ```
@@ -185,12 +328,9 @@ class:small-code
 
 ```{r}
 dim( data )
-dim( metadata )
-data = data[ -1 * feature.noise, ]
-
-metadata = metadata[ -1 * feature.noise, ]
+data <- data[ -1 * feature.noise, ]
+metadata <- metadata[ -1 * feature.noise, ]
 dim( data )
-dim( metadata )
 ```
 
 Sample Read Depth: revisited
@@ -198,13 +338,30 @@ Sample Read Depth: revisited
 class:small-code
 
 ```{r}
+# Recalculate sample depth
 sample.depth <- apply( data, 2, sum )
-depth.colors = polychromatic_palette( length( sample.depth ) )
-sample.depth
+
+# Make a color palette based on depth
+depth.colors <- polychromatic_palette( length( sample.depth ) )
+
+# Summarize sample depth
+summary( sample.depth )
 ```
----
-```{r}
-barplot( sort(apply( data, 2, sum )))
+
+Sample Read Depth: revisited
+===
+class:small-code
+
+```{r,eval=FALSE}
+barplot( sort(sample.depth ) )
+```
+
+Sample Read Depth: revisited
+===
+class:midcenter
+
+```{r,echo=FALSE}
+barplot( sort(sample.depth ) )
 ```
 
 Can Transforms / Normalization Help?
@@ -236,7 +393,10 @@ PCA: in quick theory
 PCA: in practice
 ===
 
-- Things to be aware of
+Things to be aware of
+- Data with different magnitudes will dominate
+-- Zero center and divided by SD
+-- (Studentized) norm
 
 PCA: in code
 ===
@@ -244,46 +404,80 @@ class:small-code
 
 ```{r, echo=TRUE}
 # Row center and log
-data.scaled = t( scale( t( as.matrix( log( data + 1 ) ) ), center=TRUE, scale=TRUE ) )
+data.scaled <- t( scale( t( as.matrix( log( data + 1 ) ) ), center=TRUE, scale=TRUE ) )
+
 # Remove constant rows
-# TODO data.scaled = data.scaled[, -1 * nearZeroVar( data.scaled ) ]
+# data.scaled<-data.scaled[,-1*nearZeroVar(data.scaled)]
+
 # Perfrom PCA
-results.pca = prcomp( data.scaled, retx = TRUE )
+results.pca <- prcomp( data.scaled, retx = TRUE )
+```
+
+PCA: in code
+===
+
+```{r}
+# Plot scree / elbow plot
+plot( results.pca )
 ```
 
 PCA: in code
 ===
 class:small-code
 
-```{r, echo=TRUE}
-plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16 )
+```{r, eval=FALSE}
+# Plot PC1 vs PC2
+pca.var <- results.pca$sdev^2
+pca.var <- round( pca.var/sum( pca.var ), 2)
+plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, xlab=paste("PC1 (",pca.var[1],")"), ylab=paste("PC2 (",pca.var[2],")"), main="Standard PCA")
+```
+
+PCA: in code
+===
+class:midcenter
+
+```{r, echo=FALSE}
+# Get percent variance
+pca.var <- results.pca$sdev^2
+pca.var <- round( pca.var/sum( pca.var ), 2)
+
+# Plot PC1 vs PC2
+plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, xlab=paste("PC1 (",pca.var[1],")"), ylab=paste("PC2 (",pca.var[2],")"), main="Standard PCA")
 ```
 
 PCA: by depth
 ===
 class:small-code
 
-```{r,echo=FALSE}
-min.pc1 = min( results.pca$rotation[,1] )
-min.index = which(sort(results.pca$rotation[,1]) == min.pc1 )[1]
-min.pc1 = round(min.pc1,4)
-median.pc1 = median(c(0,results.pca$rotation[,1]))
-median.index = which(sort(results.pca$rotation[,1]) == median.pc1 )[1]
-median.pc1 = round(median.pc1,4)
-max.pc1 = max( results.pca$rotation[,1] )
-max.index = which(sort(results.pca$rotation[,1]) == max.pc1 )[1]
-max.pc1 = round(max.pc1,4)
+```{r, eval=FALSE}
+plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, col=depth.colors, xlab="PC1", ylab="PC2", main="PCA by Sample Depth" )
+legend( "topright", c("Max","Median","Min"), fill=c("yellow","black","purple") )
 ```
-```{r, echo=TRUE}
-plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, col= depth.colors, xlab="PC1", ylab="PC2", main="PCA by Sample Depth" )
-legend( "topright", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), paste(min.pc1," (Min)")), fill=c(depth.colors[max.index], depth.colors[median.index], depth.colors[min.index]) )
+
+PCA: by depth
+===
+class:midcenter
+
+```{r, echo=FALSE}
+plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, col=depth.colors, xlab="PC1", ylab="PC2", main="PCA by Sample Depth" )
+legend( "topright", c("Max","Median","Min"), fill=c("yellow","black","purple") )
+```
+
+PCA: 3D with caution
+===
+class:midcenter
+
+```{r,echo=FALSE}
+# 3D plotting method for scatter plots
+scatterplot3d( x=results.pca$rotation[,1], y=results.pca$rotation[,3], z=results.pca$rotation[,2], color = depth.colors, xlab="PC1", ylab="PC3", zlab="PC2", main="3D PCA using Components 1-3" )
 ```
 
 PCA: 3D with caution
 ===
 class:small-code
 
-```{r}
+```{r,eval=FALSE}
+# 3D plotting method for scatter plots
 scatterplot3d( x=results.pca$rotation[,1], y=results.pca$rotation[,3], z=results.pca$rotation[,2], color = depth.colors, xlab="PC1", ylab="PC3", zlab="PC2", main="3D PCA using Components 1-3" )
 ```
 
@@ -308,31 +502,81 @@ PCoA: in code (Bray-curtis)
 ===
 class:small-code
 
-```{r, echo=FALSE}
-pcoa.data = data
-pcoa.data = sweep( pcoa.data, 2, colSums( pcoa.data ), "/")
+```{r, eval=FALSE}
+# Make proportional
+pcoa.data = sweep( data, 2, colSums( data ), "/")
+
+# Perform PCoA with Bray Curtis distance metric
 nmds.b.c.result = metaMDS( comm=t(pcoa.data), distance="bray", k=2, autotransfer=FALSE, trymax=10)
 ```
-```{r}
-plot( nmds.b.c.result$points[,1], nmds.b.c.result$points[,2], col=depth.colors, main="Ordination by Bray Curtis")
-legend( "topleft", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), paste(min.pc1," (Min)")), fill=c(depth.colors[max.index], depth.colors[median.index], depth.colors[min.index]) )
-```
 
-PCoA: in code (Jaccard)
+PCoA: in code (Bray-curtis)
 ===
 class:small-code
 
-```{r, echo=TRUE}
-nmds.j.result = metaMDS( comm=t(pcoa.data), distance="jaccard", k=2, autotransfer=FALSE, trymax=10)
-plot( nmds.j.result$points[,1], nmds.j.result$points[,2], col=depth.colors, main="Ordination by Jaccard")
-legend( "topleft", c(paste(max.pc1," (Max)"), paste(median.pc1," (Median)"), paste(min.pc1," (Min)")), fill=c(depth.colors[max.index], depth.colors[median.index], depth.colors[min.index]) )
+```{r, echo=FALSE}
+# Make proportional
+pcoa.data = sweep( data, 2, colSums( data ), "/")
+
+# Perform PCoA with Bray Curtis distance metric
+nmds.b.c.result = metaMDS( comm=t(pcoa.data), distance="bray", k=2, autotransfer=FALSE, trymax=10)
+```
+
+PCoA: in code (Bray-curtis)
+===
+class:small-code
+
+```{r, eval=FALSE}
+# Plot PCoA with Bray-curtis
+plot( nmds.b.c.result$points[,1], nmds.b.c.result$points[,2], col=depth.colors, main="Ordination by Bray Curtis", xlab="NMDS 1", ylab="NMDS 2")
+
+# Add legend
+legend( "topleft", c("Max","Median","Min"), fill=c("yellow","black","purple") )
+```
+
+PCoA: in code (Bray-curtis)
+===
+class:midcenter
+
+```{r, echo=FALSE}
+plot( nmds.b.c.result$points[,1], nmds.b.c.result$points[,2], col=depth.colors, main="Ordination by Bray Curtis", xlab="NMDS 1", ylab="NMDS 2")
+legend( "topleft", c("Max","Median","Min"), fill=c("yellow","black","purple") )
+```
+
+PCoA: in code (Binomial)
+===
+class:small-code
+
+```{r}
+# Perform PCoA with binomial metric
+nmds.b.result = metaMDS( comm=t(pcoa.data), distance="binomial", k=2, autotransfer=FALSE, trymax=10)
+```
+
+PCoA: in code (Binomial)
+===
+class:small-code
+
+```{r, eval=FALSE}
+# Plot and add legend
+plot( nmds.b.result$points[,1], nmds.b.result$points[,2], col=depth.colors, main="Ordination by Binomial", xlab="NMDS 1", ylab="NMDS 2")
+
+legend( "topleft", c("Max","Median","Min"), fill=c("yellow","black","purple") )
+```
+
+PCoA: in code (Binomial)
+===
+class:midcenter
+
+```{r, echo=FALSE}
+plot( nmds.b.result$points[,1], nmds.b.result$points[,2], col=depth.colors, main="Ordination by Binomial", xlab="NMDS 1", ylab="NMDS 2" )
+legend( "topleft", c("Max","Median","Min"), fill=c("yellow","black","purple") )
 ```
 
 Next Steps in Ordination
 ===
 
 Other options to explore
-- Wieghted PCA
+- Weighted PCA
 
 Unsupervised Substructure Discovery
 ===
@@ -451,25 +695,45 @@ Supervised Analysis: Known gene groups
 ===
 class:small-code
 
-NEED CODE
+```{r}
 # Read in data
 gbm_data <- read.delim("data/GBM_data_matrix.txt", row.names=1)
 # Reduce to genes of interest
-gbm_group_ <- read.delim("data/.txt")
-gbm_group_ <- read.delim("data/.txt")
-gbm_group_ <- read.delim("data/.txt")
-gbm_group_ <- read.delim("data/.txt")
+gbm_CL <- read.delim("data/GBM_gene_CL.txt",stringsAsFactors=FALSE)$genes
+gbm_MES<- read.delim("data/GBM_gene_MES.txt",stringsAsFactors=FALSE)$genes
+gbm_NL<- read.delim("data/GBM_gene_NL.txt",stringsAsFactors=FALSE)$genes
+gbm_PN <- read.delim("data/GBM_gene_PN.txt",stringsAsFactors=FALSE)$genes
+```
 
+Supervised Analysis: Known gene groups
+===
+class:small-code
+
+```{r}
 # Reduce to genes of interest
-gbm_group_all <- unique( gbm_group_, gbm_group_, gbm_group_, gbm_group_)
-gbm_data <- gbm_data[ gbm_group_all, ]
+gbm_all <- unique( c( gbm_CL, gbm_MES, gbm_NL, gbm_PN ) )
+gbm_data <- gbm_data[ gbm_all, ]
 # Visualize before
-heatmap( as.matrix( gbm_matrix) )
+heatmap( as.matrix( gbm_data ) )
+```
 
+Supervised Analysis: Known gene groups
+===
+class:small-code
+
+```{r}
 # Make average
+gbm_averaged = as.data.frame( matrix(rep(NA,4*ncol( gbm_data )), ncol=ncol(gbm_data) ))
+names( gbm_averaged ) <- names( gbm_data )
+row.names( gbm_averaged ) <- c( "CL", "MES", "NL", "PN" )
+gbm_averaged[1,] <- apply( gbm_data[ gbm_CL,],2,mean)
+gbm_averaged[2,] <- apply( gbm_data[ gbm_MES,],2,mean)
+gbm_averaged[3,] <- apply( gbm_data[ gbm_NL,],2,mean)
+gbm_averaged[4,] <- apply( gbm_data[ gbm_PN,],2,mean)
 
 # View after
 heatmap( gbm_averaged )
+```
 
 scOpportunities: cell cycle plot
 ===
@@ -493,46 +757,40 @@ SCDE: in code
 ===
 class:small-code
 
-```{r}
 names( data.groups ) = data.groups
 data.groups <- as.factor( data.groups )
 o.ifm <- scde.error.models( as.matrix( data ), groups = data.groups, n.cores=1, threshold.segmentation=TRUE, save.crossfit.plot=FALSE, save.model.plots=FALSE, verbose=1 )
 # Filter out cell (QC)
 o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
-```
 
 SCDE: in code
 ===
 class:small-code
 
-```{r}
 o.prior <- scde.expression.prior(models=o.ifm,counts=as.matrix(data),length.out=400,show.plot=FALSE)
 # Perform T-test like analysis
 ediff <- scde.expression.difference(o.ifm,as.matrix(data),o.prior,groups=as.factor(data.groups),n.randomizations=100,n.cores=1,verbose=1)
 write.table(ediff[order(abs(ediff$Z),decreasing=T),],file="scde_results.txt",row.names=T,col.names=T,sep="\t",quote=F)
-```
 
 PCoA: in code (Reciprocal)
 ===
 class:small-code
 
-```{r}
 names(data.groups) = data.groups
 dist.recip <- reciprocal_weighting( x=as.matrix(data), groups=data.groups )
 nmds.r.result = metaMDS( comm=dist.recip, k=2, autotransfer=FALSE )
 plot( nmds.r.result$points[,1], nmds.r.result$points[,2], col=data.group.colors, main="Ordination by Reciprocal Weighting")
-```
 
 PCoA: in code (Reciprocal)
 ===
 class:small-code
 
 Attempting with 7 dimensions
-```{r}
+
 names(data.groups) = data.groups
 nmds.r.result = metaMDS( comm=dist.recip, k=7, autotransfer=FALSE )
 plot( nmds.r.result$points[,1], nmds.r.result$points[,2], col=data.group.colors, main="Ordination by Reciprocal Weighting")
-```
+
 
 What did we find ?
 ===
@@ -615,3 +873,4 @@ plot( 1:10, log(1:10 ) ) # plot in to the pdf file
 plot( seq(0,.9,.1), sin(0:9) ) # another plot for the pdf file
 dev.off() # Close pdf file ( very important )
 ```
+
