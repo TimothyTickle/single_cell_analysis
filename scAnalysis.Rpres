@@ -38,7 +38,7 @@ What we will *Attempt* to Cover
 ===
 
 - How to look at the data *
-- Ways to plot samples (Ordination) *
+- Ways to plot samples (ordination) *
 - Discovery substructure in data *
 - Using gene sets for visualization  *
 - An example of unique plots for scAnalysis
@@ -481,18 +481,21 @@ Waste Not, Want Not
 Dimensionality Reduction and Ordination
 ===
 
-- A frequently used method is PCA
+- Start with many measurements (high dimensional)
+  - Want to reduce to a few features (lower-dimensional space)
+- One way is to extract features based on capturing groups of variance
+- Another could be to preferentially select some of the cuurent features
+  - We have already done this
+- We need this to plot the samples in 2D (or ordinate them)
 
 PCA: in quick theory
 ===
-
-- Describe PCA
 
 - Eigenvectors of covariance matrix
 - Find orthognal groups of variance
 - Given from most to least variance
   - Components of variation
-  - Linear combination (weighted)
+  - Linear combination of variance
 
 PCA: in practice
 ===
@@ -500,7 +503,8 @@ PCA: in practice
 Things to be aware of
 - Data with different magnitudes will dominate
   - Zero center and divided by SD
-  - (Studentized) norm
+  - (Standardized)
+- Can be affected by outliers
 
 PCA: in code
 ===
@@ -603,6 +607,14 @@ Alternatives?
 
 NMDS: in quick theory
 ===
+
+- Number of dimensions are selected
+- Distance matrix is calculated
+- Samples are positioned
+- Distance betwen the rank order in the higher and lower dinmensions are calculated
+  - Stress
+- Positions are moved to be better
+- This continues until stress is at a minimum
 
 NMDS: in practice
 ===
@@ -859,12 +871,16 @@ plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, xlab="PC1", yl
 Mixture modeling to select samples
 ===
 
+- Uses an EM algorithm optimizing the number of guassian distributions
 - Works directly off of the ordination
 - Only as good as the ordination
 - Sample ordination relys on the strongest signals
   - Global, less sensitive
-- Less subject to parameters
 - Really easy!
+
+---
+
+![mclust](images/mclust.pdf)
 
 mclust: Mixture Modeling
 ===
