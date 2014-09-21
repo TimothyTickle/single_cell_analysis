@@ -327,3 +327,19 @@ n.cores = 1
   },mc.cores=n.cores)),upper=FALSE)
   return( reciprocal.dist )
 }
+
+
+#####################################
+### Misc
+#####################################
+stick_breaking <- function(
+i_variance_count
+### Number of breaks
+){
+  vctr_break_distribution = c()
+  for( i_k_break in 1:i_variance_count )
+  {
+    vctr_break_distribution = c(vctr_break_distribution, (1/i_variance_count) * sum( 1 / ( i_k_break : i_variance_count ) ) )
+  }
+  return( vctr_break_distribution )
+}
