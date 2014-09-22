@@ -193,7 +193,7 @@ cor_matrix <- function(
 ### Show the correlation of the date in the data frame (samples or features)
 df_frame,
 ### Data for which to show correlation
-str_cor = "euclidean",
+str_cor = "spearman",
 ### The correlation metric to use
 vctr_grouping = NULL,
 ### Grouping of samples or features by color
@@ -207,16 +207,8 @@ str_title = NULL,
 ### Title for plot
 ...
 ){
-  loginfo( "Visualize correlation" )
-  if( f_correlate_samples )
-  {
-    loginfo( "Sample Correlation" )
-  } else {
-    loginfo( "Feature Correlation" )
-  }
-
   # Get a consistent color scheme for the plotting
-  plt_colors = func_polychromatic_palette( )
+  plt_colors = polychromatic_palette( )
 
   # Create correlation matrix
   mtrx_cor = NA

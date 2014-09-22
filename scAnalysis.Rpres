@@ -846,8 +846,13 @@ PCA + ANOVA: PCA by Depth
 class:midcenter
 
 ```{r, echo=FALSE}
+data.groups <- c( rep("ES",48),rep("MEF",48))
+names( data.groups ) = data.groups
+data.groups <- as.factor( data.groups )
+data.groups.colors <- func_factor_to_metadata_color( as.factor( data.groups) )$vctr_grouping_colors
+
 results.pca.subset = prcomp( data.scaled.subset, retx = TRUE )
-plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Sample Depth", col = depth.colors )
+plot( results.pca.subset$rotation[,1], results.pca.subset$rotation[,2], pch=16, xlab="PC1", ylab="PC2", main="PCA by Sample Depth", col = data.groups.colors )
 ```
 
 PCA + ANOVA: Another view
