@@ -63,7 +63,7 @@ library(gplots)  #Colorpanel
 library(mclust)  #Selection of clusters
 library(scatterplot3d)  #3D plotting
 library(scde)  #Single cell differential expression
-library(vegan)  #NMDS, distance metrics
+library(vegan)  #NMDS and distance metrics
 
 # Source code
 source("heatmap.3b.R")  #Custom HCL
@@ -74,7 +74,15 @@ source("Modules.R")  #Helper functions
 Today's data set
 ===
 
-- Describe data set
+Islam S et al. __Characterization of the single-cell transcriptional landscape by highly multiplex RNA-seq__ . Genome Research 2011
+
+- 96 Samples
+  - Embryonic Stem Cells (ES)
+    - 2.5 k distinct genes expressed
+    - Found more correlated than MEF
+  - Embryonic Fibroblasts (MEF)
+    - 5.4 k distinct genes expressed
+- Transcripts per Million (tpm)
 
 Data: Ready, Start, Load!
 ===
@@ -262,7 +270,6 @@ Many zeros
 
 Zoomed in
 ![plot of chunk unnamed-chunk-13](scAnalysis-figure/unnamed-chunk-13.png) 
-
 
 Zooming in to gene distributions
 ===
@@ -455,23 +462,19 @@ class:midcenter
 
 ![plot of chunk unnamed-chunk-30](scAnalysis-figure/unnamed-chunk-30.png) 
 
-Can Transforms / Normalization Help?
+Handling Challenges in the Data
 ===
 
-- Log transform seemed to work for less sparse
-  - High expression
-- TODO
-
-Challenge
-===
-
-- We have a large range of read depth per sample
-  - Is this a problem?
-
-Waste Not, Want Not
-===
-
-- Rarefy?
+- Can Transforms / Normalization Help?
+  - Log transform seemed to work for less sparse
+    - High expression
+- We have a large range of counts per sample
+  - In today's dataset this may be biology...
+- If you want to remove them
+  - Ordination, removing the dimension most correlated with depth
+  - Inference, controlling for depth
+- Rarifying?
+- __Waste Not Want Not__ PLOS Comp. Bio. 2014
 
 Dimensionality Reduction and Ordination
 ===
@@ -804,7 +807,7 @@ class:midcenter
 
 
 
-PCA + Anova: select sample groups
+PCA + ANOVA: select sample groups
 ===
 class:small-code
 
@@ -1068,47 +1071,69 @@ Statistical Inference in scData
 SCDE: in quick theory
 ===
 
-SCDE: in practice
-===
+TODO
 
 SCDE: in code
 ===
 class:small-code
 
+
+```r
+# Setting up sampel groups
 names( data.groups ) = data.groups
 data.groups <- as.factor( data.groups )
+
+# Calculate error models
 o.ifm <- scde.error.models( as.matrix( data ), groups = data.groups, n.cores=1, threshold.segmentation=TRUE, save.crossfit.plot=FALSE, save.model.plots=FALSE, verbose=1 )
+```
+
+```
+cross-fitting cells.
+building individual error models.
+WARNING: unable to find cross-fit models for  121  out of  1128  pairs. Using a subset.
+WARNING: unable to find cross-fit models for  125  out of  1128  pairs. Using a subset.
+```
+
+```r
 # Filter out cell (QC)
 o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
+```
 
 SCDE: in code
 ===
 class:small-code
 
-o.prior <- scde.expression.prior(models=o.ifm,counts=as.matrix(data),length.out=400,show.plot=FALSE)
+
+```r
+# Set up the Prior (starting value)
+o.prior <- scde.expression.prior(models=o.ifm,counts=as.matrix(data), length.out=400,show.plot=FALSE)
+
 # Perform T-test like analysis
-ediff <- scde.expression.difference(o.ifm,as.matrix(data),o.prior,groups=as.factor(data.groups),n.randomizations=100,n.cores=1,verbose=1)
-write.table(ediff[order(abs(ediff$Z),decreasing=T),],file="scde_results.txt",row.names=T,col.names=T,sep="\t",quote=F)
+ediff <- scde.expression.difference(o.ifm,as.matrix(data), o.prior,groups=as.factor(data.groups),n.randomizations=100, n.cores=1,verbose=1)
+write.table(ediff[order(abs(ediff$Z),decreasing=T),], file="scde_results.txt",row.names=T,col.names=T, sep="\t",quote=F)
+```
 
 NMDS: in code (Reciprocal)
 ===
 class:small-code
 
-names(data.groups) = data.groups
-dist.recip <- reciprocal_weighting( x=as.matrix(data), groups=data.groups )
+
+```r
+# Make distance matrix
+dist.recip <- reciprocal_weighting( x=data, groups=data.groups, n.cores=3)
+
+# Perfroms NMDS
 nmds.r.result = metaMDS( comm=dist.recip, k=2, autotransfer=FALSE )
-plot( nmds.r.result$points[,1], nmds.r.result$points[,2], col=data.group.colors, main="Ordination by Reciprocal Weighting")
+
+#Plot
+plot( nmds.r.result$points[,1], nmds.r.result$points[,2], col=data.groups.colors, main="Ordination by Reciprocal Weighting")
+```
 
 NMDS: in code (Reciprocal)
 ===
-class:small-code
+class:midcenter
 
-Attempting with 7 dimensions
-
-names(data.groups) = data.groups
-nmds.r.result = metaMDS( comm=dist.recip, k=7, autotransfer=FALSE )
-plot( nmds.r.result$points[,1], nmds.r.result$points[,2], col=data.group.colors, main="Ordination by Reciprocal Weighting")
-
+![reciprocal](images/Reciprocal.pdf)
 
 What did we find ?
 ===
@@ -1133,6 +1158,10 @@ Gene Set Enrichment Analysis: GSEA
 What did we find ???
 ===
 
+- MEFs characterized by high expression of cytoskeletal proteins
+- ESs characterized by highly enriched ribosomal proteins
+
+TODO?
 
 Summary: of the data
 ===

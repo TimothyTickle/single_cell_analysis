@@ -322,7 +322,7 @@ n.cores = 1
       f2 <- scde.failure.probability( models=o.ifm[nam2,,drop=FALSE], magnitudes=o.fpm[ ,nam1 ])
       # Weight factor
       pnf <- sqrt((1-f1)*(1-f2))*k +(1-k); 
-      boot::corr(log10(cbind(cd[,nam1],cd[,nam2])+1),w=pnf)
+      boot::corr(log10(cbind(data[,nam1],data[,nam2])+1),w=pnf)
     }))
   },mc.cores=n.cores)),upper=FALSE)
   return( reciprocal.dist )
