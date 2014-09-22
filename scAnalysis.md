@@ -638,16 +638,16 @@ class:small-code
 
 ```
 Run 0 stress 0.09202 
-Run 1 stress 0.09317 
-Run 2 stress 0.09418 
-Run 3 stress 0.09531 
-Run 4 stress 0.09742 
-Run 5 stress 0.09531 
-Run 6 stress 0.1533 
-Run 7 stress 0.0963 
-Run 8 stress 0.09821 
-Run 9 stress 0.1026 
-Run 10 stress 0.1911 
+Run 1 stress 0.09781 
+Run 2 stress 0.09735 
+Run 3 stress 0.09617 
+Run 4 stress 0.09374 
+Run 5 stress 0.09336 
+Run 6 stress 0.09424 
+Run 7 stress 0.09688 
+Run 8 stress 0.09366 
+Run 9 stress 0.09503 
+Run 10 stress 0.09543 
 ```
 
 NMDS: in code (Bray-curtis)
@@ -681,16 +681,17 @@ nmds.b.result = metaMDS( comm=t(nmds.data), distance="binomial", k=2, autotransf
 
 ```
 Run 0 stress 0.0724 
-Run 1 stress 0.09305 
-Run 2 stress 0.09686 
-Run 3 stress 0.09862 
-Run 4 stress 0.08954 
-Run 5 stress 0.09653 
-Run 6 stress 0.094 
-Run 7 stress 0.09774 
-Run 8 stress 0.08516 
-Run 9 stress 0.09001 
-Run 10 stress 0.09692 
+Run 1 stress 0.08653 
+Run 2 stress 0.09909 
+Run 3 stress 0.08719 
+Run 4 stress 0.09326 
+Run 5 stress 0.09539 
+Run 6 stress 0.09997 
+Run 7 stress 0.09869 
+Run 8 stress 0.07243 
+... procrustes: rmse 0.002435  max resid 0.01998 
+Run 9 stress 0.0966 
+Run 10 stress 0.09912 
 ```
 
 NMDS: in code (Binomial)
@@ -1090,8 +1091,8 @@ o.ifm <- scde.error.models( as.matrix( data ), groups = data.groups, n.cores=1, 
 ```
 cross-fitting cells.
 building individual error models.
-WARNING: unable to find cross-fit models for  121  out of  1128  pairs. Using a subset.
-WARNING: unable to find cross-fit models for  125  out of  1128  pairs. Using a subset.
+WARNING: unable to find cross-fit models for  122  out of  1128  pairs. Using a subset.
+WARNING: unable to find cross-fit models for  123  out of  1128  pairs. Using a subset.
 ```
 
 ```r
