@@ -1,0 +1,126 @@
+#Logistics
+#===
+library(caret) #Near-zero filter
+library(gplots) #Colorpanel
+library(mclust) #Selection of clusters
+library(scatterplot3d) #3D plotting
+
+source("heatmap.3b.R") #Custom HCL
+source("cell_cycle_plot.R") #Custom plot for cell cycle
+source("Modules.R") #Helper functions
+
+#Data: Ready, start, load!
+#===
+data = read.delim( file.path("data","GSE29087_L139_expression_tab.annotated_colnames.txt"), row.names = 1 )
+
+#What are our genes?
+#===
+rownames( data )
+
+#What are our samples?
+#===
+colnames( data )
+
+#Remove metadata and negative controls
+#====
+metadata <- data[ 1:6 ]
+data <- data[ -1 * 1:6 ]
+
+data.col <- ncol( data )
+data <- data[ data.col-4:data.col]
+
+#How many genes express in a cell?
+#===
+counts.per.cell <- colSums( data )
+
+genes.per.cell <- apply( data, 2, function(x) sum( x>0 ))
+
+#How much expression?
+#===
+barplot( sort( counts.per.cell ) ) 
+
+#How many genes express?
+#===
+barplot( sort( genes.per.cell ) )
+
+#Filter cells: Finding a cut-off
+#===
+plot( counts.per.cell, genes.per.cell )
+abline( v = 200000, col = "red")
+
+#Filter cells: Removing the low signal cells
+#===
+data.remove.cells <- data[ counts.per.cell > 200000 ]
+
+#Filter genes: GENES with no expression
+#===
+counts.per.gene <- rowSums( data.remove.cells )
+
+hist( log2( counts.per.gene + 1 ) )
+abline( v = log2( 10 ), col= "red" )
+
+data.cleaned <- data.remove.cells[ counts.per.gene > 10, ]
+
+hist( log2( rowSums( data.cleaned ) + 1 ))
+
+#Normalizing for sample sequencing depth
+#===
+data.cleaned.cpm <- sweep( data.cleaned, 2, colSums( data.cleaned ) , "/" ) * 1000000
+
+#Variability in cleaned data
+#===
+data.cleaned.cpm.log2 <- log2( data.cleaned.cpm + 1 )
+sd.cleaned.cpm = apply( data.cleaned.cpm.log2, 1, sd )
+mean.cleaned.cpm = apply( data.cleaned.cpm.log2, 1, mean )
+plot( mean.cleaned.cpm, sd.cleaned.cpm )
+
+#PCA: in code
+#===
+data.scaled <- t( scale( t( as.matrix( data.cleaned.cpm.log2 ) ), center=TRUE, scale=TRUE ) )
+
+results.pca <- prcomp( data.scaled, retx = TRUE )
+
+#PCA: in code
+#===
+plot( results.pca )
+
+#PCA: in code
+#===
+pca.var <- results.pca$sdev^2
+pca.var <- pca.var/sum( pca.var )
+pca.var <- round( pca.var, 2 )
+
+MEF.samples <- grep( "MEF", names( data.cleaned.cpm.log2 ))
+sample.colors <- rep( "red", ncol( data.cleaned.cpm.log2))
+sample.colors[ MEF.samples ] <- "blue"
+
+plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, xlab=paste("PC1 (",pca.var[1],")"), ylab=paste("PC2 (",pca.var[2],")"), main="Standard PCA", col=sample.colors)
+legend( "topright", c("ES","MEF"), fill = c("red","blue"))
+
+#PCA: 3D with caution
+#===
+scatterplot3d( x=results.pca$rotation[,1], y=results.pca$rotation[,3], z=results.pca$rotation[,2], color = depth.colors, xlab="PC1", ylab="PC3", zlab="PC2", main="3D PCA using Components 1-3", color=sample.colors )
+
+#mclust: Mixture modeling
+#===
+mclust.results = Mclust(results.pca$rotation[,c(1:2)])
+
+mclust.groups = mclust.results$classification
+plot( mclust.results, what=c("classification") )
+
+#Visualize differentially expressed genes
+#===
+scde.results.de <- read.delim( "scde_results.txt", row.names=1 )
+head( scde.results.de )
+
+#Visualize differentially expressed genes
+#===
+top.de.genes <- rownames( scde.results.de )[ 1:100 ]
+heatmap( log2( data.cleaned[ top.de.genes,] + 1 ), vctr_grouping = data.groups )
+
+#Notes: to make a pdf
+#===
+pdf( "data/my_file.pdf", useDingbats = FALSE ) # Start pdf
+plot( 1:10, log(1:10 ) ) # plot in to the pdf file
+plot( seq(0,.9,.1), sin(0:9) ) # another plot for the pdf file
+dev.off() # Close pdf file ( very important )

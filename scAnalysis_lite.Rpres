@@ -1,0 +1,588 @@
+```{r setup, include=FALSE}
+opts_chunk$set(cache=TRUE)
+```
+
+scAnalysis
+========================================================
+author: Timothy Tickle and Brian Haas
+css: 2014_scAnalysis.css
+date: September 23, 2014
+
+Before we get started
+===
+
+- scAnalysis is new
+  - Give you a feel for the data
+  - Give you some options to explore
+  - These techniques will grow as the field does
+
+Before we get started
+===
+
+- This is VERY hands on
+  - Much can be applied to other analyses
+  - Strengthen those R ninja skills!
+  - If you need, cut and pasting is available
+  
+---
+
+![ninja corgis](images/ninja_corgi.jpeg)
+
+What we will *attempt* to Cover
+===
+
+- How to look at the data
+- Ways to plot samples (ordination)
+- Discussion on performing inference
+- An example of unique plots for scAnalysis
+
+RStudio: getting to know you
+===
+
+Let's take a moment
+- Pull data from online (Github)
+  - https://github.com/TimothyTickle/2014_scAnalysis
+- Quick overview of RStudio
+
+Logistics
+===
+class:small-code
+
+```{r, tidy=TRUE}
+# Load libraries
+library(caret) #Near-zero filter
+library(gplots) #Colorpanel
+library(mclust) #Selection of clusters
+library(scatterplot3d) #3D plotting
+
+# Source code
+source("heatmap.3b.R") #Custom HCL
+source("cell_cycle_plot.R") #Custom plot for cell cycle
+source("Modules.R") #Helper functions
+```
+
+Today's data set
+===
+
+Islam S et al. __Characterization of the single-cell transcriptional landscape by highly multiplex RNA-seq__ . Genome Research 2011
+
+- 96 Samples
+  - Embryonic Stem Cells (ES)
+     - 2.5 k distinct genes expressed
+     - Found more correlated than MEF
+  - Embryonic Fibroblasts (MEF)
+     - 5.4 k distinct genes expressed
+
+Data: Ready, start, load!
+===
+class:small-code
+
+```{r}
+# Load tab delimited file
+data = read.delim( file.path("data","GSE29087_L139_expression_tab.annotated_colnames.txt"), row.names = 1 )
+```
+
+Always look at your data
+===
+class:midcenter
+
+![professor corgi](images/professor_corgi.jpg)
+
+What are our genes?
+===
+
+```{r}
+rownames( data )
+```
+
+What are our samples?
+===
+
+```{r}
+colnames( data )
+```
+
+Remove metadata and negative controls
+====
+
+```{r}
+# For convenience splitting in to metadata and data
+metadata <- data[ 1:6 ]
+data <- data[ -1 * 1:6 ]
+
+# Remove last 4 (negative controls)
+data.col <- ncol( data )
+data <- data[ data.col-4:data.col]
+```
+
+How many genes express in a cell?
+===
+
+```{r}
+# Plot counts per cell ( how much expression )
+counts.per.cell <- colSums( data )
+
+# Plot genes per cell ( how many genes express )
+genes.per.cell <- apply( data, 2, function(x) sum( x>0 ))
+```
+
+How much expression?
+===
+
+```{r}
+barplot( sort( counts.per.cell ) ) 
+```
+
+How many genes express?
+===
+
+```{r}
+barplot( sort( genes.per.cell ) ) 
+```
+
+Filter cells: Finding a cut-off
+===
+
+```{r}
+plot( counts.per.cell, genes.per.cell )
+abline( v = 200000, col = "red")
+```
+
+How are the genes distributed?
+====
+
+Logged and Zoomed in
+
+```{r, echo = FALSE, fig.keep='last'}
+# Get the sorted order for the genes
+feature.sum.order <- order( apply( data, 1, sum) )
+feature.summary <- summary( 1:length(feature.sum.order))
+# Get the 10 most sparse genes
+index_min <- feature.sum.order[ 1:10 ]
+# 1 quartile sparsity genes
+index_q1 <- feature.sum.order[ floor(feature.summary[[2]]):(floor(feature.summary[[2]])+10) ]
+# Median sparsity genes
+index_median <- feature.sum.order[ floor(feature.summary[[3]]):(floor(feature.summary[[3]])+10) ]
+# 3rd quartile sparsity genes
+index_q3 <- feature.sum.order[ floor(feature.summary[[5]]):(floor(feature.summary[[5]])+10) ]
+# Get the least sparse genes
+index_max <- feature.sum.order[ (floor(feature.summary[[6]])-10):floor(feature.summary[[6]]) ]
+plot( x=0,y=0,type="p", xlim=c(0,log(max(data)+1)), ylim=c(0,.75), main="Gene Count Distributions by Sparsity", ylab="Density of gene counts", xlab="Gene count value (Log)" )
+for( i_q3_plot in index_q3 ){ lines( density( as.matrix( log(data[ i_q3_plot, ]+1))), col = "#0000ff75", add = TRUE)}
+for( i_median_plot in index_median ){ lines( density( as.matrix( log(data[ i_median_plot, ]+1))), col = "#00ffff75", add = TRUE)}
+for( i_min_plot in index_min ){ lines( density( as.matrix( log(data[ i_min_plot, ]+1))), col = "#ff000075", add = TRUE)}
+for( i_q1_plot in index_q1 ){ lines( density( as.matrix( log(data[ i_q1_plot, ]+1))), col = "#EE82EE75", add = TRUE)}
+for( i_max_plot in index_max ){ lines( density( as.matrix( log(data[ i_max_plot, ]+1))), col = "#00ff0075", add = TRUE)}
+legend( "topright", c("Min","Q1","Median","Q3","MAX"), fill=c("#ff0000","#EE82EE","#00ffff","#0000ff","#00ff00"), title="Sparsity group" )
+```
+
+Filter cells: Removing the low signal cells
+===
+```{r}
+# Remove low expressing cells
+data.remove.cells <- data[ counts.per.cell > 200000 ]
+```
+
+Filter genes: GENES with no expression
+===
+
+```{r}
+# Remove genes with zero count
+counts.per.gene <- rowSums( data.remove.cells )
+
+# Genes with zeros
+hist( log2( counts.per.gene + 1 ) )
+abline( v = log2( 10 ), col= "red" )
+
+# Remove noisey genes
+data.cleaned <- data.remove.cells[ counts.per.gene > 10, ]
+
+# Plot
+hist( log2( rowSums( data.cleaned ) + 1 ))
+```
+
+Normalizing for sample sequencing depth
+===
+
+```{r}
+data.cleaned.cpm <- sweep( data.cleaned, 2, colSums( data.cleaned ) , "/" ) * 1000000
+```
+
+Variability in cleaned data
+===
+class:small-code
+```{r, eval=FALSE}
+data.cleaned.cpm.log2 <- log2( data.cleaned.cpm + 1 )
+sd.cleaned.cpm = apply( data.cleaned.cpm.log2, 1, sd )
+mean.cleaned.cpm = apply( data.cleaned.cpm.log2, 1, mean )
+plot( mean.cleaned.cpm, sd.cleaned.cpm )
+```
+
+Variability in cleaned data
+===
+class:small-code
+
+```{r, echo=FALSE}
+data.cleaned.cpm.log2 <- log2( data.cleaned.cpm + 1 )
+sd.cleaned.cpm = apply( data.cleaned.cpm.log2, 1, sd )
+mean.cleaned.cpm = apply( data.cleaned.cpm.log2, 1, mean )
+plot( mean.cleaned.cpm, sd.cleaned.cpm )
+```
+
+---
+
+![rahul_variability](images/rahul_variability.pdf)
+
+Dimensionality reduction and ordination
+===
+
+- Start with many measurements (high dimensional)
+  - Want to reduce to a few features (lower-dimensional space)
+- One way is to extract features based on capturing groups of variance
+- Another could be to preferentially select some of the current features
+  - We have already done this
+- We need this to plot the samples in 2D (or ordinate them)
+
+PCA: in quick theory
+===
+
+- Eigenvectors of covariance matrix
+- Find orthogonal groups of variance
+- Given from most to least variance
+  - Components of variation
+  - Linear combinations explaining the variance
+  
+---
+
+![pca_describe](images/PCA_plot_02.gif)
+
+PCA: in practice
+===
+
+Things to be aware of
+- Data with different magnitudes will dominate
+  - Zero center and divided by SD
+  - (Standardized)
+- Can be affected by outliers
+
+---
+
+![outlier_corgi](images/outlier_corgi.jpg)
+
+PCA: in code
+===
+class:small-code
+
+```{r, echo=TRUE}
+# Row center and log
+data.scaled <- t( scale( t( as.matrix( data.cleaned.cpm.log2 ) ), center=TRUE, scale=TRUE ) )
+
+# Remove constant rows
+# data.scaled<-data.scaled[,-1*nearZeroVar(data.scaled)]
+
+# Perfrom PCA
+results.pca <- prcomp( data.scaled, retx = TRUE )
+```
+
+PCA: in code
+===
+
+```{r}
+# Plot scree / elbow plot
+plot( results.pca )
+```
+
+PCA: in code
+===
+class:small-code
+
+```{r, eval=FALSE}
+# Get Percent variance
+pca.var <- results.pca$sdev^2
+pca.var <- pca.var/sum( pca.var )
+pca.var <- round( pca.var, 2 )
+
+# Make Colors for samples
+MEF.samples <- grep( "MEF", names( data.cleaned.cpm.log2 ))
+sample.colors <- rep( "red", ncol( data.cleaned.cpm.log2 ))
+sample.colors[ MEF.samples ] <- "blue"
+
+# Scatter plot PCA
+plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, xlab=paste("PC1 (",pca.var[1],")"), ylab=paste("PC2 (",pca.var[2],")"), main="Standard PCA", col=sample.colors)
+```
+
+PCA: in code
+===
+class:midcenter
+
+```{r, echo=FALSE}
+# Get Percent variance
+pca.var <- results.pca$sdev^2
+pca.var <- pca.var/sum( pca.var )
+pca.var <- round( pca.var, 2 )
+
+# Make Colors for samples
+MEF.samples <- grep( "MEF", names( data.cleaned.cpm.log2 ))
+sample.colors <- rep( "red", ncol( data.cleaned.cpm.log2))
+sample.colors[ MEF.samples ] <- "blue"
+
+# Scatter plot PCA
+plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, xlab=paste("PC1 (",pca.var[1],")"), ylab=paste("PC2 (",pca.var[2],")"), main="Standard PCA", col=sample.colors)
+legend( "topright", c("ES","MEF"), fill = c("red","blue"))
+```
+
+PCA: 3D with caution
+===
+class:midcenter
+
+```{r,echo=FALSE}
+# 3D plotting method for scatter plots
+scatterplot3d( x=results.pca$rotation[,1], y=results.pca$rotation[,3], z=results.pca$rotation[,2], xlab="PC1", ylab="PC3", zlab="PC2", main="3D PCA using Components 1-3", color=sample.colors )
+```
+
+PCA: 3D with caution
+===
+class:small-code
+
+```{r,eval=FALSE}
+# 3D plotting method for scatter plots
+scatterplot3d( x=results.pca$rotation[,1], y=results.pca$rotation[,3], z=results.pca$rotation[,2], color = depth.colors, xlab="PC1", ylab="PC3", zlab="PC2", main="3D PCA using Components 1-3", color=sample.colors )
+```
+
+Alternatives?
+===
+
+- PCA makes assumptions
+  - Shows linear relationships
+  - Many zeros / differing sparsity may be a component
+- Nonmetric Multidimensional Scaling
+- Weighted PCA
+
+Unsupervised substructure discovery
+===
+
+Often a goal of scProjects is to describe new structure to a group of cells:
+- Heterogeniety of tumor populations
+- Novel steps in development
+- Robust / dynamic cellular signalling
+
+Unsupervised substructure discovery
+===
+
+- The general approach
+  - Find unsupervised groupings of cells
+  - Find the genes most likely to explain the cell groups
+  - Further investigate the biology
+    - Are these groupings important?
+
+Mixture modeling to select samples
+===
+
+- Uses an EM algorithm optimizing the number of gaussian distributions
+- Works directly off of the ordination
+- Only as good as the ordination
+- Sample ordination shows the strongest signals
+- Really easy!
+
+---
+
+![mclust](images/mclust.pdf)
+
+mclust: Mixture modeling
+===
+class:small-code
+
+```{r, eval=FALSE}
+# Start with our first two dimensions
+mclust.results = Mclust(results.pca$rotation[,c(1:2)])
+
+# Get classification groups
+mclust.groups = mclust.results$classification
+
+# Plot
+plot( mclust.results, what=c("classification") )
+```
+
+mclust: Mixture modeling
+===
+class:midcenter
+
+```{r, echo=FALSE}
+# Start with our first two dimensions
+mclust.results = Mclust(results.pca$rotation[,c(1:2)])
+
+# Get classification groups
+mclust.groups = mclust.results$classification
+plot( mclust.results, what=c("classification") )
+```
+
+Supervised vs unsupervised
+===
+
+```{r, echo=FALSE}
+plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, xlab=paste("PC1 (",pca.var[1],")"), ylab=paste("PC2 (",pca.var[2],")"), main="Standard PCA", col=sample.colors)
+```
+
+---
+
+```{r, echo=FALSE}
+plot( mclust.results, what=c("classification") )
+```
+
+SCDE: in quick theory
+===
+
+TODO
+
+SCDE: in code
+===
+class:small-code
+
+```{r}
+# Setting up sample groups
+# Get groupings
+data.groups <- rep( NA, ncol( data.cleaned ) )
+data.groups[ grep( "MEF", names( data.cleaned )) ] <- "MEF"
+data.groups[ grep( "ES", names( data.cleaned )) ] <- "ES"
+data.groups <- factor( data.groups, levels = c("ES","MEF") )
+```
+
+SCDE: in code
+===
+class:small-code
+
+```{r, eval=FALSE}
+library(scde)
+
+# Calculate error models
+o.ifm <- scde.error.models( as.matrix( data.cleaned ), groups = data.groups, n.cores=3, threshold.segmentation=TRUE, save.crossfit.plot=FALSE, save.model.plots=FALSE, verbose=1 )
+
+# Filter out cell (QC)
+o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
+```
+
+SCDE: in code
+===
+class:small-code
+
+```{r, eval=FALSE}
+# Set up the Prior (starting value)
+o.prior <- scde.expression.prior(models=o.ifm,counts=as.matrix( data.cleaned ), length.out=400,show.plot=FALSE)
+
+# Perform T-test like analysis
+ediff <- scde.expression.difference(o.ifm,as.matrix(data.cleaned), o.prior,groups=data.groups,n.randomizations=100, n.cores=1,verbose=1)
+write.table(ediff[order(abs(ediff$Z),decreasing=T),], file="scde_results.txt",row.names=T,col.names=T, sep="\t",quote=F)
+```
+
+Visualize differentially expressed genes
+===
+class:small-code
+
+```{r}
+# Read in results
+scde.results.de <- read.delim( "scde_results.txt", row.names=1 )
+head( scde.results.de )
+```
+- mle = log2 fold change (estimate)
+- ub and lb = upper and lower bound on mle
+- ce = log2 fold change (conservative estimate)
+- Z = Z-score
+- cZ = Z-score corrected for multiple hypothesis testing
+
+Visualize differentially expressed genes
+===
+class:small-code
+
+ Let's plot the top 100 DE genes
+ 
+ ```{r, eval=FALSE}
+ # Get top genes
+ top.de.genes <- rownames( scde.results.de )[ 1:100 ]
+ 
+ # Visualize in heatmap
+ heatmap( log2( data.cleaned[ top.de.genes,] + 1 ), vctr_grouping=data.groups )
+ ```
+ 
+Visualize differentially expressed genes
+===
+class:midcenter
+
+ ```{r, echo=FALSE}
+ top.de.genes <- rownames( scde.results.de )[ 1:100 ]
+ heatmap( log2( data.cleaned[ top.de.genes,] + 1 ), vctr_grouping = data.groups )
+ ```
+
+scOpportunities: cell cycle plot
+===
+
+Plot cell cycle with marker genes of interest
+
+![cell cycle plot](images/cell_cycle.pdf)
+
+What did we find ?
+===
+
+- Unsupervised discovery of substructure
+- Inference on known structure
+- How do we connect this to biology?
+
+Gene set enrichment analysis: GSEA
+===
+
+- Many options
+  - DAVID (online or R library RDAVIDWebService)
+  - GSEA (online or many libraries)
+    - wilcoxGST from the limma library
+    - GSEABase
+- GenePattern workshop
+
+Summary: of the data
+===
+
+- We are still understanding scData and how to apply it
+  - Not normal
+  - Zero-inflated
+  - Very noisey
+- Keeping these characteristics in analysis assumptions
+
+Summary: of today
+===
+
+- Created expectations for scData
+- Applied ordination techniques
+- Tried a method to detect substructure
+- Applied a statistical inference method
+
+Thank you
+===
+
+- Aviv Regev
+- Alex Shalek
+- Manik Kuchroo
+- Rahul Satija
+- Itay Tirosh
+
+References
+===
+
+Please note this is a collection of many peoples ideas.
+Included in the download is a references.txt to document sources and links to cute corgi pictures :-)
+
+Questions?
+===
+
+![gradute corgi](images/graduate_corgi.jpg)
+
+Notes: to make a pdf
+===
+class:small-code
+
+- Create a pdf file before you plot ( can plot multiple plots )
+- Close the plotting
+
+```{r}
+pdf( "data/my_file.pdf", useDingbats = FALSE ) # Start pdf
+plot( 1:10, log(1:10 ) ) # plot in to the pdf file
+plot( seq(0,.9,.1), sin(0:9) ) # another plot for the pdf file
+dev.off() # Close pdf file ( very important )
+```
