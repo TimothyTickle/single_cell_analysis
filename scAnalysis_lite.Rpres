@@ -309,6 +309,7 @@ sample.colors[ MEF.samples ] <- "blue"
 
 # Scatter plot PCA
 plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, xlab=paste("PC1 (",pca.var[1],")"), ylab=paste("PC2 (",pca.var[2],")"), main="Standard PCA", col=sample.colors)
+legend( "topright", c("ES","MEF"), fill = c("red","blue"))
 ```
 
 PCA: in code
@@ -432,7 +433,15 @@ plot( mclust.results, what=c("classification") )
 SCDE: in quick theory
 ===
 
-TODO
+For each group (ES or MEF)
+- Genes are modeled to have two groups of counts
+  - Noisey area highly prone to dropout (Poisson distribution)
+  - "Amplified" signal ( NB distribution )
+- This makes the error model or how much one can trust counts
+- Pairwise within groups
+
+Differential Expression
+- Expected value * the probability of dropout in that cell for that expression level
 
 SCDE: in code
 ===
@@ -483,11 +492,19 @@ class:small-code
 scde.results.de <- read.delim( "scde_results.txt", row.names=1 )
 head( scde.results.de )
 ```
+
+Visualize differentially expressed genes
+===
+
 - mle = log2 fold change (estimate)
 - ub and lb = upper and lower bound on mle
 - ce = log2 fold change (conservative estimate)
 - Z = Z-score
 - cZ = Z-score corrected for multiple hypothesis testing
+
+---
+
+![scde_output](images/scde_output.png)
 
 Visualize differentially expressed genes
 ===
