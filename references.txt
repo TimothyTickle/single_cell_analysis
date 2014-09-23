@@ -3,13 +3,26 @@ Text References:
 Tutorial on SCDE:
 http://pklab.med.harvard.edu/scde/Tutorials
 
+(SCDE paper)
 Characterization of the single-cell transcriptional landscape by highly multiplex RNA-seq
 http://genome.cshlp.org/content/21/7/1160
 
 Embryonic fibroblasts represent a connecting link between mesenchymal and embryonic stem cells.
 http://www.ncbi.nlm.nih.gov/pubmed/23441817
 
+Single-cell transcriptomics reveals bimodlity in expression and splicing in immune cells.
+http://www.nature.com/nature/journal/v498/n7453/full/nature12172.html
+
 Images
 ------
 PCA-
 https://onlinecourses.science.psu.edu/stat857/sites/onlinecourses.science.psu.edu.stat857/files/lesson05/PCA_plot_02.gif
+
+Corgi Images
+-----------
+graduate_corgi: http://parsonsadmissions.files.wordpress.com/2014/05/100_0658.jpg
+ninja_corgi: http://api.ning.com/files/vf4DkD4*4JTbec6DwPBwauaYrSZtHTku-xD5FnPqkR*kb4k4YBE4TgFyPZzIOwf2tuBJshRnChdGeyrZSv2PJ5whPDEX--MA/photo.JPG?transform=rotate(180)&width=737&height=552
+outlier_corgi: http://i.imgur.com/t5yybLH.jpg
+professor_corgi: http://cdn.thebarkpost.com/wp-content/uploads/2014/05/tumblr_l3533tVA621qa8kz9o1_500.jpg
+tea_corgi: 
+wizard_corgi: http://kekiongacomics.files.wordpress.com/2013/02/dogwizard11-warp1.jpg 
