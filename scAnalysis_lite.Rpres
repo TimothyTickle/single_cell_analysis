@@ -42,6 +42,8 @@ RStudio: getting to know you
 Let's take a moment
 - Pull data from online (Github)
   - https://github.com/TimothyTickle/2014_scAnalysis
+- You can view this presentation on-line at
+  - http://rpubs.com/timothyltickle/scAnalysis
 - Quick overview of RStudio
 
 Logistics
@@ -57,7 +59,6 @@ library(scatterplot3d) #3D plotting
 
 # Source code
 source("heatmap.3b.R") #Custom HCL
-source("cell_cycle_plot.R") #Custom plot for cell cycle
 source("Modules.R") #Helper functions
 ```
 
@@ -231,7 +232,7 @@ plot( mean.cleaned.cpm, sd.cleaned.cpm )
 
 ---
 
-![rahul_variability](images/rahul_variability.pdf)
+![rahul_plot](images/rahul_variability.pdf)
 
 Dimensionality reduction and ordination
 ===
@@ -347,7 +348,7 @@ class:small-code
 
 ```{r,eval=FALSE}
 # 3D plotting method for scatter plots
-scatterplot3d( x=results.pca$rotation[,1], y=results.pca$rotation[,3], z=results.pca$rotation[,2], color = depth.colors, xlab="PC1", ylab="PC3", zlab="PC2", main="3D PCA using Components 1-3", color=sample.colors )
+scatterplot3d( x=results.pca$rotation[,1], y=results.pca$rotation[,3], z=results.pca$rotation[,2], xlab="PC1", ylab="PC3", zlab="PC2", main="3D PCA using Components 1-3", color=sample.colors )
 ```
 
 Alternatives?
@@ -387,7 +388,7 @@ Mixture modeling to select samples
 
 ---
 
-![mclust](images/mclust.pdf)
+![mclust_description](images/mclust.pdf)
 
 mclust: Mixture modeling
 ===
@@ -529,12 +530,10 @@ class:midcenter
  heatmap( log2( data.cleaned[ top.de.genes,] + 1 ), vctr_grouping = data.groups )
  ```
 
-scOpportunities: cell cycle plot
+Cell-cycle: batch effect or new resolution
 ===
 
-Plot cell cycle with marker genes of interest
-
-![cell cycle plot](images/cell_cycle.pdf)
+![cell_cycle](images/cell_cycle.pdf)
 
 What did we find ?
 ===

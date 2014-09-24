@@ -6,7 +6,6 @@ library(mclust) #Selection of clusters
 library(scatterplot3d) #3D plotting
 
 source("heatmap.3b.R") #Custom HCL
-source("cell_cycle_plot.R") #Custom plot for cell cycle
 source("Modules.R") #Helper functions
 
 #Data: Ready, start, load!
@@ -99,7 +98,7 @@ legend( "topright", c("ES","MEF"), fill = c("red","blue"))
 
 #PCA: 3D with caution
 #===
-scatterplot3d( x=results.pca$rotation[,1], y=results.pca$rotation[,3], z=results.pca$rotation[,2], color = depth.colors, xlab="PC1", ylab="PC3", zlab="PC2", main="3D PCA using Components 1-3", color=sample.colors )
+scatterplot3d( x=results.pca$rotation[,1], y=results.pca$rotation[,3], z=results.pca$rotation[,2], xlab="PC1", ylab="PC3", zlab="PC2", main="3D PCA using Components 1-3", color=sample.colors )
 
 #mclust: Mixture modeling
 #===
@@ -115,6 +114,11 @@ head( scde.results.de )
 
 #Visualize differentially expressed genes
 #===
+data.groups <- rep( NA, ncol( data.cleaned ) )
+data.groups[ grep( "MEF", names( data.cleaned )) ] <- "MEF"
+data.groups[ grep( "ES", names( data.cleaned )) ] <- "ES"
+data.groups <- factor( data.groups, levels = c("ES","MEF") )
+
 top.de.genes <- rownames( scde.results.de )[ 1:100 ]
 heatmap( log2( data.cleaned[ top.de.genes,] + 1 ), vctr_grouping = data.groups )
 

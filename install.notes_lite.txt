@@ -1,0 +1,51 @@
+# In the following instructions a step starts with a #, a comment to you is a line surrounded by ( ). These should not be typed.
+
+# 1. Install Git ( you may have done this already )
+( Use installer from http://msysgit.github.io )
+( in wizard add link to desktop )
+( Note I pulled a git repository from on to the desktop named 2014_scAnalysis, that is not required, I will have attendies do that. They will just need git. )
+
+# 2. RStudio
+( Download RStudio at http://www.rstudio.com/products/RStudio )
+
+# 3. Download source library
+( This step is for Mac and Linux, the SCDE library is not compatible with windows at this time. )
+( Once library that is being installed will need the source to be downloaded, everything else can be pulled off of remote repos. )
+# We will need to install one library from source. This works by first downloading a source tarball and having R install from source
+( Go to http://pklab.med.harvard.edu/scde/index.html )
+( Click on the green Version 1.1 link to download the file scde_1.1.tar.gz )
+( Download http://cran.r-project.org/src/contrib/RcppArmadillo_0.4.400.0.tar.gz )
+( Download http://cran.r-project.org/src/contrib/Archive/multicore/multicore_0.2.tar.gz )
+
+# 3. R Libraries
+# Installed from with in RStudio
+# Several of these commands rely on preceding commands so the order of the commands should be kept
+( First open RStudio )
+( In the GUI there will be a window titled R Console )
+( In the R Console past the following library install commands ( you must be connected to the internet ) )
+install.packages( "knitr" )
+( Select USA (CA1), do this as needed )
+install.packages( "scatterplot3d" )
+install.packages( "gplots" )
+install.packages( "boot" )
+install.packages( "caret" )
+install.packages( "mclust" )
+install.packages( "flexmix" )
+install.packages( "Cairo" )
+( The rest of this section is not compatible with a windows machine. One of the needed libraries has a dependency that will not work on windows but will on Mac or linux. )
+source( "http://bioconductor.org/biocLite.R" )
+biocLite("edgeR")
+( With the next commands, your path to the file may change depending on where it is located and what system you are using. )
+install.packages( "/Users/username/RccpArmadillo_0.4.400.0.tar.gz", repos=NULL, type="source" )
+install.packages( "/Users/username/multicore_0.2.tar.gz", repos=NULL, type="source" )
+install.packages( "/Users/username/scde_1.1.tar.gz", repos=NULL, type="source" )
+
+# 5. Check system
+( Open RStudio, copy and past the following commands, in the R Console. If you get no errors then all librarys can load :-) )
+library( boot )
+library( caret )
+library( gplots )
+library( mclust )
+library( scatterplot3d )
+( The next library is currently not compatible with windows. )
+library( scde )

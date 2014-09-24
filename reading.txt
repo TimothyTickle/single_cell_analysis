@@ -1,0 +1,46 @@
+Here are some publications for further reading:
+
+Characterization of the single-cell transcriptional landscape by highly multiplex RNA-seq
+http://genome.cshlp.org/content/21/7/1160
+
+Embryonic fibroblasts represent a connecting link between mesenchymal and embryonic stem cells.
+http://www.ncbi.nlm.nih.gov/pubmed/23441817
+
+Single-cell transcriptomics reveals bimodlity in expression and splicing in immune cells.
+http://www.nature.com/nature/journal/v498/n7453/full/nature12172.html
+
+Cell fate inclination within 2-cell and 4-cell mouse embryos revealed by single-cell RNA sequencing
+Fernando Biase, Xiaoyi Cao and Sheng Zhong
+http://genome.cshlp.org/content/early/2014/08/04/gr.177725.114?top=1
+
+Single-cell RNA-seq: advances and future challenges
+Antoine-Emmanuel Saliba, Alexander J. Westermann, Stanislaw A. Gorski and Jorg Vogel
+http://nar.oxfordjournals.org/content/early/2014/07/22/nar.gku555.full
+
+Single-cell RNA-seq highlights intratumoral heterogeneity in primary glioblastoma
+Anoop P. Patel, Itay Tirosh, John J. Trombetta, Alex K. Shalek, Shawn M. Gillespie, Hiroaki Wakimoto, Daniel P. Cahill, Brian V. Nahed, William T. Curry, Robert L. Martuza, David N. Louis, Orit Rozenblatt-Rosen, Mario L. Suvà, Aviv Regev, Bradley E. Bernstein
+http://www.sciencemag.org/content/344/6190/1396.abstract
+
+Reconstructing lineage hierarchies of the distal lung epithelium using single-cell RNA-seq
+Barbara Treutlein, Doug G. Brownfield, Angela R. Wu, Norma F. Neff, Gary L. Mantalas, F. Hernan Espinoza, Tushar J. Desai, Mark A. Krasnow, Stephen R. Quake
+http://www.nature.com/nature/journal/v509/n7500/full/nature13173.html
+
+Single-cell sequencing
+http://www.nature.com/nmeth/journal/v11/n1/full/nmeth.2771.html
+
+Entering the era of single-cell transcriptomics in biology and medicine
+Rickard Sandberg
+http://www.nature.com/nmeth/journal/v11/n1/full/nmeth.2764.html
+
+Single-cell RNA-seq reveals dynamic paracrine control of cellular variation
+Alex K. Shalek et al.
+http://www.nature.com/nature/journal/v510/n7505/full/nature13437.html
+https://www.youtube.com/watch?v=0c0Sqaqmq1w
+
+Transcriptome sequencing of single cells with Smart-Seq
+Jillian J Goetz & Jeffrey M Trimarchi
+http://www.nature.com/nbt/journal/v30/n8/full/nbt.2325.html
+
+Full-length mRNA-Seq from single-cell levels of RNA and individual circulating tumor cells
+Daniel Ramsköld et al.
+http://www.ncbi.nlm.nih.gov/pubmed/22820318
