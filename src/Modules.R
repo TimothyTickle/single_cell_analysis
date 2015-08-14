@@ -50,6 +50,35 @@ d_min_occurence,
   return( length( which( vctr_values_to_evaluate >= vctr_min_values ) ) )
 }
 
+############################################
+# Data plots
+############################################
+plot.quantiles <- function(
+  ### Plot data arbitrarly selected for the quantiles of the data
+  data
+){
+  # Get the sorted order for the genes
+  feature.sum.order <- order( apply( data, 1, sum) )
+  feature.summary <- summary( 1:length(feature.sum.order))
+  # Get the 10 most sparse genes
+  index_min <- feature.sum.order[ 1:10 ]
+  # 1 quartile sparsity genes
+  index_q1 <- feature.sum.order[ floor(feature.summary[[2]]):(floor(feature.summary[[2]])+9) ]
+  # Median sparsity genes
+  index_median <- feature.sum.order[ floor(feature.summary[[3]]):(floor(feature.summary[[3]])+9) ]
+  # 3rd quartile sparsity genes
+  index_q3 <- feature.sum.order[ floor(feature.summary[[5]]):(floor(feature.summary[[5]])+9) ]
+  # Get the least sparse genes
+  index_max <- feature.sum.order[ (length(feature.sum.order)-9):length(feature.sum.order) ]
+  plot( x=0,y=0,type="p", xlim=c(0,log(max(data)+1)), ylim=c(0,.75), main="Gene Count Distributions by Sparsity", ylab="Density of gene counts", xlab="Gene count value (Log)" )
+  for( i_q3_plot in index_q3 ){ lines( density( as.matrix( log(data[ i_q3_plot, ]+1))), col = "#0000ff75")}
+  for( i_median_plot in index_median ){ lines( density( as.matrix( log(data[ i_median_plot, ]+1))), col = "#00ffff75")}
+  for( i_min_plot in index_min ){ lines( density( as.matrix( log(data[ i_min_plot, ]+1))), col = "#ff000075")}
+  for( i_q1_plot in index_q1 ){ lines( density( as.matrix( log(data[ i_q1_plot, ]+1))), col = "#EE82EE75")}
+  for( i_max_plot in index_max ){ lines( density( as.matrix( log(data[ i_max_plot, ]+1))), col = "#00ff0075")}
+  legend( "topright", c("Min","Q1","Median","Q3","MAX"), fill=c("#ff0000","#EE82EE","#00ffff","#0000ff","#00ff00"), title="Sparsity group" )
+  
+}
 
 ###########################################
 # Normalization methods
