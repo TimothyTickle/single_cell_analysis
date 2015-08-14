@@ -1,5 +1,8 @@
 Text References:
 
+Tutorial on Seurat:
+http://www.satijalab.org/seurat-intro.html
+
 Tutorial on SCDE:
 http://pklab.med.harvard.edu/scde/Tutorials
 
