@@ -1,15 +1,15 @@
 
 
-scAnalysis
+Single-cell RNA-Seq Analysis
 ========================================================
 author: Timothy Tickle and Brian Haas
-css: 2014_scAnalysis.css
-date: September 23, 2014
+css: single_cell_analysis.css
+date: October 1, 2015
 
 Before we get started
 ===
 
-- scAnalysis is new
+- Single-cell analysis is new
   - Give you a feel for the data
   - Give you some options to explore
   - These techniques will grow as the field does
@@ -21,25 +21,32 @@ Before we get started
   - Much can be applied to other analyses
   - Strengthen those R ninja skills!
   - If you need, cut and pasting is available
+  - Complex R is simplified in functions
   
 ---
 
 ![ninja corgis](images/ninja_corgi.jpeg)
 
-What we will *attempt* to Cover
+What we will attempt to Cover
 ===
 
-- How to look at the data
-- Ways to plot samples (ordination)
-- Discussion on performing inference
-- An example of unique plots for scAnalysis
+- How did we get here?
+- How to initially look at the data.
+- Ways to plot genes and samples.
+- Discussion on performing inference.
+- An example of unique plots for single-cell Analysis
+
+Briefly Single-cell sequencing
+===
+
+
 
 RStudio: getting to know you
 ===
 
 Let's take a moment
 - Pull data from online (Github)
-  - https://github.com/TimothyTickle/2014_scAnalysis
+  - https://github.com/TimothyTickle/single_cell_analysis
 - You can view this presentation on-line at
   - http://rpubs.com/timothyltickle/scAnalysis
 - Quick overview of RStudio
@@ -48,17 +55,20 @@ Logistics
 ===
 class:small-code
 
+- install_notes.txt
+- load libraries
+
 
 ```r
 # Load libraries
 library(caret)  #Near-zero filter
 library(gplots)  #Colorpanel
-library(mclust)  #Selection of clusters
 library(scatterplot3d)  #3D plotting
+library(Seurat)
 
 # Source code
-source("heatmap.3b.R")  #Custom HCL
-source("Modules.R")  #Helper functions
+source(file.path("src", "heatmap.3b.R"))  #Custom HCL
+source(file.path("src", "Modules.R"))  #Helper functions
 ```
 
 Today's data set
@@ -88,6 +98,11 @@ Always look at your data
 class:midcenter
 
 ![professor corgi](images/professor_corgi.jpg)
+
+A generic start
+===
+
+- These are important steps for any data set
 
 What are our genes?
 ===
@@ -7812,7 +7827,7 @@ How much expression?
 barplot( sort( counts.per.cell ) ) 
 ```
 
-![plot of chunk unnamed-chunk-7](scAnalysis_lite-figure/unnamed-chunk-7.png) 
+![plot of chunk unnamed-chunk-7](scAnalysis_lite-figure/unnamed-chunk-7-1.png) 
 
 How many genes express?
 ===
@@ -7822,7 +7837,7 @@ How many genes express?
 barplot( sort( genes.per.cell ) ) 
 ```
 
-![plot of chunk unnamed-chunk-8](scAnalysis_lite-figure/unnamed-chunk-8.png) 
+![plot of chunk unnamed-chunk-8](scAnalysis_lite-figure/unnamed-chunk-8-1.png) 
 
 Filter cells: Finding a cut-off
 ===
@@ -7833,14 +7848,7 @@ plot( counts.per.cell, genes.per.cell )
 abline( v = 200000, col = "red")
 ```
 
-![plot of chunk unnamed-chunk-9](scAnalysis_lite-figure/unnamed-chunk-9.png) 
-
-How are the genes distributed?
-====
-
-Logged and Zoomed in
-
-![plot of chunk unnamed-chunk-10](scAnalysis_lite-figure/unnamed-chunk-10.png) 
+![plot of chunk unnamed-chunk-9](scAnalysis_lite-figure/unnamed-chunk-9-1.png) 
 
 Filter cells: Removing the low signal cells
 ===
@@ -7863,7 +7871,7 @@ hist( log2( counts.per.gene + 1 ) )
 abline( v = log2( 10 ), col= "red" )
 ```
 
-![plot of chunk unnamed-chunk-12](scAnalysis_lite-figure/unnamed-chunk-121.png) 
+![plot of chunk unnamed-chunk-11](scAnalysis_lite-figure/unnamed-chunk-11-1.png) 
 
 ```r
 # Remove noisey genes
@@ -7873,36 +7881,97 @@ data.cleaned <- data.remove.cells[ counts.per.gene > 10, ]
 hist( log2( rowSums( data.cleaned ) + 1 ))
 ```
 
-![plot of chunk unnamed-chunk-12](scAnalysis_lite-figure/unnamed-chunk-122.png) 
+![plot of chunk unnamed-chunk-11](scAnalysis_lite-figure/unnamed-chunk-11-2.png) 
+
+Genes Have Different Distributions
+===
+
+
+```r
+plot.quantiles( data.cleaned )
+```
+
+![plot of chunk unnamed-chunk-12](scAnalysis_lite-figure/unnamed-chunk-12-1.png) 
+
+Normalization in scData
+===
+
+- Lack of publications / annecdotal
+- ( TPM / 100000 ) + 1
 
 Normalizing for sample sequencing depth
 ===
 
 
 ```r
-data.cleaned.cpm <- sweep( data.cleaned, 2, colSums( data.cleaned ) , "/" ) * 1000000
+data.cleaned.norm <- sweep( data.cleaned, 2, colSums( data.cleaned ) , "/" ) * 1000000
 ```
 
-Variability in cleaned data
+Quality Control in scData
 ===
-class:small-code
+
+- Check the identity of the cells!!!
 
 ```r
-data.cleaned.cpm.log2 <- log2( data.cleaned.cpm + 1 )
-sd.cleaned.cpm = apply( data.cleaned.cpm.log2, 1, sd )
-mean.cleaned.cpm = apply( data.cleaned.cpm.log2, 1, mean )
-plot( mean.cleaned.cpm, sd.cleaned.cpm )
+# Marker genes
+nbt.data=read.table(file.path("data","HiSeq301_RSEM_linear_values.txt"),sep="\t",header=TRUE,row.names=1)
+nbt.data=log(nbt.data+1)
+nbt=new("seurat",raw.data=nbt.data)
+nbt=setup(nbt,project="NBT",min.cells = 3,names.field = 2,names.delim = "_",min.genes = 1000,is.expr=1,)
+genes.interesting = c("DPPA4")
+vlnPlot( nbt, genes.interesting )
 ```
 
-Variability in cleaned data
+Quality Control in scData
+===
+
+- Check the identity of the cells!!!
+![plot of chunk unnamed-chunk-15](scAnalysis_lite-figure/unnamed-chunk-15-1.png) 
+
+Viewing all genes in a sample
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-15](scAnalysis_lite-figure/unnamed-chunk-15.png) 
+
 
 ---
 
 ![rahul_plot](images/rahul_variability.pdf)
+
+
+Viewing specific genes in data
+===
+class:small-code
+
+![plot of chunk unnamed-chunk-17](scAnalysis_lite-figure/unnamed-chunk-17-1.png) 
+
+Viewing specific genes vs another gene
+===
+class:small-code
+
+
+```r
+cellPlot(nbt,nbt@cell.names[1],nbt@cell.names[2],do.ident = FALSE)
+```
+
+Viewing specific genes vs another gene
+===
+class:small-code
+
+![plot of chunk unnamed-chunk-19](scAnalysis_lite-figure/unnamed-chunk-19-1.png) 
+
+Viewing 1 cell vs 1 cell
+===
+class:small-code
+
+```r
+cellPlot(nbt,nbt@cell.names[3],nbt@cell.names[4],do.ident = FALSE)
+```
+
+Viewing 1 cell vs 1 cell
+===
+class:small-code
+![plot of chunk unnamed-chunk-21](scAnalysis_lite-figure/unnamed-chunk-21-1.png) 
 
 Dimensionality reduction and ordination
 ===
@@ -7940,75 +8009,56 @@ Things to be aware of
 
 ![outlier_corgi](images/outlier_corgi.jpg)
 
-PCA: in code
+PCA using Seurat
 ===
 class:small-code
 
 
 ```r
-# Row center and log
-data.scaled <- t( scale( t( as.matrix( data.cleaned.cpm.log2 ) ), center=TRUE, scale=TRUE ) )
-
-# Remove constant rows
-# data.scaled<-data.scaled[,-1*nearZeroVar(data.scaled)]
-
-# Perfrom PCA
-results.pca <- prcomp( data.scaled, retx = TRUE )
+nbt=mean.var.plot(nbt,y.cutoff = 2,x.low.cutoff = 2,fxn.x = expMean,fxn.y = logVarDivMean,do.plot=FALSE)
+nbt=pca(nbt,do.print=FALSE)
+pca.plot(nbt,1,2,pt.size = 2)
 ```
 
-PCA: in code
+PCA using Seurat
 ===
+class:small-code
 
+![plot of chunk unnamed-chunk-23](scAnalysis_lite-figure/unnamed-chunk-23-1.png) 
 
-```r
-# Plot scree / elbow plot
-plot( results.pca )
-```
-
-![plot of chunk unnamed-chunk-17](scAnalysis_lite-figure/unnamed-chunk-17.png) 
-
-PCA: in code
+Identifying genes contributing to components
 ===
 class:small-code
 
 
 ```r
-# Get Percent variance
-pca.var <- results.pca$sdev^2
-pca.var <- pca.var/sum( pca.var )
-pca.var <- round( pca.var, 2 )
-
-# Make Colors for samples
-MEF.samples <- grep( "MEF", names( data.cleaned.cpm.log2 ))
-sample.colors <- rep( "red", ncol( data.cleaned.cpm.log2 ))
-sample.colors[ MEF.samples ] <- "blue"
-
-# Scatter plot PCA
-plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, xlab=paste("PC1 (",pca.var[1],")"), ylab=paste("PC2 (",pca.var[2],")"), main="Standard PCA", col=sample.colors)
-legend( "topright", c("ES","MEF"), fill = c("red","blue"))
+print.pca(nbt,1)
 ```
 
-PCA: in code
-===
-class:midcenter
+```
+[1] "PC1"
+ [1] "LGALS1"    "TIMP1"     "KRT18"     "IFI30"     "ARHGDIB"  
+ [6] "IFI27"     "UCA1"      "HIST1H2BK" "KRT15"     "LCN2"     
+[11] "S100A9"    "KRT81"     "ALDH1A3"   "KLK5"      "CEACAM6"  
+[1] ""
+ [1] "SOX11"     "TUBB2B"    "DCX"       "GPM6A"     "CRMP1"    
+ [6] "RTN1"      "NNAT"      "C1orf61"   "STMN2"     "FABP7"    
+[11] "LOC150568" "41520"     "TMSB15A"   "PPP2R2B"   "GAP43"    
+[16] "NREP"     
+[1] ""
+[1] ""
+```
 
-![plot of chunk unnamed-chunk-19](scAnalysis_lite-figure/unnamed-chunk-19.png) 
-
-PCA: 3D with caution
-===
-class:midcenter
-
-![plot of chunk unnamed-chunk-20](scAnalysis_lite-figure/unnamed-chunk-20.png) 
-
-PCA: 3D with caution
+Identifying genes contributing to components
 ===
 class:small-code
 
 
 ```r
-# 3D plotting method for scatter plots
-scatterplot3d( x=results.pca$rotation[,1], y=results.pca$rotation[,3], z=results.pca$rotation[,2], xlab="PC1", ylab="PC3", zlab="PC2", main="3D PCA using Components 1-3", color=sample.colors )
+viz.pca(nbt,1:2)
 ```
+
+![plot of chunk unnamed-chunk-25](scAnalysis_lite-figure/unnamed-chunk-25-1.png) 
 
 Alternatives?
 ===
@@ -8018,6 +8068,35 @@ Alternatives?
   - Many zeros / differing sparsity may be a component
 - Nonmetric Multidimensional Scaling
 - Weighted PCA
+
+tSNE: What and Why?
+===
+
+tSNE using Seurat
+===
+class:small-code
+
+
+```r
+nbt=run_tsne(nbt,dims.use = 1:11,max_iter=2000)
+tsne.plot(nbt,pt.size = 1)
+```
+
+tSNE using Seurat
+===
+class:small-code
+
+![plot of chunk unnamed-chunk-27](scAnalysis_lite-figure/unnamed-chunk-27-1.png) 
+
+tSNE: PCA & tSNE side by side
+===
+class:small-code
+
+![plot of chunk unnamed-chunk-28](scAnalysis_lite-figure/unnamed-chunk-28-1.png) 
+
+---
+
+![plot of chunk unnamed-chunk-29](scAnalysis_lite-figure/unnamed-chunk-29-1.png) 
 
 Unsupervised substructure discovery
 ===
@@ -8036,49 +8115,13 @@ Unsupervised substructure discovery
   - Further investigate the biology
     - Are these groupings important?
 
-Mixture modeling to select samples
+Differential expression in defined groups
 ===
 
-- Uses an EM algorithm optimizing the number of gaussian distributions
-- Works directly off of the ordination
-- Only as good as the ordination
-- Sample ordination shows the strongest signals
-- Really easy!
-
----
-
-![mclust_description](images/mclust.pdf)
-
-mclust: Mixture modeling
-===
-class:small-code
-
-
-```r
-# Start with our first two dimensions
-mclust.results = Mclust(results.pca$rotation[,c(1:2)])
-
-# Get classification groups
-mclust.groups = mclust.results$classification
-
-# Plot
-plot( mclust.results, what=c("classification") )
-```
-
-mclust: Mixture modeling
-===
-class:midcenter
-
-![plot of chunk unnamed-chunk-23](scAnalysis_lite-figure/unnamed-chunk-23.png) 
-
-Supervised vs unsupervised
-===
-
-![plot of chunk unnamed-chunk-24](scAnalysis_lite-figure/unnamed-chunk-24.png) 
-
----
-
-![plot of chunk unnamed-chunk-25](scAnalysis_lite-figure/unnamed-chunk-25.png) 
+- Biomarker discovery
+- What are current options?
+ - ROC / T-test / LRT / Tobit-censored LRT tests ( Seurat )
+ - SCDE (Single-Cell Differential Expression)
 
 SCDE: in quick theory
 ===
@@ -8099,12 +8142,12 @@ class:small-code
 
 
 ```r
-# Setting up sample groups
-# Get groupings
-data.groups <- rep( NA, ncol( data.cleaned ) )
-data.groups[ grep( "MEF", names( data.cleaned )) ] <- "MEF"
-data.groups[ grep( "ES", names( data.cleaned )) ] <- "ES"
-data.groups <- factor( data.groups, levels = c("ES","MEF") )
+## Setting up sample groups
+## Get groupings
+#data.groups <- rep( NA, ncol( data.cleaned ) )
+#data.groups[ grep( "MEF", names( data.cleaned )) ] <- "MEF"
+#data.groups[ grep( "ES", names( data.cleaned )) ] <- "ES"
+#data.groups <- factor( data.groups, levels = c("ES","MEF") )
 ```
 
 SCDE: in code
@@ -8113,13 +8156,13 @@ class:small-code
 
 
 ```r
-library(scde)
+#library(scde)
 
-# Calculate error models
-o.ifm <- scde.error.models( as.matrix( data.cleaned ), groups = data.groups, n.cores=3, threshold.segmentation=TRUE, save.crossfit.plot=FALSE, save.model.plots=FALSE, verbose=1 )
+## Calculate error models
+#o.ifm <- scde.error.models( as.matrix( data.cleaned ), groups = data.groups, n.cores=3, threshold.segmentation=TRUE, save.crossfit.plot=FALSE, save.model.plots=FALSE, verbose=1 )
 
-# Filter out cell (QC)
-o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
+## Filter out cell (QC)
+#o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
 ```
 
 SCDE: in code
@@ -8128,12 +8171,12 @@ class:small-code
 
 
 ```r
-# Set up the Prior (starting value)
-o.prior <- scde.expression.prior(models=o.ifm,counts=as.matrix( data.cleaned ), length.out=400,show.plot=FALSE)
+## Set up the Prior (starting value)
+#o.prior <- scde.expression.prior(models=o.ifm,counts=as.matrix( data.cleaned ), length.out=400,show.plot=FALSE)
 
-# Perform T-test like analysis
-ediff <- scde.expression.difference(o.ifm,as.matrix(data.cleaned), o.prior,groups=data.groups,n.randomizations=100, n.cores=1,verbose=1)
-write.table(ediff[order(abs(ediff$Z),decreasing=T),], file="scde_results.txt",row.names=T,col.names=T, sep="\t",quote=F)
+## Perform T-test like analysis
+#ediff <- scde.expression.difference(o.ifm,as.matrix(data.cleaned), o.prior,groups=data.groups,n.randomizations=100, n.cores=1,verbose=1)
+#write.table(ediff[order(abs(ediff$Z),decreasing=T),], file="scde_results.txt",row.names=T,col.names=T, sep="\t",quote=F)
 ```
 
 Visualize differentially expressed genes
@@ -8142,19 +8185,9 @@ class:small-code
 
 
 ```r
-# Read in results
-scde.results.de <- read.delim( "scde_results.txt", row.names=1 )
-head( scde.results.de )
-```
-
-```
-                 lb    mle     ub     ce      Z     cZ
-Tdh          -8.469 -6.728 -4.986 -4.986 -7.161 -6.023
-r_LTRIS2     -8.984 -7.559 -5.976 -5.976 -7.161 -6.023
-Pou5f1       -7.440 -5.897 -4.393 -4.393 -7.161 -6.023
-Dppa5a       -9.815 -8.271 -6.807 -6.807 -7.161 -6.023
-r_RLTRETN_Mm -9.696 -8.271 -6.767 -6.767 -7.161 -6.023
-Ifitm1       -7.875 -6.095 -4.432 -4.432 -7.161 -6.023
+## Read in results
+#scde.results.de <- read.delim( "scde_results.txt", row.names=1 )
+#head( scde.results.de )
 ```
 
 Visualize differentially expressed genes
@@ -8176,20 +8209,20 @@ class:small-code
 
  Let's plot the top 100 DE genes
  
+
+```r
+## Get top genes
+#top.de.genes <- rownames( scde.results.de )[ 1:100 ]
  
- ```r
- # Get top genes
- top.de.genes <- rownames( scde.results.de )[ 1:100 ]
- 
- # Visualize in heatmap
- heatmap( log2( data.cleaned[ top.de.genes,] + 1 ), vctr_grouping=data.groups )
- ```
+## Visualize in heatmap
+#heatmap( log2( data.cleaned[ top.de.genes,] + 1 ), vctr_grouping=data.groups )
+```
  
 Visualize differentially expressed genes
 ===
 class:midcenter
 
- ![plot of chunk unnamed-chunk-31](scAnalysis_lite-figure/unnamed-chunk-31.png) 
+
 
 Cell-cycle: batch effect or new resolution
 ===
@@ -8230,14 +8263,29 @@ Summary: of today
 - Tried a method to detect substructure
 - Applied a statistical inference method
 
+What did we miss?
+===
+
+- Seurat (spatial inference)
+
+Single cell Analysis Software
+===
+
+- SCDE
+- Seurat
+- Presentation Scripts
+
 Thank you
 ===
 
-- Aviv Regev
+- *Aviv Regev*
 - Alex Shalek
-- Manik Kuchroo
-- Rahul Satija
+- Asma bankapur
+- Brian Haas
 - Itay Tirosh
+- Karthik Shekhar
+- Rahul Satija (Seurat)
+
 
 References
 ===
@@ -8259,13 +8307,53 @@ class:small-code
 
 
 ```r
-pdf( "data/my_file.pdf", useDingbats = FALSE ) # Start pdf
-plot( 1:10, log(1:10 ) ) # plot in to the pdf file
-plot( seq(0,.9,.1), sin(0:9) ) # another plot for the pdf file
-dev.off() # Close pdf file ( very important )
+#pdf( "data/my_file.pdf", useDingbats = FALSE ) # Start pdf
+#plot( 1:10, log(1:10 ) ) # plot in to the pdf file
+#plot( seq(0,.9,.1), sin(0:9) ) # another plot for the pdf file
+#dev.off() # Close pdf file ( very important )
 ```
 
+Mixture modeling to select samples
+===
+
+- Uses an EM algorithm optimizing the number of gaussian distributions
+- Works directly off of the ordination
+- Only as good as the ordination
+- Sample ordination shows the strongest signals
+- Really easy!
+
+---
+
+![mclust_description](images/mclust.pdf)
+
+mclust: Mixture modeling
+===
+class:small-code
+
+
+```r
+#library(mclust) # Load library
+## Start with our first two dimensions
+#mclust.results = Mclust(results.pca$rotation[,c(1:2)])
+
+## Get classification groups
+#mclust.groups = mclust.results$classification
+
+## Plot
+#plot( mclust.results, what=c("classification") )
 ```
-pdf 
-  2 
-```
+
+mclust: Mixture modeling
+===
+class:midcenter
+
+
+
+Supervised vs unsupervised
+===
+
+
+
+---
+
+
