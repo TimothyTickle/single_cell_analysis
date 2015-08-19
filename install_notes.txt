@@ -1,9 +1,8 @@
 # In the following instructions a step starts with a #, a comment to you is a line surrounded by ( ). These should not be typed.
 
-# 1. Install Git ( you may have done this already )
+# 1. Install Github:
 ( Use installer from http://msysgit.github.io )
 ( in wizard add link to desktop )
-( Note I pulled a git repository from on to the desktop named single_cell_analysis, that is not required, I will have attendies do that. They will just need git. )
 
 # 2. RStudio
 ( Download RStudio at http://www.rstudio.com/products/RStudio )
@@ -29,6 +28,7 @@ install.packages( c( "scatterplot3d","gplots","boot","caret","mclust","flexmix",
 ( The rest of this section is not compatible with a windows machine. One of the needed libraries has a dependency that will not work on windows but will on Mac or linux. )
 source( "http://bioconductor.org/biocLite.R" )
 biocLite("edgeR")
+biocLite(“monocle”)
 install_github("satijalab/seurat")
 ( With the next commands, your path to the file may change depending on where it is located and what system you are using. )
 install.packages( "/Users/username/RccpArmadillo_0.4.400.0.tar.gz", repos=NULL, type="source" )
@@ -42,7 +42,16 @@ library( caret )
 library( devtools )
 library( gplots )
 library( mclust )
+library( monocle )
 library( scatterplot3d )
 library( Seurat )
 ( The next library is currently not compatible with windows. )
 library( scde )
+
+# 6. Links
+( Please make sure that there is a link to RStudio on the desktop )
+( Please pull the following github repo and place on the desktop )
+( You can either download and uncompress from the following link or use the following command line in a terminal while on the desktop )
+( Either link: )
+
+( or gitclone: )
