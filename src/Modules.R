@@ -349,6 +349,83 @@ n.cores = 1
   return( reciprocal.dist )
 }
 
+#####################################
+### Monocle associated
+#####################################
+
+make_cell_data_set <- function(
+expression_file,
+cell_phenotype_file,
+gene_metadata_file
+){
+  # Read in expression as matrix
+  monocle.exprs <- as.matrix( read.table(expression_file ) )
+  # Read in cell phenotype
+  monocle.cell.meta <- read.table( cell_phenotype_file )
+  # Read in gene metadata
+  monocle.gene.meta <- read.table( gene_metadata_file )
+  # Prep cell phenotype data
+  monocle.pheno <- new( "AnnotationDataFrame", data=monocle.cell.meta )
+  # Prep gene metadata
+  monocle.feature.data <- new( "AnnotatedDataFrame", data=monocle.gene.meta )
+  # Hold everything in a CellDataSet object
+  return( newCellDataSet( monocle.exprs, phenoData=monocle.pheno, featureData=monocle.feature.data ) )
+}
+
+get_monocle_presentation_data <- function(){
+  data( HSMM_expr_matrix )
+  data( HSMM_gene_annotation )
+  data( HSMM_sample_sheet )
+  monocle.pheno <- new( "AnnotatedDataFrame", data=HSMM_sample_sheet )
+  monocle.feature.data <- new( "AnnotatedDataFrame", data=HSMM_gene_annotation )
+  return( newCellDataSet( as.matrix(HSMM_expr_matrix), phenoData=monocle.pheno, featureData=monocle.feature.data ) )
+}
+
+get_monocle_presentation_marker_genes <- function(){
+  return( c("MEF2C","MEF2D","MYF5","ANPEP","PDGFRA","MYOG","TPM1","TPM2","MYH2","MYH3","NCAM1","TNNT1","TNNT2","TNNC1","CDK1","CDK2","CCNB1","CNNB2","CCND1","CCNA1","ID1") )
+}
+
+plot_log_normal_monocle <- function(
+  data.set
+){
+  # Log transform data
+  data.logged <- log(exprs(data.set[ monocle.expr.genes,]))
+  # Standardize each gene
+  data.logged <- t(scale(t(data.logged)))
+  # Plot
+  qplot(value, geom="density", data=melt(data.logged)) + stat_function(fun=dnorm, size=0.5, color="red") + xlab("Standarized log") + ylab("Density")
+}
+
+select_ordering_genes <- function(
+data.set,
+genes.expressed,
+genes.of.interest,
+model.formula,
+qvalue.threshold
+){
+  diff.marker.genes <- differentialGeneTest(data.set[genes.of.interest,], fullModelFormulaStr=model.formula)
+  sig.marker.genes <- row.names(subset(diff.marker.genes, qval < qvalue.threshold))
+  return( intersect( sig.marker.genes, genes.expressed ) )
+}
+
+order_cells_wrapper <- function( 
+data.set, 
+genes, 
+use_irlba, 
+num_paths, 
+reverse 
+){
+  data.set <- setOrderingFilter( data.set, genes )
+  data.set <- reductDimension( data.set, use_irlba=use_irlba )
+  return( orderCells( data.set, num_paths=num_paths, reverse=reverse) );
+}
+
+subset_to_genes <- function(
+data.set,
+genes
+){
+  return( data.set[ row.names( subset(fData( data.set ), gene_short_name %in% genes ) ),] )
+}
 
 #####################################
 ### Misc
