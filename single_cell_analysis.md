@@ -61,14 +61,16 @@ class:small-code
 
 ```r
 # Load libraries
-library(caret)  #Near-zero filter
-library(gplots)  #Colorpanel
-library(scatterplot3d)  #3D plotting
+library(fpc)  # Density based clustering dbscan
+library(gplots)  # Colorpanel
+# library(RaceID)
+library(scatterplot3d)  # 3D plotting
 library(Seurat)
+library(monocle)
 
-# Source code
-source(file.path("src", "heatmap.3b.R"))  #Custom HCL
+# Source code source(file.path('src','heatmap.3b.R')) #Custom HCL
 source(file.path("src", "Modules.R"))  #Helper functions
+# source(file.path('src','RaceID_class.R'))
 ```
 
 Today's data set
@@ -7807,7 +7809,7 @@ data.col <- ncol( data )
 data <- data[ data.col-4:data.col]
 ```
 
-How many genes express in a cell?
+How many genes express in a cell (Complexity)?
 ===
 
 
@@ -7819,6 +7821,17 @@ counts.per.cell <- colSums( data )
 genes.per.cell <- apply( data, 2, function(x) sum( x>0 ))
 ```
 
+QC in tSNE
+===
+
+reads per cell
+genes per cell
+% mapping reads
+% rRNA
+
+Comparison of FACS and identified cluster to see if FACs sorts all the types.
+TSNE clustering, colored by FACs then colored by identified tsna clusters
+
 How much expression?
 ===
 
@@ -7827,7 +7840,7 @@ How much expression?
 barplot( sort( counts.per.cell ) ) 
 ```
 
-![plot of chunk unnamed-chunk-7](scAnalysis_lite-figure/unnamed-chunk-7-1.png) 
+![plot of chunk unnamed-chunk-7](single_cell_analysis-figure/unnamed-chunk-7-1.png) 
 
 How many genes express?
 ===
@@ -7837,7 +7850,7 @@ How many genes express?
 barplot( sort( genes.per.cell ) ) 
 ```
 
-![plot of chunk unnamed-chunk-8](scAnalysis_lite-figure/unnamed-chunk-8-1.png) 
+![plot of chunk unnamed-chunk-8](single_cell_analysis-figure/unnamed-chunk-8-1.png) 
 
 Filter cells: Finding a cut-off
 ===
@@ -7848,7 +7861,7 @@ plot( counts.per.cell, genes.per.cell )
 abline( v = 200000, col = "red")
 ```
 
-![plot of chunk unnamed-chunk-9](scAnalysis_lite-figure/unnamed-chunk-9-1.png) 
+![plot of chunk unnamed-chunk-9](single_cell_analysis-figure/unnamed-chunk-9-1.png) 
 
 Filter cells: Removing the low signal cells
 ===
@@ -7871,7 +7884,7 @@ hist( log2( counts.per.gene + 1 ) )
 abline( v = log2( 10 ), col= "red" )
 ```
 
-![plot of chunk unnamed-chunk-11](scAnalysis_lite-figure/unnamed-chunk-11-1.png) 
+![plot of chunk unnamed-chunk-11](single_cell_analysis-figure/unnamed-chunk-11-1.png) 
 
 ```r
 # Remove noisey genes
@@ -7881,17 +7894,17 @@ data.cleaned <- data.remove.cells[ counts.per.gene > 10, ]
 hist( log2( rowSums( data.cleaned ) + 1 ))
 ```
 
-![plot of chunk unnamed-chunk-11](scAnalysis_lite-figure/unnamed-chunk-11-2.png) 
+![plot of chunk unnamed-chunk-11](single_cell_analysis-figure/unnamed-chunk-11-2.png) 
 
 Genes Have Different Distributions
 ===
 
 
 ```r
-plot.quantiles( data.cleaned )
+plot.quantiles( data.cleaned ) 
 ```
 
-![plot of chunk unnamed-chunk-12](scAnalysis_lite-figure/unnamed-chunk-12-1.png) 
+![plot of chunk unnamed-chunk-12](single_cell_analysis-figure/unnamed-chunk-12-1.png) 
 
 Normalization in scData
 ===
@@ -7926,7 +7939,7 @@ Quality Control in scData
 ===
 
 - Check the identity of the cells!!!
-![plot of chunk unnamed-chunk-15](scAnalysis_lite-figure/unnamed-chunk-15-1.png) 
+![plot of chunk unnamed-chunk-15](single_cell_analysis-figure/unnamed-chunk-15-1.png) 
 
 Viewing all genes in a sample
 ===
@@ -7943,7 +7956,7 @@ Viewing specific genes in data
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-17](scAnalysis_lite-figure/unnamed-chunk-17-1.png) 
+![plot of chunk unnamed-chunk-17](single_cell_analysis-figure/unnamed-chunk-17-1.png) 
 
 Viewing specific genes vs another gene
 ===
@@ -7958,7 +7971,7 @@ Viewing specific genes vs another gene
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-19](scAnalysis_lite-figure/unnamed-chunk-19-1.png) 
+![plot of chunk unnamed-chunk-19](single_cell_analysis-figure/unnamed-chunk-19-1.png) 
 
 Viewing 1 cell vs 1 cell
 ===
@@ -7971,7 +7984,7 @@ cellPlot(nbt,nbt@cell.names[3],nbt@cell.names[4],do.ident = FALSE)
 Viewing 1 cell vs 1 cell
 ===
 class:small-code
-![plot of chunk unnamed-chunk-21](scAnalysis_lite-figure/unnamed-chunk-21-1.png) 
+![plot of chunk unnamed-chunk-21](single_cell_analysis-figure/unnamed-chunk-21-1.png) 
 
 Dimensionality reduction and ordination
 ===
@@ -8024,7 +8037,7 @@ PCA using Seurat
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-23](scAnalysis_lite-figure/unnamed-chunk-23-1.png) 
+![plot of chunk unnamed-chunk-23](single_cell_analysis-figure/unnamed-chunk-23-1.png) 
 
 Identifying genes contributing to components
 ===
@@ -8058,7 +8071,7 @@ class:small-code
 viz.pca(nbt,1:2)
 ```
 
-![plot of chunk unnamed-chunk-25](scAnalysis_lite-figure/unnamed-chunk-25-1.png) 
+![plot of chunk unnamed-chunk-25](single_cell_analysis-figure/unnamed-chunk-25-1.png) 
 
 Alternatives?
 ===
@@ -8086,17 +8099,22 @@ tSNE using Seurat
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-27](scAnalysis_lite-figure/unnamed-chunk-27-1.png) 
+![plot of chunk unnamed-chunk-27](single_cell_analysis-figure/unnamed-chunk-27-1.png) 
 
 tSNE: PCA & tSNE side by side
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-28](scAnalysis_lite-figure/unnamed-chunk-28-1.png) 
+![plot of chunk unnamed-chunk-28](single_cell_analysis-figure/unnamed-chunk-28-1.png) 
 
 ---
 
-![plot of chunk unnamed-chunk-29](scAnalysis_lite-figure/unnamed-chunk-29-1.png) 
+![plot of chunk unnamed-chunk-29](single_cell_analysis-figure/unnamed-chunk-29-1.png) 
+
+Density Based Clustering
+===
+
+Select samples in one cluster to use as groups.
 
 Unsupervised substructure discovery
 ===
@@ -8224,136 +8242,98 @@ class:midcenter
 
 
 
-Cell-cycle: batch effect or new resolution
+Time-series analysis: Monocle
 ===
 
-![cell_cycle](images/cell_cycle.pdf)
+TODO: the methodology briefly
 
-What did we find ?
+What to expect
 ===
 
-- Unsupervised discovery of substructure
-- Inference on known structure
-- How do we connect this to biology?
+TODO: Brief overview of what to do
+- Read in and prepare data
+- Filter and quality control
+- Select genes of interest
+ - Literature or differential expression analysis
+- Order cells by expression
+- Run pseudotemporal analysis
 
-Gene set enrichment analysis: GSEA
+Moncole's Assumptions
 ===
 
-- Many options
-  - DAVID (online or R library RDAVIDWebService)
-  - GSEA (online or many libraries)
-    - wilcoxGST from the limma library
-    - GSEABase
-- GenePattern workshop
+- Monocle's Assumptions
+ - Genes not splice variants.
+ - Assumes a log normal distribution.
+ - Does NOT normalize (library size, depth, technical batch).
+ - Do NOT give it raw counts.
 
-Summary: of the data
+Read in and Format
 ===
+class:midcenter
 
-- We are still understanding scData and how to apply it
-  - Not normal
-  - Zero-inflated
-  - Very noisey
-- Keeping these characteristics in analysis assumptions
-
-Summary: of today
-===
-
-- Created expectations for scData
-- Applied ordination techniques
-- Tried a method to detect substructure
-- Applied a statistical inference method
-
-What did we miss?
-===
-
-- Seurat (spatial inference)
-
-Single cell Analysis Software
-===
-
-- SCDE
-- Seurat
-- Presentation Scripts
-
-Thank you
-===
-
-- *Aviv Regev*
-- Alex Shalek
-- Asma bankapur
-- Brian Haas
-- Itay Tirosh
-- Karthik Shekhar
-- Rahul Satija (Seurat)
-
-
-References
-===
-
-Please note this is a collection of many peoples ideas.
-Included in the download is a references.txt to document sources and links to cute corgi pictures :-)
-
-Questions?
-===
-
-![gradute corgi](images/graduate_corgi.jpg)
-
-Notes: to make a pdf
-===
-class:small-code
-
-- Create a pdf file before you plot ( can plot multiple plots )
-- Close the plotting
+Needed files -
+- Expression file ( Genes (row) x Cells (col) )
+- Cell Phenotype Metadata ( Cells (row) x Metadatum (col) )
+- Gene Metadata ( Genes (row) x Medatatum (col) )
 
 
 ```r
-#pdf( "data/my_file.pdf", useDingbats = FALSE ) # Start pdf
-#plot( 1:10, log(1:10 ) ) # plot in to the pdf file
-#plot( seq(0,.9,.1), sin(0:9) ) # another plot for the pdf file
-#dev.off() # Close pdf file ( very important )
+# Do not run (For later)
+# monocle.data <- make_cell_data_set( expression_file="monocle_exprs.txt", cell_phenotype_file="monocle_cell_meta.txt", gene_metadata_file="monocle_gene_meta.txt" )
+
+# Get data for today
+monocle.data <- get_monocle_presentation_data()
 ```
 
-Mixture modeling to select samples
-===
-
-- Uses an EM algorithm optimizing the number of gaussian distributions
-- Works directly off of the ordination
-- Only as good as the ordination
-- Sample ordination shows the strongest signals
-- Really easy!
-
----
-
-![mclust_description](images/mclust.pdf)
-
-mclust: Mixture modeling
-===
-class:small-code
 
 
-```r
-#library(mclust) # Load library
-## Start with our first two dimensions
-#mclust.results = Mclust(results.pca$rotation[,c(1:2)])
-
-## Get classification groups
-#mclust.groups = mclust.results$classification
-
-## Plot
-#plot( mclust.results, what=c("classification") )
-```
-
-mclust: Mixture modeling
+Filter Genes
 ===
 class:midcenter
 
 
+```r
+# Require a minimun of 0.1 expression
+monocle.data <- detectGenes( monocle.data, min_expr=0.1 )
 
-Supervised vs unsupervised
+# Require atleast 50 cells to have the minimum 0.1 expression
+# Get name of genes pass these filters
+monocle.expr.genes <- row.names(subset(fData( monocle.data), num_cells_expressed >= 50 ))
+```
+
+Other QC can be performed.
+ - Depth, accurate capture of 1 cell, ...
+ - Can be added to phentype or feature metadata files.
+ 
+Confirm the Log-Normal Assumption
+===
+class:midcenter
+
+
+```r
+plot_log_normal_monocle( monocle.data )
+```
+
+![plot of chunk unnamed-chunk-39](single_cell_analysis-figure/unnamed-chunk-39-1.png) 
+
+Ordering by Expression: Study View
 ===
 
 
 
----
 
 
+
+
+
+
+
+
+
+
+
+
+```
+Error in esApply(cds, 1, diff_test_helper, fullModelFormulaStr = fullModelFormulaStr,  : 
+  error in evaluating the argument 'X' in selecting a method for function 'esApply': Error in orig[[nm]][i, , ..., drop = drop] : subscript out of bounds
+```

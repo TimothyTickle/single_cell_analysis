@@ -62,14 +62,18 @@ class:small-code
 
 ```{r, tidy=TRUE}
 # Load libraries
-library(caret) #Near-zero filter
-library(gplots) #Colorpanel
-library(scatterplot3d) #3D plotting
+library(fpc) # Density based clustering dbscan
+library(gplots) # Colorpanel
+#library(RaceID)
+library(scatterplot3d) # 3D plotting
 library(Seurat)
+library(monocle)
 
 # Source code
-source(file.path("src","heatmap.3b.R")) #Custom HCL
+#source(file.path("src","heatmap.3b.R")) #Custom HCL
 source(file.path("src","Modules.R")) #Helper functions
+#source(file.path("src","RaceID_class.R")) 
+
 ```
 
 Today's data set
@@ -131,7 +135,7 @@ data.col <- ncol( data )
 data <- data[ data.col-4:data.col]
 ```
 
-How many genes express in a cell?
+How many genes express in a cell (Complexity)?
 ===
 
 ```{r}
@@ -141,6 +145,17 @@ counts.per.cell <- colSums( data )
 # Plot genes per cell ( how many genes express )
 genes.per.cell <- apply( data, 2, function(x) sum( x>0 ))
 ```
+
+QC in tSNE
+===
+
+reads per cell
+genes per cell
+% mapping reads
+% rRNA
+
+Comparison of FACS and identified cluster to see if FACs sorts all the types.
+TSNE clustering, colored by FACs then colored by identified tsna clusters
 
 How much expression?
 ===
@@ -193,7 +208,7 @@ Genes Have Different Distributions
 ===
 
 ```{r}
-plot.quantiles( data.cleaned )
+plot.quantiles( data.cleaned ) 
 ```
 
 Normalization in scData
@@ -405,6 +420,11 @@ pca.plot(nbt,1,2,pt.size = 2)
 tsne.plot(nbt,pt.size = 1)
 ```
 
+Density Based Clustering
+===
+
+Select samples in one cluster to use as groups.
+
 Unsupervised substructure discovery
 ===
 
@@ -529,6 +549,117 @@ class:midcenter
 #heatmap( log2( data.cleaned[ top.de.genes,] + 1 ), vctr_grouping = data.groups )
 ```
 
+Time-series analysis: Monocle
+===
+
+TODO: the methodology briefly
+
+What to expect
+===
+
+TODO: Brief overview of what to do
+- Read in and prepare data
+- Filter and quality control
+- Select genes of interest
+ - Literature or differential expression analysis
+- Order cells by expression
+- Run pseudotemporal analysis
+
+Moncole's Assumptions
+===
+
+- Monocle's Assumptions
+ - Genes not splice variants.
+ - Assumes a log normal distribution.
+ - Does NOT normalize (library size, depth, technical batch).
+ - Do NOT give it raw counts.
+
+Read in and Format
+===
+class:midcenter
+
+Needed files -
+- Expression file ( Genes (row) x Cells (col) )
+- Cell Phenotype Metadata ( Cells (row) x Metadatum (col) )
+- Gene Metadata ( Genes (row) x Medatatum (col) )
+
+```{r, eval=FALSE}
+# Do not run (For later)
+# monocle.data <- make_cell_data_set( expression_file="monocle_exprs.txt", cell_phenotype_file="monocle_cell_meta.txt", gene_metadata_file="monocle_gene_meta.txt" )
+
+# Get data for today
+monocle.data <- get_monocle_presentation_data()
+```
+```{r,eval=TRUE,echo=FALSE}
+monocle.data <- get_monocle_presentation_data()
+```
+
+
+Filter Genes
+===
+class:midcenter
+
+```{r}
+# Require a minimun of 0.1 expression
+monocle.data <- detectGenes( monocle.data, min_expr=0.1 )
+
+# Require atleast 50 cells to have the minimum 0.1 expression
+# Get name of genes pass these filters
+monocle.expr.genes <- row.names(subset(fData( monocle.data), num_cells_expressed >= 50 ))
+```
+
+Other QC can be performed.
+ - Depth, accurate capture of 1 cell, ...
+ - Can be added to phentype or feature metadata files.
+ 
+Confirm the Log-Normal Assumption
+===
+class:midcenter
+
+```{r}
+plot_log_normal_monocle( monocle.data )
+```
+
+Ordering by Expression: Study View
+===
+
+```{r}
+# Marker genes that are differentially expressed
+marker.genes <- get_monocle_presentation_marker_genes()
+select_ordering_genes( monocle.data, monocle.expr.genes, marker.genes, "expression~Media", 0.01 )
+
+# Order the cells by expression
+monocle.data <- order_cells_wrapper( monocle.data, ordering.genes, use_irlba=FALSE, num_paths=2, reverse=TRUE)
+# Plot all cells in study with ordering
+plot_spanning_tree( monocle.data )
+# TODO write data to file
+```
+
+Ordering by Expression: Gene View
+===
+
+```{r,eval=FALSE}
+monocle.data.diff.states <- monocle.data[ monocle.expr.genes, pData( monocle.data)$State != 3]
+# TODO subset is not generic, needs gene_short_name attr
+subset.for.plot <- subset_to_genes( monocle.data.diff.states, c("CDK1","MEF2C", "MYH3") )
+plot_genes_in_pseudotime( subset.for.plot, color_by="Hours" )
+
+```
+
+Genes which Follow an Assumed Temporal Pattern
+===
+
+Monocle Leftovers
+===
+
+- Other methodology
+ - Differential Expression
+ - Multifactorial Differential Expression
+ 
+Diffusion Maps
+===
+
+ 
 Cell-cycle: batch effect or new resolution
 ===
 
@@ -576,14 +707,15 @@ What did we miss?
 Single cell Analysis Software
 ===
 
-- SCDE
-- Seurat
-- Presentation Scripts
+- Monocle : http://bioconductor.org/packages/release/bioc/html/monocle.html
+- SCDE : http://pklab.med.harvard.edu/scde/index.html
+- Seurat : http://www.satijalab.org/seurat.html
+- Presentation Scripts : https://github.com/TimothyTickle/single_cell_analysis
 
 Thank you
 ===
 
-- *Aviv Regev*
+- Aviv Regev
 - Alex Shalek
 - Asma bankapur
 - Brian Haas

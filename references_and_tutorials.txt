@@ -6,6 +6,9 @@ http://www.satijalab.org/seurat-intro.html
 Tutorial on SCDE:
 http://pklab.med.harvard.edu/scde/Tutorials
 
+Tutorial on Monocle:
+http://bioconductor.org/packages/release/bioc/vignettes/monocle/inst/doc/monocle-vignette.pdf
+
 (SCDE paper)
 Characterization of the single-cell transcriptional landscape by highly multiplex RNA-seq
 http://genome.cshlp.org/content/21/7/1160

@@ -12,11 +12,11 @@ Included are:
 
 * reading.txt - Some publications to get you started, have fun these are great reads!
 
-* reference.txt - References for information used in the presentation.
+* references_and_tutorials.txt - References for information used in the presentation and online tutorials for further reading.
 
 * single_cell_analysis.Rpres - The presentation in RStudio format (the environment I used to build the presentation).
 
-* scde_results.txt - If you are using a windows machine, you will not be able to run SCDE; no worries. These are the results from the run shown in the presentation.
+* data/scde_results.txt - If you are using a windows machine, you will not be able to run SCDE; no worries. These are the results from the run shown in the presentation.
 
 * url_presentation.txt - URL for on-line presentation
 
@@ -34,6 +34,6 @@ Others:
 
 * single_cell_analysis.md - The markdown used to make the presentation.
 
-* src - come code to reduce the amount of R code during the workshop. You are welcome to use the code as you need.
- * heatmap.3b.R - convenience code to make it easy to make a heatmap during the workshop
- * Module.R - helper functions which may be used in the presentation to reduce code.
+* src - some code to reduce the amount of R code during the workshop. You are welcome to use the code as you need.
+* src/heatmap.3b.R - convenience code to make it easy to make a heatmap during the workshop
+* src/Module.R - helper functions which may be used in the presentation to reduce code.
