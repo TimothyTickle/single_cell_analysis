@@ -623,10 +623,27 @@ plot_log_normal_monocle( monocle.data )
 Ordering by Expression: Study View
 ===
 
-```{r}
-# Marker genes that are differentially expressed
+```{r,eval=FALSE}
+# Marker genes of biological interest
 marker.genes <- get_monocle_presentation_marker_genes()
-select_ordering_genes( monocle.data, monocle.expr.genes, marker.genes, "expression~Media", 0.01 )
+# Select from those marker genes those important to the study
+ordering.genes <- select_ordering_genes( monocle.data, monocle.expr.genes, marker.genes, "expression~Media", 0.01 )
+
+# Order the cells by expression
+monocle.data <- order_cells_wrapper( monocle.data, ordering.genes, use_irlba=FALSE, num_paths=2, reverse=TRUE)
+# Plot all cells in study with ordering
+plot_spanning_tree( monocle.data )
+# TODO write data to file
+```
+
+Ordering by Expression: Study View
+===
+
+```{r,echo=FALSE}
+# Marker genes that are differentially expressed
+source(file.path("src","Modules.R")) 
+marker.genes <- get_monocle_presentation_marker_genes()
+ordering.genes <- select_ordering_genes( monocle.data, monocle.expr.genes, marker.genes, "expression~Media", 0.01 )
 
 # Order the cells by expression
 monocle.data <- order_cells_wrapper( monocle.data, ordering.genes, use_irlba=FALSE, num_paths=2, reverse=TRUE)
@@ -638,7 +655,18 @@ plot_spanning_tree( monocle.data )
 Ordering by Expression: Gene View
 ===
 
-```{r,eval=FALSE}
+```{r, eval=FALSE}
+monocle.data.diff.states <- monocle.data[ monocle.expr.genes, pData( monocle.data)$State != 3]
+# TODO subset is not generic, needs gene_short_name attr
+subset.for.plot <- subset_to_genes( monocle.data.diff.states, c("CDK1","MEF2C", "MYH3") )
+plot_genes_in_pseudotime( subset.for.plot, color_by="Hours" )
+
+```
+
+Ordering by Expression: Gene View
+===
+
+```{r,echo=FALSE}
 monocle.data.diff.states <- monocle.data[ monocle.expr.genes, pData( monocle.data)$State != 3]
 # TODO subset is not generic, needs gene_short_name attr
 subset.for.plot <- subset_to_genes( monocle.data.diff.states, c("CDK1","MEF2C", "MYH3") )
@@ -649,12 +677,34 @@ plot_genes_in_pseudotime( subset.for.plot, color_by="Hours" )
 Genes which Follow an Assumed Temporal Pattern
 ===
 
+```{r,eval=FALSE}
+# Get genes of interest
+subset.pseudo <- subset_to_genes( monocle.data, c("MYH3","MEF2C","CCNB2","TNNT1"))
+subset.pseudo <- subset.pseudo[,pData(subset.pseudo)$State != 3 ]
+subset.pseudo.diff <- differentialGeneTest( subset.pseudo, fullModelFormulaStr="expression~sm.ns(Pseudotime)")
+plot_genes_in_pseudotime( subset.pseudo, color_by="Hours")
+```
+
+Genes which Follow an Assumed Temporal Pattern
+===
+
+```{r,echo=FALSE}
+# Get genes of interest
+subset.pseudo <- subset_to_genes( monocle.data, c("MYH3","MEF2C","CCNB2","TNNT1"))
+subset.pseudo <- subset.pseudo[,pData(subset.pseudo)$State != 3 ]
+subset.pseudo.diff <- differentialGeneTest( subset.pseudo, fullModelFormulaStr="expression~sm.ns(Pseudotime)")
+plot_genes_in_pseudotime( subset.pseudo, color_by="Hours")
+```
+
 Monocle Leftovers
 ===
 
 - Other methodology
- - Differential Expression
+ - Simple Differential Expression
+     - Finding genes that distiguish cell state
  - Multifactorial Differential Expression
+     - Account for confounders
+ - Clustering genes by pseudotime
  
 Diffusion Maps
 ===

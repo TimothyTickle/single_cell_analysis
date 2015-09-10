@@ -403,7 +403,8 @@ genes.of.interest,
 model.formula,
 qvalue.threshold
 ){
-  diff.marker.genes <- differentialGeneTest(data.set[genes.of.interest,], fullModelFormulaStr=model.formula)
+  data.set.subset <- subset_to_genes( data.set, genes.of.interest )
+  diff.marker.genes <- differentialGeneTest(data.set.subset, fullModelFormulaStr=model.formula)
   sig.marker.genes <- row.names(subset(diff.marker.genes, qval < qvalue.threshold))
   return( intersect( sig.marker.genes, genes.expressed ) )
 }
@@ -416,7 +417,7 @@ num_paths,
 reverse 
 ){
   data.set <- setOrderingFilter( data.set, genes )
-  data.set <- reductDimension( data.set, use_irlba=use_irlba )
+  data.set <- reduceDimension( data.set, use_irlba=use_irlba )
   return( orderCells( data.set, num_paths=num_paths, reverse=reverse) );
 }
 

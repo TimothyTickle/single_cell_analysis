@@ -8320,20 +8320,207 @@ Ordering by Expression: Study View
 ===
 
 
+```r
+# Marker genes of biological interest
+marker.genes <- get_monocle_presentation_marker_genes()
+# Select from those marker genes those important to the study
+ordering.genes <- select_ordering_genes( monocle.data, monocle.expr.genes, marker.genes, "expression~Media", 0.01 )
 
+# Order the cells by expression
+monocle.data <- order_cells_wrapper( monocle.data, ordering.genes, use_irlba=FALSE, num_paths=2, reverse=TRUE)
+# Plot all cells in study with ordering
+plot_spanning_tree( monocle.data )
+# TODO write data to file
+```
 
-
-
-
-
-
-
-
-
-
+Ordering by Expression: Study View
+===
 
 
 ```
-Error in esApply(cds, 1, diff_test_helper, fullModelFormulaStr = fullModelFormulaStr,  : 
-  error in evaluating the argument 'X' in selecting a method for function 'esApply': Error in orig[[nm]][i, , ..., drop = drop] : subscript out of bounds
+<simpleError in lm.fit(X.vlm, y = z.vlm, ...): NA/NaN/Inf in 'y'>
 ```
+
+![plot of chunk unnamed-chunk-41](single_cell_analysis-figure/unnamed-chunk-41-1.png) 
+
+Ordering by Expression: Gene View
+===
+
+
+```r
+monocle.data.diff.states <- monocle.data[ monocle.expr.genes, pData( monocle.data)$State != 3]
+# TODO subset is not generic, needs gene_short_name attr
+subset.for.plot <- subset_to_genes( monocle.data.diff.states, c("CDK1","MEF2C", "MYH3") )
+plot_genes_in_pseudotime( subset.for.plot, color_by="Hours" )
+```
+
+Ordering by Expression: Gene View
+===
+
+![plot of chunk unnamed-chunk-43](single_cell_analysis-figure/unnamed-chunk-43-1.png) 
+
+Genes which Follow an Assumed Temporal Pattern
+===
+
+
+```r
+# Get genes of interest
+subset.pseudo <- subset_to_genes( monocle.data, c("MYH3","MEF2C","CCNB2","TNNT1"))
+subset.pseudo <- subset.pseudo[,pData(subset.pseudo)$State != 3 ]
+subset.pseudo.diff <- differentialGeneTest( subset.pseudo, fullModelFormulaStr="expression~sm.ns(Pseudotime)")
+plot_genes_in_pseudotime( subset.pseudo, color_by="Hours")
+```
+
+Genes which Follow an Assumed Temporal Pattern
+===
+
+![plot of chunk unnamed-chunk-45](single_cell_analysis-figure/unnamed-chunk-45-1.png) 
+
+Monocle Leftovers
+===
+
+- Other methodology
+ - Simple Differential Expression
+     - Finding genes that distiguish cell state
+ - Multifactorial Differential Expression
+     - Account for confounders
+ - Clustering genes by pseudotime
+ 
+Diffusion Maps
+===
+
+ 
+Cell-cycle: batch effect or new resolution
+===
+
+![cell_cycle](images/cell_cycle.pdf)
+
+What did we find ?
+===
+
+- Unsupervised discovery of substructure
+- Inference on known structure
+- How do we connect this to biology?
+
+Gene set enrichment analysis: GSEA
+===
+
+- Many options
+  - DAVID (online or R library RDAVIDWebService)
+  - GSEA (online or many libraries)
+    - wilcoxGST from the limma library
+    - GSEABase
+- GenePattern workshop
+
+Summary: of the data
+===
+
+- We are still understanding scData and how to apply it
+  - Not normal
+  - Zero-inflated
+  - Very noisey
+- Keeping these characteristics in analysis assumptions
+
+Summary: of today
+===
+
+- Created expectations for scData
+- Applied ordination techniques
+- Tried a method to detect substructure
+- Applied a statistical inference method
+
+What did we miss?
+===
+
+- Seurat (spatial inference)
+
+Single cell Analysis Software
+===
+
+- Monocle : http://bioconductor.org/packages/release/bioc/html/monocle.html
+- SCDE : http://pklab.med.harvard.edu/scde/index.html
+- Seurat : http://www.satijalab.org/seurat.html
+- Presentation Scripts : https://github.com/TimothyTickle/single_cell_analysis
+
+Thank you
+===
+
+- Aviv Regev
+- Alex Shalek
+- Asma bankapur
+- Brian Haas
+- Itay Tirosh
+- Karthik Shekhar
+- Rahul Satija (Seurat)
+
+
+References
+===
+
+Please note this is a collection of many peoples ideas.
+Included in the download is a references.txt to document sources and links to cute corgi pictures :-)
+
+Questions?
+===
+
+![gradute corgi](images/graduate_corgi.jpg)
+
+Notes: to make a pdf
+===
+class:small-code
+
+- Create a pdf file before you plot ( can plot multiple plots )
+- Close the plotting
+
+
+```r
+#pdf( "data/my_file.pdf", useDingbats = FALSE ) # Start pdf
+#plot( 1:10, log(1:10 ) ) # plot in to the pdf file
+#plot( seq(0,.9,.1), sin(0:9) ) # another plot for the pdf file
+#dev.off() # Close pdf file ( very important )
+```
+
+Mixture modeling to select samples
+===
+
+- Uses an EM algorithm optimizing the number of gaussian distributions
+- Works directly off of the ordination
+- Only as good as the ordination
+- Sample ordination shows the strongest signals
+- Really easy!
+
+---
+
+![mclust_description](images/mclust.pdf)
+
+mclust: Mixture modeling
+===
+class:small-code
+
+
+```r
+#library(mclust) # Load library
+## Start with our first two dimensions
+#mclust.results = Mclust(results.pca$rotation[,c(1:2)])
+
+## Get classification groups
+#mclust.groups = mclust.results$classification
+
+## Plot
+#plot( mclust.results, what=c("classification") )
+```
+
+mclust: Mixture modeling
+===
+class:midcenter
+
+
+
+Supervised vs unsupervised
+===
+
+
+
+---
+
+
