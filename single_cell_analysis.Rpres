@@ -8,273 +8,270 @@ author: Timothy Tickle and Brian Haas
 css: single_cell_analysis.css
 date: October 1, 2015
 
-Before we get started
+Before We Get Started
 ===
 
-- Single-cell analysis is new
-  - Give you a feel for the data
-  - Give you some options to explore
-  - These techniques will grow as the field does
+- Single-cell analysis is new.
+  - Give you a feel for the data.
+  - Give you some options to explore.
+  - These techniques will grow as the field does.
 
-Before we get started
+Before We Get Started
 ===
 
-- This is VERY hands on
-  - Much can be applied to other analyses
+- This is VERY hands on.
+  - Much can be applied to other analyses.
   - Strengthen those R ninja skills!
-  - If you need, cut and pasting is available
-  - Complex R is simplified in functions
+  - If you need, cut and pasting is available (cut_and_paste.txt).
+  - Complex R is simplified in wrapper functions.
   
 ---
 
 ![ninja corgis](images/ninja_corgi.jpeg)
 
-What we will attempt to Cover
+What We Will Attempt to Cover
 ===
 
-- How did we get here?
-- How to initially look at the data.
-- Ways to plot genes and samples.
-- Discussion on performing inference.
-- An example of unique plots for single-cell Analysis
+- Initial data exploration, QC, and filtering.
+- Ways to plot genes and cells.
+- Finding clusters of cells.
+- Performing differential expression.
+- Detecting rare cell population.
+- Psuedotemporal time-series analysis.
 
-Briefly Single-cell sequencing
+RStudio: Getting to Know You
 ===
 
-
-
-RStudio: getting to know you
-===
-
-Let's take a moment
-- Pull data from online (Github)
+Let's take a moment.
+- Pull data from online (Github).
   - https://github.com/TimothyTickle/single_cell_analysis
-- You can view this presentation on-line at
-  - http://rpubs.com/timothyltickle/scAnalysis
-- Quick overview of RStudio
+- You can view this presentation on-line.
+  - http://rpubs.com/timothyltickle/single_cell_analysis
+- Quick overview of RStudio.
 
 Logistics
 ===
 class:small-code
 
-- install_notes.txt
-- load libraries
-
 ```{r, tidy=TRUE}
 # Load libraries
 library(fpc) # Density based clustering dbscan
 library(gplots) # Colorpanel
-#library(RaceID)
 library(scatterplot3d) # 3D plotting
-library(Seurat)
 library(monocle)
-
-# Source code
-#source(file.path("src","heatmap.3b.R")) #Custom HCL
-source(file.path("src","Modules.R")) #Helper functions
-#source(file.path("src","RaceID_class.R")) 
-
+library(tsne) # Non-linear ordination
+library(pheatmap)
+library(MASS)
+library(cluster)
+library(mclust)
+library(flexmix)
+library(lattice)
+library(fpc)
+library(amap)
+library(RColorBrewer)
+library(locfit)
+library(Seurat)
 ```
 
-Today's data set
+Load Code
+===
+class:small-code
+
+```{r}
+# Source code
+source(file.path("src","Modules.R")) # Helper functions
+```
+
+Briefly Single-cell Sequencing
+===
+
+#TODO
+# UMI / RMT
+# Sequence breakdown
+
+Our First Data Set
 ===
 
 Islam S et al. __Characterization of the single-cell transcriptional landscape by highly multiplex RNA-seq__ . Genome Research 2011
 
-- 96 Samples
-  - Embryonic Stem Cells (ES)
-     - 2.5 k distinct genes expressed
-     - Found more correlated than MEF
-  - Embryonic Fibroblasts (MEF)
-     - 5.4 k distinct genes expressed
+- 92 Cells.
+  - Embryonic Stem Cells (ES).
+  - Embryonic Fibroblasts (MEF).
 
-Data: Ready, start, load!
+Data: Ready, Get Set, Load!
 ===
 class:small-code
 
 ```{r}
 # Load tab delimited file
-data = read.delim( file.path("data","GSE29087_L139_expression_tab.annotated_colnames.txt"), row.names = 1 )
+data.set = read.delim( file.path("data","GSE29087_L139_updated.txt") )
 ```
 
-Always look at your data
+Always Look at Your Data
 ===
 class:midcenter
 
+- These are important steps for any scRNA-Seq data set.
+
 ![professor corgi](images/professor_corgi.jpg)
 
-A generic start
+What are Our Genes?
 ===
+class:small-code
 
-- These are important steps for any data set
-
-What are our genes?
-===
-
-```{r}
-rownames( data )
+```{r,eval=FALSE}
+rownames( data.set )
 ```
 
-What are our samples?
+What are Our Genes?
 ===
+class:small-code
 
-```{r}
-colnames( data )
+```{r,echo=FALSE}
+head( rownames( data.set ) )
 ```
 
-Remove metadata and negative controls
-====
+What are Our Cells?
+===
+class:small-code
 
-```{r}
-# For convenience splitting in to metadata and data
-metadata <- data[ 1:6 ]
-data <- data[ -1 * 1:6 ]
-
-# Remove last 4 (negative controls)
-data.col <- ncol( data )
-data <- data[ data.col-4:data.col]
+```{r,eval=FALSE}
+colnames( data.set )
 ```
 
-How many genes express in a cell (Complexity)?
+What are Our Cells?
 ===
+class:small-code
 
-```{r}
-# Plot counts per cell ( how much expression )
-counts.per.cell <- colSums( data )
-
-# Plot genes per cell ( how many genes express )
-genes.per.cell <- apply( data, 2, function(x) sum( x>0 ))
+```{r, echo=FALSE}
+head( colnames( data.set ) )
 ```
 
-QC in tSNE
+How Many Expressed Genes (Complexity)?
 ===
-
-reads per cell
-genes per cell
-% mapping reads
-% rRNA
-
-Comparison of FACS and identified cluster to see if FACs sorts all the types.
-TSNE clustering, colored by FACs then colored by identified tsna clusters
-
-How much expression?
-===
+class:small-code
 
 ```{r}
-barplot( sort( counts.per.cell ) ) 
+# Plot genes per cell
+# ( how many genes express )
+genes.per.cell <- apply( data.set, 2, function(x) sum( x>0 ))
 ```
 
-How many genes express?
+How Many Expressed Genes (Complexity)?
 ===
+class:small-code
 
 ```{r}
-barplot( sort( genes.per.cell ) ) 
+cell.outlier = plot.cell.complexity( genes.per.cell )
 ```
 
-Filter cells: Finding a cut-off
+Filter Cells: Removing the Outlier Cells
 ===
+class:small-code
+
+- Cells that are unusually simple (or no expression)
+- Cells that are unusually complex
 
 ```{r}
-plot( counts.per.cell, genes.per.cell )
-abline( v = 200000, col = "red")
+cell.outlier
+
+# Remove outlier cells
+data.set = data.set[,-1*cell.outlier]
+ncol( data.set)
 ```
 
-Filter cells: Removing the low signal cells
+Filter Cells: Removing the Outlier Cells
 ===
-```{r}
-# Remove low expressing cells
-data.remove.cells <- data[ counts.per.cell > 200000 ]
-```
+class:small-code
 
-Filter genes: GENES with no expression
-===
-
-```{r}
-# Remove genes with zero count
-counts.per.gene <- rowSums( data.remove.cells )
-
-# Genes with zeros
-hist( log2( counts.per.gene + 1 ) )
-abline( v = log2( 10 ), col= "red" )
-
-# Remove noisey genes
-data.cleaned <- data.remove.cells[ counts.per.gene > 10, ]
-
-# Plot
-hist( log2( rowSums( data.cleaned ) + 1 ))
-```
+- Outlier samples are not just measured by complexity
+  - Percent Reads Mapping
+  - Percent Mitochondrial Reads
+  - Presence of marker genes
+  - etc ...
 
 Genes Have Different Distributions
 ===
+class:small-code
 
 ```{r}
-plot.quantiles( data.cleaned ) 
+plot.quantiles( data.set ) 
+```
+
+Filter Genes: Using Prevalence
+===
+class:small-code
+
+```{r}
+# Remove low expressing genes
+data.cleaned <- func_filter_by_occurence( data.set, 10, 10 )
 ```
 
 Normalization in scData
 ===
 
-- Lack of publications / annecdotal
-- ( TPM / 100000 ) + 1
+- Lack of publications / annecdotal .
+- Log( Count / cell sum * median magnitude ) + 1 .
+- Median magnitude = Median of cell medians .
 
-Normalizing for sample sequencing depth
+Normalizing for Cell Sequencing Depth
 ===
+class:small-code
 
 ```{r}
-data.cleaned.norm <- sweep( data.cleaned, 2, colSums( data.cleaned ) , "/" ) * 1000000
+data.cleaned.norm <- func_cpx( data.cleaned )
+```
+- Some perform TMM normalization afterwards.
+  - See EdgeR package.
+
+Sequencing Saturation
+====
+
+- The correct depth of sequencing will depend on the cell and the question.
+- Can view saturation levels.
+
+Plotting Sequencing Saturation of a Cell
+===
+class:small-code
+
+```{r}
+func_plot_saturation_curve( data.cleaned[,1], 1000 )
 ```
 
 Quality Control in scData
 ===
+
+#TODO Izzary paper
+
+Loading Data into Seurat
+===
+class:small-code
+
+```{r}
+nbt=read.into.seurat(file.path("data","HiSeq301_RSEM_linear_values.txt"),sep="\t",header=TRUE,row.names=1)
+nbt=setup(nbt,project="NBT",min.cells = 3,names.field = 2,names.delim = "_",min.genes = 1000,is.expr=1)
+```
+
+Quality Control in scData
+===
+class:small-code
 
 - Check the identity of the cells!!!
 ```{r,eval=FALSE}
-# Marker genes
-nbt.data=read.table(file.path("data","HiSeq301_RSEM_linear_values.txt"),sep="\t",header=TRUE,row.names=1)
-nbt.data=log(nbt.data+1)
-nbt=new("seurat",raw.data=nbt.data)
-nbt=setup(nbt,project="NBT",min.cells = 3,names.field = 2,names.delim = "_",min.genes = 1000,is.expr=1,)
-genes.interesting = c("DPPA4")
-vlnPlot( nbt, genes.interesting )
+vlnPlot( nbt, c("DPPA4") )
 ```
 
-Quality Control in scData
+Viewing Specific Genes in Data
 ===
+class:small-code
 
 - Check the identity of the cells!!!
+
 ```{r,echo=FALSE}
-# Marker genes
-nbt.data=read.table(file.path("data","HiSeq301_RSEM_linear_values.txt"),sep="\t",header=TRUE,row.names=1)
-nbt.data=log(nbt.data+1)
-nbt=new("seurat",raw.data=nbt.data)
-nbt=setup(nbt,project="NBT",min.cells = 3,names.field = 2,names.delim = "_",min.genes = 1000,is.expr=1,)
-genes.interesting = c("DPPA4")
-vlnPlot( nbt, genes.interesting )
+vlnPlot( nbt, c("DPPA4") )
 ```
 
-Viewing all genes in a sample
-===
-class:small-code
-
-```{r, echo=FALSE}
-
-```
-
----
-
-![rahul_plot](images/rahul_variability.pdf)
-
-
-Viewing specific genes in data
-===
-class:small-code
-
-```{r, echo=FALSE}
-genes.interesting = c("DPPA4")
-vlnPlot( nbt, genes.interesting )
-```
-
-Viewing specific genes vs another gene
+Viewing Genes vs Genes
 ===
 class:small-code
 
@@ -282,59 +279,61 @@ class:small-code
 cellPlot(nbt,nbt@cell.names[1],nbt@cell.names[2],do.ident = FALSE)
 ```
 
-Viewing specific genes vs another gene
+Viewing Genes vs Genes
 ===
 class:small-code
 
 ```{r,echo=FALSE}
-genePlot(nbt,"DLX1","DLX2",cex.use = 1)
+genePlot(nbt,"SOX11","BCL11A",cex.use = 1)
 ```
 
-Viewing 1 cell vs 1 cell
+Viewing Cells vs Cells
 ===
 class:small-code
+
 ```{r,eval=FALSE}
 cellPlot(nbt,nbt@cell.names[3],nbt@cell.names[4],do.ident = FALSE)
 ```
 
-Viewing 1 cell vs 1 cell
+Viewing Cells vs Cells
 ===
 class:small-code
+
 ```{r,echo=FALSE}
 cellPlot(nbt,nbt@cell.names[3],nbt@cell.names[4],do.ident = FALSE)
 ```
 
-Dimensionality reduction and ordination
+Dimensionality Reduction and Ordination
 ===
 
-- Start with many measurements (high dimensional)
-  - Want to reduce to a few features (lower-dimensional space)
-- One way is to extract features based on capturing groups of variance
-- Another could be to preferentially select some of the current features
-  - We have already done this
-- We need this to plot the samples in 2D (or ordinate them)
+- Start with many measurements (high dimensional).
+  - Want to reduce to a few features (lower-dimensional space).
+- One way is to extract features based on capturing groups of variance.
+- Another could be to preferentially select some of the current features.
+  - We have already done this.
+- We need this to plot the cells in 2D (or ordinate them).
 
-PCA: in quick theory
+PCA: in Quick Theory
 ===
 
-- Eigenvectors of covariance matrix
-- Find orthogonal groups of variance
-- Given from most to least variance
-  - Components of variation
-  - Linear combinations explaining the variance
+- Eigenvectors of covariance matrix.
+- Find orthogonal groups of variance.
+- Given from most to least variance.
+  - Components of variation.
+  - Linear combinations explaining the variance.
   
 ---
 
 ![pca_describe](images/PCA_plot_02.gif)
 
-PCA: in practice
+PCA: in Practice
 ===
 
-Things to be aware of
-- Data with different magnitudes will dominate
-  - Zero center and divided by SD
-  - (Standardized)
-- Can be affected by outliers
+Things to be aware of.
+- Data with different magnitudes will dominate.
+  - Zero center and divided by SD.
+  - (Standardized).
+- Can be affected by outliers.
 
 ---
 
@@ -345,9 +344,8 @@ PCA using Seurat
 class:small-code
 
 ```{r, eval=FALSE}
-nbt=mean.var.plot(nbt,y.cutoff = 2,x.low.cutoff = 2,fxn.x = expMean,fxn.y = logVarDivMean,do.plot=FALSE)
-nbt=pca(nbt,do.print=FALSE)
-pca.plot(nbt,1,2,pt.size = 2)
+nbt=prep.pca.seurat( y.cutoff = 2,x.low.cutoff = 2 )
+pca.plot(nbt,1,2,pt.size = 3)
 ```
 
 PCA using Seurat
@@ -355,12 +353,11 @@ PCA using Seurat
 class:small-code
 
 ```{r, echo=FALSE}
-nbt=mean.var.plot(nbt,y.cutoff = 2,x.low.cutoff = 2,fxn.x = expMean,fxn.y = logVarDivMean,do.plot=FALSE)
-nbt=pca(nbt,do.print=FALSE)
-pca.plot(nbt,1,2,pt.size = 2)
+nbt=prep.pca.seurat( y.cutoff = 2,x.low.cutoff = 2 )
+pca.plot(nbt,1,2,pt.size = 3)
 ```
 
-Identifying genes contributing to components
+Identifying Genes Contributing to Components
 ===
 class:small-code
 
@@ -368,22 +365,13 @@ class:small-code
 print.pca(nbt,1)
 ```
 
-Identifying genes contributing to components
+Identifying Genes Contributing to Components
 ===
 class:small-code
 
 ```{r}
 viz.pca(nbt,1:2)
 ```
-
-Alternatives?
-===
-
-- PCA makes assumptions
-  - Shows linear relationships
-  - Many zeros / differing sparsity may be a component
-- Nonmetric Multidimensional Scaling
-- Weighted PCA
 
 tSNE: What and Why?
 ===
@@ -394,7 +382,7 @@ class:small-code
 
 ```{r,eval=FALSE}
 nbt=run_tsne(nbt,dims.use = 1:11,max_iter=2000)
-tsne.plot(nbt,pt.size = 1)
+tsne.plot(nbt,pt.size = 3)
 ```
 
 tSNE using Seurat
@@ -403,7 +391,7 @@ class:small-code
 
 ```{r,echo=FALSE}
 nbt=run_tsne(nbt,dims.use = 1:11,max_iter=2000)
-tsne.plot(nbt,pt.size = 1)
+tsne.plot(nbt,pt.size = 3)
 ```
 
 tSNE: PCA & tSNE side by side
@@ -411,64 +399,91 @@ tSNE: PCA & tSNE side by side
 class:small-code
 
 ```{r,echo=FALSE}
-pca.plot(nbt,1,2,pt.size = 2)
+pca.plot(nbt,1,2,pt.size = 3)
 ```
 
 ---
 
 ```{r,echo=FALSE}
-tsne.plot(nbt,pt.size = 1)
+tsne.plot(nbt,pt.size = 3)
 ```
 
-Density Based Clustering
+QC the Clusters!
+===
+class:small-code
+
+```{r,eval=FALSE}
+pca.plot(nbt,1,2,pt.size = 3,group.by="nGene")
+tsne.plot(nbt,pt.size = 3,group.by="nGene")
+```
+
+QC the Clusters!
+===
+class:small-code
+
+```{r,echo=FALSE}
+pca.plot(nbt,1,2,pt.size = 3,group.by="nGene")
+```
+
+---
+
+```{r,echo=FALSE}
+tsne.plot(nbt,pt.size = 3,group.by="nGene")
+```
+
+Defining Clusters from PCA or TSNE
 ===
 
-Select samples in one cluster to use as groups.
+- Density based clustering.
+```{r,eval=FALSE}
+nbt=DBclust_dimension(nbt,1,2,reduction.use="tsne", G.use=8,set.ident=TRUE)
+nbt=buildClusterTree(nbt,do.reorder=TRUE,reorder.numeric=TRUE,pcs.use=1:11,do.plot=FALSE)
+tsne.plot(nbt,do.label=TRUE,label.pt.size=0.5)
+```
 
-Unsupervised substructure discovery
+Defining Clusters from PCA or TSNE
 ===
 
-Often a goal of scProjects is to describe new structure to a group of cells:
-- Heterogeniety of tumor populations
-- Novel steps in development
-- Robust / dynamic cellular signalling
+```{r, echo=FALSE}
+nbt=DBclust_dimension(nbt,1,2,reduction.use="tsne", G.use=8,set.ident=TRUE)
+nbt=buildClusterTree(nbt,do.reorder=TRUE,reorder.numeric=TRUE,pcs.use=1:11,do.plot=FALSE)
+tsne.plot(nbt,do.label=TRUE,label.pt.size=0.5)
+```
 
-Unsupervised substructure discovery
+Seurat: What Did We Miss?
 ===
 
-- The general approach
-  - Find unsupervised groupings of cells
-  - Find the genes most likely to explain the cell groups
-  - Further investigate the biology
-    - Are these groupings important?
+- Data imputation
+- Spatial Inference
 
-Differential expression in defined groups
+Differential Expression in Defined Groups
 ===
 
-- Biomarker discovery
+- Biomarker discovery.
 - What are current options?
- - ROC / T-test / LRT / Tobit-censored LRT tests ( Seurat )
- - SCDE (Single-Cell Differential Expression)
+ - ROC / T-test / LRT / Tobit-censored LRT tests ( Seurat ).
+ - ( Monocle ).
+ - SCDE ( Single-Cell Differential Expression ).
 
-SCDE: in quick theory
+SCDE: in Quick Theory
 ===
 
-For each group (ES or MEF)
-- Genes are modeled to have two groups of counts
-  - Noisey area highly prone to dropout (Poisson distribution)
-  - "Amplified" signal ( NB distribution )
-- This makes the error model or how much one can trust counts
-- Pairwise within groups
+For each group (ES or MEF).
+- Genes are modeled to have two groups of counts.
+  - Noisey area highly prone to dropout (Poisson distribution).
+  - "Amplified" signal (Negative Binomial distribution).
+- This makes the error model or how much one can trust counts.
+- Pairwise within groups.
 
-Differential Expression
-- Expected value * the probability of dropout in that cell for that expression level
+Differential Expression.
+- Expected value * the probability of dropout in that cell for that expression level .
 
-SCDE: in code
+SCDE: in Code
 ===
 class:small-code
 
 ```{r}
-## Setting up sample groups
+## Setting up cells groups
 ## Get groupings
 #data.groups <- rep( NA, ncol( data.cleaned ) )
 #data.groups[ grep( "MEF", names( data.cleaned )) ] <- "MEF"
@@ -476,7 +491,7 @@ class:small-code
 #data.groups <- factor( data.groups, levels = c("ES","MEF") )
 ```
 
-SCDE: in code
+SCDE: in Code
 ===
 class:small-code
 
@@ -490,7 +505,7 @@ class:small-code
 #o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
 ```
 
-SCDE: in code
+SCDE: in Code
 ===
 class:small-code
 
@@ -503,7 +518,7 @@ class:small-code
 #write.table(ediff[order(abs(ediff$Z),decreasing=T),], file="scde_results.txt",row.names=T,col.names=T, sep="\t",quote=F)
 ```
 
-Visualize differentially expressed genes
+Visualize Differentially Expressed Genes
 ===
 class:small-code
 
@@ -513,24 +528,24 @@ class:small-code
 #head( scde.results.de )
 ```
 
-Visualize differentially expressed genes
+Visualize Differentially Expressed Genes
 ===
 
-- mle = log2 fold change (estimate)
-- ub and lb = upper and lower bound on mle
-- ce = log2 fold change (conservative estimate)
-- Z = Z-score
-- cZ = Z-score corrected for multiple hypothesis testing
+- mle = log2 fold change (estimate) .
+- ub and lb = upper and lower bound on mle .
+- ce = log2 fold change (conservative estimate) .
+- Z = Z-score .
+- cZ = Z-score corrected for multiple hypothesis testing .
 
 ---
 
 ![scde_output](images/scde_output.png)
 
-Visualize differentially expressed genes
+Visualize Differentially Expressed Genes
 ===
 class:small-code
 
- Let's plot the top 100 DE genes
+Let's plot the top 100 DE genes.
  
 ```{r, eval=FALSE}
 ## Get top genes
@@ -540,64 +555,131 @@ class:small-code
 #heatmap( log2( data.cleaned[ top.de.genes,] + 1 ), vctr_grouping=data.groups )
 ```
  
-Visualize differentially expressed genes
+Visualize Differentially Expressed Genes
 ===
-class:midcenter
+class:small-code
 
-```{r, echo=FALSE}
+```{r, eval=FALSE}
 #top.de.genes <- rownames( scde.results.de )[ 1:100 ]
 #heatmap( log2( data.cleaned[ top.de.genes,] + 1 ), vctr_grouping = data.groups )
 ```
 
-Time-series analysis: Monocle
+RaceID: Detecting Rare Cell Populations
+===
+class:small-code
+
+```{r}
+source(file.path("src","RaceID_class.R"))
+# Load tutorial data
+race.in <-read.csv(file.path("data","transcript_counts_intestine.xls"), sep="\t", header=TRUE)
+rownames( race.in ) <-race.in$GENEID
+race.in <- race.in[grep("ERCC",rownames(race.in),invert=TRUE),-1]
+race.data <- SCseq(race.in)
+race.data <- filterdata( race.data, mintotal=3000, minexpr=5, minnumber=1, maxexpr=500, downsample=FALSE, dsn=1, rseed=17000 )
+race.data <- clustexp( race.data, metric="pearson", cln=0, do.gap=TRUE, clustnr=20, B.gap=50, SE.method="Tibs2001SEmax", SE.factor=.25, bootnr=50, rseed=17000 )
+```
+
+RaceID: Detecting Rare Cell Populations
+===
+class:small-code
+
+```{r}
+plotgap(race.data)
+```
+
+RaceID: Detecting Rare Cell Populations
+===
+class:small-code
+
+```{r}
+race.data <- findoutliers( race.data, outminc=5, outlg=2,probthr=1e-3,thr=2**-(1:40),outdistquant=.75)
+race.data <- comptsne( race.data,rseed=15555 )
+```
+
+RaceID: Detecting Rare Cell Populations
+===
+class:small-code
+
+```{r}
+plottsne( race.data, final=FALSE )
+```
+
+RaceID: Detecting Rare Cell Populations
+===
+class:small-code
+
+```{r}
+plottsne( race.data, final=TRUE )
+```
+
+RaceID: Detecting Rare Cell Populations
+===
+class:small-code
+
+```{r}
+target.genes <- c("Apoa1__chr9", "Apoa1bp__chr3", "Apoa2__chr1", "Apoa4__chr9", "Apoa5__chr9")
+plotexptsne( race.data, target.genes )
+```
+
+RaceID: Detecting Rare Cell Populations
+===
+class:small-code
+
+```{r}
+plotsymbolstsne( race.data, type=sub("\\_\\d+$","",names(race.data@ndata)))
+```
+
+RaceIDs: Leftovers
+===
+
+- Alternative methods to evaluating clusters.
+- Differential Expression between clusters.
+
+Time-series Analysis: Monocle
 ===
 
 TODO: the methodology briefly
 
-What to expect
+What to Expect
 ===
 
-TODO: Brief overview of what to do
-- Read in and prepare data
-- Filter and quality control
-- Select genes of interest
- - Literature or differential expression analysis
-- Order cells by expression
-- Run pseudotemporal analysis
+TODO:Can we tie this into SCDE?
+- Read in and prepare data.
+- Filter and quality control.
+- Select genes of interest.
+ - Literature or differential expression analysis.
+- Order cells by expression.
+- Run pseudotemporal analysis.
 
 Moncole's Assumptions
 ===
 
-- Monocle's Assumptions
+- Monocle's Assumptions.
  - Genes not splice variants.
  - Assumes a log normal distribution.
  - Does NOT normalize (library size, depth, technical batch).
  - Do NOT give it raw counts.
 
-Read in and Format
+Read In and Format
 ===
-class:midcenter
+class:small-code
 
 Needed files -
-- Expression file ( Genes (row) x Cells (col) )
-- Cell Phenotype Metadata ( Cells (row) x Metadatum (col) )
-- Gene Metadata ( Genes (row) x Medatatum (col) )
+- Expression file ( Genes (row) x Cells (col) ) .
+- Cell Phenotype Metadata ( Cells (row) x Metadatum (col) ) .
+- Gene Metadata ( Genes (row) x Medatatum (col) ) .
 
-```{r, eval=FALSE}
+```{r}
 # Do not run (For later)
 # monocle.data <- make_cell_data_set( expression_file="monocle_exprs.txt", cell_phenotype_file="monocle_cell_meta.txt", gene_metadata_file="monocle_gene_meta.txt" )
 
 # Get data for today
 monocle.data <- get_monocle_presentation_data()
 ```
-```{r,eval=TRUE,echo=FALSE}
-monocle.data <- get_monocle_presentation_data()
-```
-
 
 Filter Genes
 ===
-class:midcenter
+class:small-code
 
 ```{r}
 # Require a minimun of 0.1 expression
@@ -610,11 +692,11 @@ monocle.expr.genes <- row.names(subset(fData( monocle.data), num_cells_expressed
 
 Other QC can be performed.
  - Depth, accurate capture of 1 cell, ...
- - Can be added to phentype or feature metadata files.
+ - Can be added to phenotype or feature metadata files.
  
 Confirm the Log-Normal Assumption
 ===
-class:midcenter
+class:small-code
 
 ```{r}
 plot_log_normal_monocle( monocle.data )
@@ -622,6 +704,7 @@ plot_log_normal_monocle( monocle.data )
 
 Ordering by Expression: Study View
 ===
+class:small-code
 
 ```{r,eval=FALSE}
 # Marker genes of biological interest
@@ -633,11 +716,13 @@ ordering.genes <- select_ordering_genes( monocle.data, monocle.expr.genes, marke
 monocle.data <- order_cells_wrapper( monocle.data, ordering.genes, use_irlba=FALSE, num_paths=2, reverse=TRUE)
 # Plot all cells in study with ordering
 plot_spanning_tree( monocle.data )
-# TODO write data to file
+# Write data to file
+# TODO
 ```
 
 Ordering by Expression: Study View
 ===
+class:small-code
 
 ```{r,echo=FALSE}
 # Marker genes that are differentially expressed
@@ -654,6 +739,7 @@ plot_spanning_tree( monocle.data )
 
 Ordering by Expression: Gene View
 ===
+class:small-code
 
 ```{r, eval=FALSE}
 monocle.data.diff.states <- monocle.data[ monocle.expr.genes, pData( monocle.data)$State != 3]
@@ -665,6 +751,7 @@ plot_genes_in_pseudotime( subset.for.plot, color_by="Hours" )
 
 Ordering by Expression: Gene View
 ===
+class:small-code
 
 ```{r,echo=FALSE}
 monocle.data.diff.states <- monocle.data[ monocle.expr.genes, pData( monocle.data)$State != 3]
@@ -674,8 +761,9 @@ plot_genes_in_pseudotime( subset.for.plot, color_by="Hours" )
 
 ```
 
-Genes which Follow an Assumed Temporal Pattern
+Genes Which Follow an Assumed Temporal Pattern
 ===
+class:small-code
 
 ```{r,eval=FALSE}
 # Get genes of interest
@@ -685,8 +773,9 @@ subset.pseudo.diff <- differentialGeneTest( subset.pseudo, fullModelFormulaStr="
 plot_genes_in_pseudotime( subset.pseudo, color_by="Hours")
 ```
 
-Genes which Follow an Assumed Temporal Pattern
+Genes Which Follow an Assumed Temporal Pattern
 ===
+class:small-code
 
 ```{r,echo=FALSE}
 # Get genes of interest
@@ -699,98 +788,82 @@ plot_genes_in_pseudotime( subset.pseudo, color_by="Hours")
 Monocle Leftovers
 ===
 
-- Other methodology
- - Simple Differential Expression
-     - Finding genes that distiguish cell state
- - Multifactorial Differential Expression
-     - Account for confounders
- - Clustering genes by pseudotime
+- Other methodology.
+ - Simple Differential Expression.
+     - Finding genes that distiguish cell state.
+ - Multifactorial Differential Expression.
+     - Account for confounders.
+ - Clustering genes by pseudotime.
  
 Diffusion Maps
 ===
 
- 
-Cell-cycle: batch effect or new resolution
+#TODO Add theory about diffusion maps.
+
+What Did We Find ?
 ===
 
-![cell_cycle](images/cell_cycle.pdf)
-
-What did we find ?
-===
-
-- Unsupervised discovery of substructure
-- Inference on known structure
+- Unsupervised discovery of substructure.
+- Inference on known structure.
 - How do we connect this to biology?
 
-Gene set enrichment analysis: GSEA
+Where Do We Go?
 ===
 
-- Many options
-  - DAVID (online or R library RDAVIDWebService)
-  - GSEA (online or many libraries)
-    - wilcoxGST from the limma library
-    - GSEABase
-- GenePattern workshop
+- Gene Set Enrichment.
+  - DAVID (online or R library RDAVIDWebService).
+  - GSEA (online or many libraries).
+    - wilcoxGST from the limma library.
+    - GSEABase.
+- GenePattern workshop.
 
-Summary: of the data
+Summary: of the Data
 ===
 
-- We are still understanding scData and how to apply it
-  - Not normal
-  - Zero-inflated
-  - Very noisey
-- Keeping these characteristics in analysis assumptions
+- We are still understanding scData and how to apply it.
+  - Not normal.
+  - Zero-inflated.
+  - Very noisey.
+  - Vary in library complexity.
+- Keeping these characteristics in analysis assumptions.
 
-Summary: of today
+Summary: of Today
 ===
 
-- Created expectations for scData
-- Applied ordination techniques
-- Tried a method to detect substructure
-- Applied a statistical inference method
+- Created expectations for scData.
+- Performed QC.
+- Plotted genes and cells.
+- Detected novel structure.
+- Applied a statistical inference method.
+- Performed pseudotemporal analysis.
 
-What did we miss?
-===
-
-- Seurat (spatial inference)
-
-Single cell Analysis Software
-===
-
-- Monocle : http://bioconductor.org/packages/release/bioc/html/monocle.html
-- SCDE : http://pklab.med.harvard.edu/scde/index.html
-- Seurat : http://www.satijalab.org/seurat.html
-- Presentation Scripts : https://github.com/TimothyTickle/single_cell_analysis
-
-Thank you
+Thank You
 ===
 
 - Aviv Regev
-- Alex Shalek
 - Asma bankapur
 - Brian Haas
 - Itay Tirosh
 - Karthik Shekhar
-- Rahul Satija (Seurat)
-
+- Today's Attendees
 
 References
 ===
 
 Please note this is a collection of many peoples ideas.
-Included in the download is a references.txt to document sources and links to cute corgi pictures :-)
+Included in the download is a references.txt to document sources, tutorials, software, and links to cute corgi pictures :-)
 
 Questions?
 ===
 
 ![gradute corgi](images/graduate_corgi.jpg)
 
-Notes: to make a pdf
+Notes: to Make a PDF
 ===
 class:small-code
 
-- Create a pdf file before you plot ( can plot multiple plots )
-- Close the plotting
+- Create a pdf file before you plot ( can plot multiple plots ).
+- Close the plotting.
 
 ```{r}
 #pdf( "data/my_file.pdf", useDingbats = FALSE ) # Start pdf
@@ -799,20 +872,20 @@ class:small-code
 #dev.off() # Close pdf file ( very important )
 ```
 
-Mixture modeling to select samples
+Mixture Modeling to Select Cells
 ===
 
-- Uses an EM algorithm optimizing the number of gaussian distributions
-- Works directly off of the ordination
-- Only as good as the ordination
-- Sample ordination shows the strongest signals
+- Uses an EM algorithm optimizing the number of gaussian distributions.
+- Works directly off of the ordination.
+- Only as good as the ordination.
+- Cell ordination shows the strongest signals.
 - Really easy!
 
 ---
 
 ![mclust_description](images/mclust.pdf)
 
-mclust: Mixture modeling
+mclust: Mixture Modeling
 ===
 class:small-code
 
@@ -828,9 +901,9 @@ class:small-code
 #plot( mclust.results, what=c("classification") )
 ```
 
-mclust: Mixture modeling
+mclust: Mixture Modeling
 ===
-class:midcenter
+class:small-code
 
 ```{r, echo=FALSE}
 ## Start with our first two dimensions
@@ -841,8 +914,9 @@ class:midcenter
 #plot( mclust.results, what=c("classification") )
 ```
 
-Supervised vs unsupervised
+Supervised vs Unsupervised
 ===
+class:small-code
 
 ```{r, echo=FALSE}
 #plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, xlab=paste("PC1 (",pca.var[1],")"), ylab=paste("PC2 (",pca.var[2],")"), main="Standard PCA", col=sample.colors)

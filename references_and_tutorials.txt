@@ -19,6 +19,25 @@ http://www.ncbi.nlm.nih.gov/pubmed/23441817
 Single-cell transcriptomics reveals bimodlity in expression and splicing in immune cells.
 http://www.nature.com/nature/journal/v498/n7453/full/nature12172.html
 
+Tools:
+-----
+
+Diffusion Maps
+
+
+Monocle
+http://bioconductor.org/packages/release/bioc/html/monocle.html
+
+RaceID
+
+
+SCDE
+http://pklab.med.harvard.edu/scde/index.html
+
+Seurat
+http://www.satijalab.org/seurat.html
+
+
 Images
 ------
 PCA-

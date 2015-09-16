@@ -81,18 +81,28 @@ plot.quantiles <- function(
 }
 
 ###########################################
-# Normalization methods
+# Data QC and Normalization methods
 ###########################################
 
+func_filter_by_occurence <- function(
+df_data,
+d_min_value,
+d_min_occurence
+){
+  vctr_f_keep = apply( df_data, 1, function( x ){ return( length( which( x >= d_min_value ) ) >= d_min_occurence ) } )
+  return( df_data[ vctr_f_keep,] )
+}
 
-func_cpm <- function(
+func_cpx <- function(
 ### Normalize counts to counts per million
 ### Normalizes within columns
 df_data,
 ### Count data to be transformed
 ...
 ){
-  return( t( t( df_data )/colSums( df_data ) ) * 1e6 )
+  d_median_medians = median( apply( df_data, 2, median ) )
+  d_magnitude = as.integer(paste( c(c( "1"), rep( "0", nchar(as.character(d_median_medians)))),collapse=""))
+  return( log2( ( func_tss( df_data ) * d_magnitude ) + 1 ))
 }
 
 
@@ -106,42 +116,69 @@ df_data,
   return( sweep( df_data, 2, colSums( df_data), "/" ) )
 }
 
-
-func_upper_quartile <- function(
-### Normalize values using the upper quartile value
-### http://vinaykmittal.blogspot.com/2013/10/fpkmrpkm-normalization-caveat-and-upper.html
-df_data,
-### Count data to be transformed
-f_scale = FALSE,
-...
+func_plot_saturation_curve <- function( 
+vctr_values,
+i_depth_increment,
+d_max_depth = NA,
+i_iterations = 10
 ){
-  loginfo( "Upper quartile normalization" )
-
-  df_normalized = df_data
-
-  # Remove transcripts / genes/ rows that have 0 expression in all samples
-  vctr_zero_rows = which( apply( df_data, 1, sum ) == 0 )
-  if( length( vctr_zero_rows ) )
-  {
-    df_normalized = df_normalized[ -1 * vctr_zero_rows, ]
+  # Set up a population to sample from
+  vctr_i_population = c()
+  for( i_values in 1:length(vctr_values) ){
+    vctr_i_population = c(vctr_i_population, rep(i_values, vctr_values[i_values] ) )
   }
-
-  # For each column / sample find the 75th percentile value (upper quartile)
-  vctr_upper_quartile = apply( df_normalized, 2, quantile, probs = c(0.75) ) 
-
-  # Divide all the expression values by the upper quartile
-  df_normalized = sweep( df_normalized, MARGIN = 2, vctr_upper_quartile, "/" ) 
-
-  # Optionally scale all the values by the mean of the 75th percentile quartiles
-  # To increase very low values created by the normalization
-  if( f_scale )
-  {
-    return( df_normalized * mean( vctr_upper_quartile ) )
+  vctr_bootstrapped_genes_expressed = c()
+  
+  # If max depth is not given, use the sum of the values
+  if( is.na( d_max_depth )){
+    d_max_depth = as.integer(sum( vctr_values ))
   }
-
-  return( df_normalized )
+  
+  # Increment can not be bigger than the max depth given
+  i_depth_increment = min(i_depth_increment, d_max_depth)
+  
+  # Set sequencing of depths sampled
+  vctr_d_depths = seq( i_depth_increment, d_max_depth, i_depth_increment )
+  
+  # For each depth increment
+  for( d_depth in vctr_d_depths )
+  {
+    vctr_exprs_genes = c()
+    for( i_iter in 1:i_iterations )
+    {
+      # Bootstrap the counts
+      # Count how many genes express
+      vctr_exprs_genes = c( length( unique( sample( vctr_i_population, d_depth, replace = TRUE ))), vctr_exprs_genes )
+    }
+    vctr_bootstrapped_genes_expressed = c( vctr_bootstrapped_genes_expressed, mean(vctr_exprs_genes) )
+  }
+  # Add Zero, zero to anchor plot
+  vctr_d_depths=c(0,vctr_d_depths)
+  vctr_bootstrapped_genes_expressed=c(0,vctr_bootstrapped_genes_expressed)
+  # Plot
+  plot( vctr_d_depths, vctr_bootstrapped_genes_expressed, 
+        main="Saturation Curve", xlab="Depth", ylab="Genes Detected",
+        pch=16, col="#0000ff55")
 }
 
+plot.cell.complexity <- function(
+  ### This is only a demonstration of how outlier samples can be identified by complexity.
+  ### Plot cell complexity and identify outliers
+  vctr_values,
+  ### Cell complexity
+  ...
+){
+  barplot( sort( vctr_values ) )
+  bx.qt = as.integer( boxplot( vctr_values, plot=FALSE )$stats )
+  abline( h=bx.qt[1], col="orange" )
+  abline( h=bx.qt[2], col="purple" )
+  abline( h=bx.qt[3], col="purple" )
+  abline( h=bx.qt[4], col="purple" )
+  abline( h=bx.qt[5], col="orange" )
+  lower.outlier = which( vctr_values <= bx.qt[1] )
+  higher.outlier = which( vctr_values >= bx.qt[5] )
+  return( c( lower.outlier, higher.outlier ) )
+}
 
 ###########################################
 # Unsupervised ordination
@@ -306,47 +343,30 @@ vctr_factors
   return( list( vctr_grouping_colors = vctr_grouping_colors, vctr_levels = vctr_levels, vctr_colors = vctr_colors ) )
 }
 
+#####################################
+# Seurat Associated
+#####################################
 
-#############################
-# Distance metrics
-#############################
-
-reciprocal_weighting <- function(
-x,
-### Expected matrix (rows as feature)
-groups = NULL,
-### Groupings of data
-k = 0.95,
-### Max value
-n.cores = 1
-### Number of cores to run on
+read.into.seurat <- function(
+  str_data_file,
+  ...
 ){
-  # Fit error model
-  o.ifm <- scde.error.models( counts=x, groups=groups, n.cores=n.cores, threshold.segmentation=TRUE, save.crossfit.plots=FALSE, save.model.plots=FALSE, verbose=1 )
-  # Filter out poor fits
-  o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
+  # Read table
+  nbt.data=read.table( str_data_file, ... )
+  # Log and add 1
+  nbt.data=log( nbt.data + 1 )
+  # Make Seurat data file
+  return( new( "seurat", raw.data=nbt.data ) )
+}
 
-  # Get expression maginitude estimates
-  o.fpm <- scde.expression.magnitude(o.ifm,counts=x)
-
-  # Get cell names to iterate through
-  cell.names = names( x )
-  require(boot)
-
-  # Make distance matrix
-  reciprocal.dist <- as.dist( 1 - do.call( rbind, mclapply( cell.names, function(nam1)
-  {
-    unlist(lapply(cell.names,function(nam2)
-    {
-      # Reciprocal probabilities
-      f1 <- scde.failure.probability( models=o.ifm[nam1,,drop=FALSE], magnitudes=o.fpm[ ,nam2 ])
-      f2 <- scde.failure.probability( models=o.ifm[nam2,,drop=FALSE], magnitudes=o.fpm[ ,nam1 ])
-      # Weight factor
-      pnf <- sqrt((1-f1)*(1-f2))*k +(1-k); 
-      boot::corr(log10(cbind(data[,nam1],data[,nam2])+1),w=pnf)
-    }))
-  },mc.cores=n.cores)),upper=FALSE)
-  return( reciprocal.dist )
+prep.pca.seurat <- function(
+  ### Wrapper function to simpily prep for PCA.
+  y.cutoff,
+  x.low.cutoff
+){
+  nbt=mean.var.plot(nbt,y.cutoff=y.cutoff,x.low.cutoff=x.low.cutoff,fxn.x = expMean,fxn.y = logVarDivMean,do.plot=FALSE)
+  nbt=pca(nbt,do.print=FALSE)
+  return( nbt )
 }
 
 #####################################
@@ -426,19 +446,4 @@ data.set,
 genes
 ){
   return( data.set[ row.names( subset(fData( data.set ), gene_short_name %in% genes ) ),] )
-}
-
-#####################################
-### Misc
-#####################################
-stick_breaking <- function(
-i_variance_count
-### Number of breaks
-){
-  vctr_break_distribution = c()
-  for( i_k_break in 1:i_variance_count )
-  {
-    vctr_break_distribution = c(vctr_break_distribution, (1/i_variance_count) * sum( 1 / ( i_k_break : i_variance_count ) ) )
-  }
-  return( vctr_break_distribution )
 }
