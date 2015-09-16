@@ -168,15 +168,12 @@ plot.cell.complexity <- function(
   ### Cell complexity
   ...
 ){
-  barplot( sort( vctr_values ) )
   bx.qt = as.integer( boxplot( vctr_values, plot=FALSE )$stats )
-  abline( h=bx.qt[1], col="orange" )
-  abline( h=bx.qt[2], col="purple" )
-  abline( h=bx.qt[3], col="purple" )
-  abline( h=bx.qt[4], col="purple" )
-  abline( h=bx.qt[5], col="orange" )
   lower.outlier = which( vctr_values <= bx.qt[1] )
   higher.outlier = which( vctr_values >= bx.qt[5] )
+  vioplot( genes.per.cell, rectCol="white", col="cyan", colMed="black", border="purple" )
+  stripchart( genes.per.cell, add=TRUE, vertical=TRUE, pch=21, jitter= .1, method="jitter")
+  title( main="Cell Complexity", xlab="Study", ylab="Cell Complexity" )
   return( c( lower.outlier, higher.outlier ) )
 }
 

@@ -66,18 +66,18 @@ library(cluster)
 library(mclust)
 library(flexmix)
 library(lattice)
-library(fpc)
 library(amap)
 library(RColorBrewer)
 library(locfit)
 library(Seurat)
+library(vioplot)
 ```
 
 Load Code
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE}
 # Source code
 source(file.path("src","Modules.R")) # Helper functions
 ```
@@ -85,9 +85,8 @@ source(file.path("src","Modules.R")) # Helper functions
 Briefly Single-cell Sequencing
 ===
 
-#TODO
-# UMI / RMT
-# Sequence breakdown
+[Drop Seq Video Abstract](http://www.sciencedirect.com/science/article/pii/S0092867415005498)
+![drop_seq](images/dropseq_1.jpg)
 
 Our First Data Set
 ===
@@ -102,7 +101,7 @@ Data: Ready, Get Set, Load!
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE}
 # Load tab delimited file
 data.set = read.delim( file.path("data","GSE29087_L139_updated.txt") )
 ```
@@ -119,7 +118,7 @@ What are Our Genes?
 ===
 class:small-code
 
-```{r,eval=FALSE}
+```{r,eval=FALSE,tidy=TRUE}
 rownames( data.set )
 ```
 
@@ -127,7 +126,7 @@ What are Our Genes?
 ===
 class:small-code
 
-```{r,echo=FALSE}
+```{r,echo=FALSE,tidy=TRUE}
 head( rownames( data.set ) )
 ```
 
@@ -135,7 +134,7 @@ What are Our Cells?
 ===
 class:small-code
 
-```{r,eval=FALSE}
+```{r,eval=FALSE,tidy=TRUE}
 colnames( data.set )
 ```
 
@@ -143,7 +142,7 @@ What are Our Cells?
 ===
 class:small-code
 
-```{r, echo=FALSE}
+```{r, echo=FALSE,tidy=TRUE}
 head( colnames( data.set ) )
 ```
 
@@ -151,7 +150,7 @@ How Many Expressed Genes (Complexity)?
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE,tidy=TRUE}
 # Plot genes per cell
 # ( how many genes express )
 genes.per.cell <- apply( data.set, 2, function(x) sum( x>0 ))
@@ -161,7 +160,7 @@ How Many Expressed Genes (Complexity)?
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE,fig.align="center"}
 cell.outlier = plot.cell.complexity( genes.per.cell )
 ```
 
@@ -172,7 +171,7 @@ class:small-code
 - Cells that are unusually simple (or no expression)
 - Cells that are unusually complex
 
-```{r}
+```{r,tidy=TRUE}
 cell.outlier
 
 # Remove outlier cells
@@ -194,7 +193,7 @@ Genes Have Different Distributions
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE,fig.align="center"}
 plot.quantiles( data.set ) 
 ```
 
@@ -202,7 +201,7 @@ Filter Genes: Using Prevalence
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE}
 # Remove low expressing genes
 data.cleaned <- func_filter_by_occurence( data.set, 10, 10 )
 ```
@@ -218,7 +217,7 @@ Normalizing for Cell Sequencing Depth
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE}
 data.cleaned.norm <- func_cpx( data.cleaned )
 ```
 - Some perform TMM normalization afterwards.
@@ -234,9 +233,20 @@ Plotting Sequencing Saturation of a Cell
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE,fig.align="center"}
 func_plot_saturation_curve( data.cleaned[,1], 1000 )
 ```
+
+Summary: of the Data
+===
+
+- We are still understanding scData and how to apply it.
+  - Not normal.
+  - Zero-inflated.
+  - Very noisey.
+  - Vary in library complexity.
+- Keeping these characteristics in analysis assumptions.
+
 
 Quality Control in scData
 ===
@@ -247,7 +257,7 @@ Loading Data into Seurat
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE}
 nbt=read.into.seurat(file.path("data","HiSeq301_RSEM_linear_values.txt"),sep="\t",header=TRUE,row.names=1)
 nbt=setup(nbt,project="NBT",min.cells = 3,names.field = 2,names.delim = "_",min.genes = 1000,is.expr=1)
 ```
@@ -257,7 +267,7 @@ Quality Control in scData
 class:small-code
 
 - Check the identity of the cells!!!
-```{r,eval=FALSE}
+```{r,eval=FALSE,tidy=TRUE}
 vlnPlot( nbt, c("DPPA4") )
 ```
 
@@ -267,7 +277,7 @@ class:small-code
 
 - Check the identity of the cells!!!
 
-```{r,echo=FALSE}
+```{r,echo=FALSE,tidy=TRUE,fig.align="center"}
 vlnPlot( nbt, c("DPPA4") )
 ```
 
@@ -275,7 +285,7 @@ Viewing Genes vs Genes
 ===
 class:small-code
 
-```{r,eval=FALSE}
+```{r,eval=FALSE,tidy=TRUE,fig.align="center"}
 cellPlot(nbt,nbt@cell.names[1],nbt@cell.names[2],do.ident = FALSE)
 ```
 
@@ -283,7 +293,7 @@ Viewing Genes vs Genes
 ===
 class:small-code
 
-```{r,echo=FALSE}
+```{r,echo=FALSE,tidy=TRUE,fig.align="center"}
 genePlot(nbt,"SOX11","BCL11A",cex.use = 1)
 ```
 
@@ -291,7 +301,7 @@ Viewing Cells vs Cells
 ===
 class:small-code
 
-```{r,eval=FALSE}
+```{r,eval=FALSE,tidy=TRUE,fig.align="center"}
 cellPlot(nbt,nbt@cell.names[3],nbt@cell.names[4],do.ident = FALSE)
 ```
 
@@ -299,7 +309,7 @@ Viewing Cells vs Cells
 ===
 class:small-code
 
-```{r,echo=FALSE}
+```{r,echo=FALSE,tidy=TRUE,fig.align="center"}
 cellPlot(nbt,nbt@cell.names[3],nbt@cell.names[4],do.ident = FALSE)
 ```
 
@@ -343,7 +353,7 @@ PCA using Seurat
 ===
 class:small-code
 
-```{r, eval=FALSE}
+```{r, eval=FALSE,tidy=TRUE,fig.align="center"}
 nbt=prep.pca.seurat( y.cutoff = 2,x.low.cutoff = 2 )
 pca.plot(nbt,1,2,pt.size = 3)
 ```
@@ -352,7 +362,7 @@ PCA using Seurat
 ===
 class:small-code
 
-```{r, echo=FALSE}
+```{r, echo=FALSE,tidy=TRUE,fig.align="center"}
 nbt=prep.pca.seurat( y.cutoff = 2,x.low.cutoff = 2 )
 pca.plot(nbt,1,2,pt.size = 3)
 ```
@@ -361,7 +371,7 @@ Identifying Genes Contributing to Components
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE,fig.align="center"}
 print.pca(nbt,1)
 ```
 
@@ -369,7 +379,7 @@ Identifying Genes Contributing to Components
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE,fig.align="center"}
 viz.pca(nbt,1:2)
 ```
 
@@ -380,7 +390,7 @@ tSNE using Seurat
 ===
 class:small-code
 
-```{r,eval=FALSE}
+```{r,eval=FALSE,tidy=TRUE,fig.align="center"}
 nbt=run_tsne(nbt,dims.use = 1:11,max_iter=2000)
 tsne.plot(nbt,pt.size = 3)
 ```
@@ -389,7 +399,7 @@ tSNE using Seurat
 ===
 class:small-code
 
-```{r,echo=FALSE}
+```{r,echo=FALSE,tidy=TRUE,fig.align="center"}
 nbt=run_tsne(nbt,dims.use = 1:11,max_iter=2000)
 tsne.plot(nbt,pt.size = 3)
 ```
@@ -398,13 +408,13 @@ tSNE: PCA & tSNE side by side
 ===
 class:small-code
 
-```{r,echo=FALSE}
+```{r,echo=FALSE,tidy=TRUE}
 pca.plot(nbt,1,2,pt.size = 3)
 ```
 
 ---
 
-```{r,echo=FALSE}
+```{r,echo=FALSE,tidy=TRUE}
 tsne.plot(nbt,pt.size = 3)
 ```
 
@@ -412,7 +422,7 @@ QC the Clusters!
 ===
 class:small-code
 
-```{r,eval=FALSE}
+```{r,eval=FALSE,tidy=TRUE}
 pca.plot(nbt,1,2,pt.size = 3,group.by="nGene")
 tsne.plot(nbt,pt.size = 3,group.by="nGene")
 ```
@@ -421,13 +431,13 @@ QC the Clusters!
 ===
 class:small-code
 
-```{r,echo=FALSE}
+```{r,echo=FALSE,tidy=TRUE}
 pca.plot(nbt,1,2,pt.size = 3,group.by="nGene")
 ```
 
 ---
 
-```{r,echo=FALSE}
+```{r,echo=FALSE,tidy=TRUE}
 tsne.plot(nbt,pt.size = 3,group.by="nGene")
 ```
 
@@ -435,7 +445,7 @@ Defining Clusters from PCA or TSNE
 ===
 
 - Density based clustering.
-```{r,eval=FALSE}
+```{r,eval=FALSE,tidy=TRUE,fig.align="center"}
 nbt=DBclust_dimension(nbt,1,2,reduction.use="tsne", G.use=8,set.ident=TRUE)
 nbt=buildClusterTree(nbt,do.reorder=TRUE,reorder.numeric=TRUE,pcs.use=1:11,do.plot=FALSE)
 tsne.plot(nbt,do.label=TRUE,label.pt.size=0.5)
@@ -444,17 +454,11 @@ tsne.plot(nbt,do.label=TRUE,label.pt.size=0.5)
 Defining Clusters from PCA or TSNE
 ===
 
-```{r, echo=FALSE}
+```{r, echo=FALSE,tidy=TRUE,fig.align="center"}
 nbt=DBclust_dimension(nbt,1,2,reduction.use="tsne", G.use=8,set.ident=TRUE)
 nbt=buildClusterTree(nbt,do.reorder=TRUE,reorder.numeric=TRUE,pcs.use=1:11,do.plot=FALSE)
 tsne.plot(nbt,do.label=TRUE,label.pt.size=0.5)
 ```
-
-Seurat: What Did We Miss?
-===
-
-- Data imputation
-- Spatial Inference
 
 Differential Expression in Defined Groups
 ===
@@ -482,7 +486,7 @@ SCDE: in Code
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE}
 ## Setting up cells groups
 ## Get groupings
 #data.groups <- rep( NA, ncol( data.cleaned ) )
@@ -495,7 +499,7 @@ SCDE: in Code
 ===
 class:small-code
 
-```{r, eval=FALSE}
+```{r, eval=FALSE,tidy=TRUE}
 #library(scde)
 
 ## Calculate error models
@@ -509,23 +513,13 @@ SCDE: in Code
 ===
 class:small-code
 
-```{r, eval=FALSE}
+```{r, eval=FALSE,tidy=TRUE}
 ## Set up the Prior (starting value)
 #o.prior <- scde.expression.prior(models=o.ifm,counts=as.matrix( data.cleaned ), length.out=400,show.plot=FALSE)
 
 ## Perform T-test like analysis
 #ediff <- scde.expression.difference(o.ifm,as.matrix(data.cleaned), o.prior,groups=data.groups,n.randomizations=100, n.cores=1,verbose=1)
 #write.table(ediff[order(abs(ediff$Z),decreasing=T),], file="scde_results.txt",row.names=T,col.names=T, sep="\t",quote=F)
-```
-
-Visualize Differentially Expressed Genes
-===
-class:small-code
-
-```{r}
-## Read in results
-#scde.results.de <- read.delim( "scde_results.txt", row.names=1 )
-#head( scde.results.de )
 ```
 
 Visualize Differentially Expressed Genes
@@ -541,34 +535,11 @@ Visualize Differentially Expressed Genes
 
 ![scde_output](images/scde_output.png)
 
-Visualize Differentially Expressed Genes
-===
-class:small-code
-
-Let's plot the top 100 DE genes.
- 
-```{r, eval=FALSE}
-## Get top genes
-#top.de.genes <- rownames( scde.results.de )[ 1:100 ]
- 
-## Visualize in heatmap
-#heatmap( log2( data.cleaned[ top.de.genes,] + 1 ), vctr_grouping=data.groups )
-```
- 
-Visualize Differentially Expressed Genes
-===
-class:small-code
-
-```{r, eval=FALSE}
-#top.de.genes <- rownames( scde.results.de )[ 1:100 ]
-#heatmap( log2( data.cleaned[ top.de.genes,] + 1 ), vctr_grouping = data.groups )
-```
-
 RaceID: Detecting Rare Cell Populations
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE,fig.align="center"}
 source(file.path("src","RaceID_class.R"))
 # Load tutorial data
 race.in <-read.csv(file.path("data","transcript_counts_intestine.xls"), sep="\t", header=TRUE)
@@ -583,7 +554,7 @@ RaceID: Detecting Rare Cell Populations
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE,fig.align="center"}
 plotgap(race.data)
 ```
 
@@ -591,7 +562,7 @@ RaceID: Detecting Rare Cell Populations
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE}
 race.data <- findoutliers( race.data, outminc=5, outlg=2,probthr=1e-3,thr=2**-(1:40),outdistquant=.75)
 race.data <- comptsne( race.data,rseed=15555 )
 ```
@@ -600,7 +571,7 @@ RaceID: Detecting Rare Cell Populations
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE,fig.align="center"}
 plottsne( race.data, final=FALSE )
 ```
 
@@ -608,7 +579,7 @@ RaceID: Detecting Rare Cell Populations
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE,fig.align="center"}
 plottsne( race.data, final=TRUE )
 ```
 
@@ -616,7 +587,7 @@ RaceID: Detecting Rare Cell Populations
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE,fig.align="center"}
 target.genes <- c("Apoa1__chr9", "Apoa1bp__chr3", "Apoa2__chr1", "Apoa4__chr9", "Apoa5__chr9")
 plotexptsne( race.data, target.genes )
 ```
@@ -625,15 +596,9 @@ RaceID: Detecting Rare Cell Populations
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE,fig.align="center"}
 plotsymbolstsne( race.data, type=sub("\\_\\d+$","",names(race.data@ndata)))
 ```
-
-RaceIDs: Leftovers
-===
-
-- Alternative methods to evaluating clusters.
-- Differential Expression between clusters.
 
 Time-series Analysis: Monocle
 ===
@@ -669,7 +634,7 @@ Needed files -
 - Cell Phenotype Metadata ( Cells (row) x Metadatum (col) ) .
 - Gene Metadata ( Genes (row) x Medatatum (col) ) .
 
-```{r}
+```{r,tidy=TRUE}
 # Do not run (For later)
 # monocle.data <- make_cell_data_set( expression_file="monocle_exprs.txt", cell_phenotype_file="monocle_cell_meta.txt", gene_metadata_file="monocle_gene_meta.txt" )
 
@@ -681,7 +646,7 @@ Filter Genes
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE}
 # Require a minimun of 0.1 expression
 monocle.data <- detectGenes( monocle.data, min_expr=0.1 )
 
@@ -698,7 +663,7 @@ Confirm the Log-Normal Assumption
 ===
 class:small-code
 
-```{r}
+```{r,tidy=TRUE,fig.align="center"}
 plot_log_normal_monocle( monocle.data )
 ```
 
@@ -706,7 +671,7 @@ Ordering by Expression: Study View
 ===
 class:small-code
 
-```{r,eval=FALSE}
+```{r,eval=FALSE,tidy=TRUE}
 # Marker genes of biological interest
 marker.genes <- get_monocle_presentation_marker_genes()
 # Select from those marker genes those important to the study
@@ -724,7 +689,7 @@ Ordering by Expression: Study View
 ===
 class:small-code
 
-```{r,echo=FALSE}
+```{r,echo=FALSE,tidy=TRUE,fig.align="center"}
 # Marker genes that are differentially expressed
 source(file.path("src","Modules.R")) 
 marker.genes <- get_monocle_presentation_marker_genes()
@@ -741,7 +706,7 @@ Ordering by Expression: Gene View
 ===
 class:small-code
 
-```{r, eval=FALSE}
+```{r, eval=FALSE,tidy=TRUE,fig.align="center"}
 monocle.data.diff.states <- monocle.data[ monocle.expr.genes, pData( monocle.data)$State != 3]
 # TODO subset is not generic, needs gene_short_name attr
 subset.for.plot <- subset_to_genes( monocle.data.diff.states, c("CDK1","MEF2C", "MYH3") )
@@ -753,7 +718,7 @@ Ordering by Expression: Gene View
 ===
 class:small-code
 
-```{r,echo=FALSE}
+```{r,echo=FALSE,tidy=TRUE,fig.align="center"}
 monocle.data.diff.states <- monocle.data[ monocle.expr.genes, pData( monocle.data)$State != 3]
 # TODO subset is not generic, needs gene_short_name attr
 subset.for.plot <- subset_to_genes( monocle.data.diff.states, c("CDK1","MEF2C", "MYH3") )
@@ -765,7 +730,7 @@ Genes Which Follow an Assumed Temporal Pattern
 ===
 class:small-code
 
-```{r,eval=FALSE}
+```{r,eval=FALSE,tidy=TRUE,fig.align="center"}
 # Get genes of interest
 subset.pseudo <- subset_to_genes( monocle.data, c("MYH3","MEF2C","CCNB2","TNNT1"))
 subset.pseudo <- subset.pseudo[,pData(subset.pseudo)$State != 3 ]
@@ -777,7 +742,7 @@ Genes Which Follow an Assumed Temporal Pattern
 ===
 class:small-code
 
-```{r,echo=FALSE}
+```{r,echo=FALSE,tidy=TRUE,fig.align="center"}
 # Get genes of interest
 subset.pseudo <- subset_to_genes( monocle.data, c("MYH3","MEF2C","CCNB2","TNNT1"))
 subset.pseudo <- subset.pseudo[,pData(subset.pseudo)$State != 3 ]
@@ -785,16 +750,6 @@ subset.pseudo.diff <- differentialGeneTest( subset.pseudo, fullModelFormulaStr="
 plot_genes_in_pseudotime( subset.pseudo, color_by="Hours")
 ```
 
-Monocle Leftovers
-===
-
-- Other methodology.
- - Simple Differential Expression.
-     - Finding genes that distiguish cell state.
- - Multifactorial Differential Expression.
-     - Account for confounders.
- - Clustering genes by pseudotime.
- 
 Diffusion Maps
 ===
 
@@ -817,15 +772,20 @@ Where Do We Go?
     - GSEABase.
 - GenePattern workshop.
 
-Summary: of the Data
+What Did We Miss?
 ===
 
-- We are still understanding scData and how to apply it.
-  - Not normal.
-  - Zero-inflated.
-  - Very noisey.
-  - Vary in library complexity.
-- Keeping these characteristics in analysis assumptions.
+- Seurat
+  - Data imputation and Spatial Inference.
+- SCDE
+  - Batch Effect Correction.
+- RaceIDs
+  - Alternative methods to evaluating clusters.
+  - Differential Expression between clusters.
+- Monocle Leftovers
+  - Simple Differential Expression.
+  - Multifactorial Differential Expression (batch effects).
+  - Clustering genes by pseudotime.
 
 Summary: of Today
 ===
@@ -865,65 +825,9 @@ class:small-code
 - Create a pdf file before you plot ( can plot multiple plots ).
 - Close the plotting.
 
-```{r}
+```{r,tidy=TRUE}
 #pdf( "data/my_file.pdf", useDingbats = FALSE ) # Start pdf
 #plot( 1:10, log(1:10 ) ) # plot in to the pdf file
 #plot( seq(0,.9,.1), sin(0:9) ) # another plot for the pdf file
 #dev.off() # Close pdf file ( very important )
-```
-
-Mixture Modeling to Select Cells
-===
-
-- Uses an EM algorithm optimizing the number of gaussian distributions.
-- Works directly off of the ordination.
-- Only as good as the ordination.
-- Cell ordination shows the strongest signals.
-- Really easy!
-
----
-
-![mclust_description](images/mclust.pdf)
-
-mclust: Mixture Modeling
-===
-class:small-code
-
-```{r, eval=FALSE}
-#library(mclust) # Load library
-## Start with our first two dimensions
-#mclust.results = Mclust(results.pca$rotation[,c(1:2)])
-
-## Get classification groups
-#mclust.groups = mclust.results$classification
-
-## Plot
-#plot( mclust.results, what=c("classification") )
-```
-
-mclust: Mixture Modeling
-===
-class:small-code
-
-```{r, echo=FALSE}
-## Start with our first two dimensions
-#mclust.results = Mclust(results.pca$rotation[,c(1:2)])
-
-## Get classification groups
-#mclust.groups = mclust.results$classification
-#plot( mclust.results, what=c("classification") )
-```
-
-Supervised vs Unsupervised
-===
-class:small-code
-
-```{r, echo=FALSE}
-#plot( results.pca$rotation[,1], results.pca$rotation[,2], pch=16, xlab=paste("PC1 (",pca.var[1],")"), ylab=paste("PC2 (",pca.var[2],")"), main="Standard PCA", col=sample.colors)
-```
-
----
-
-```{r, echo=FALSE}
-#plot( mclust.results, what=c("classification") )
 ```
