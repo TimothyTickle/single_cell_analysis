@@ -70,6 +70,7 @@ library(RColorBrewer)
 library(locfit)
 library(Seurat)
 library(vioplot)
+# library(scde)
 ```
 
 Load Code
@@ -235,8 +236,12 @@ Normalization in scData
 ===
 
 - Lack of publications / annecdotal .
-- Log( Count / cell sum * median magnitude ) + 1 .
-- Median magnitude = Median of cell medians .
+- $CPX = Log( Count / cell sum * median\_magnitude ) + 1$.
+- Median_magnitude = A magnitude more than the median of cell medians .
+  - Cell Medians = 6024, Median magnitude = 10000
+- Can also use TPX
+  - Use RSEM for TPM
+  - $TPM * 10^{6}/median\_mgnitude$
 
 Normalizing for Cell Sequencing Depth
 ===
@@ -275,12 +280,6 @@ Summary: of the Data
   - Very noisey.
   - Vary in library complexity.
 - Keeping these characteristics in analysis assumptions.
-
-
-Quality Control in scData
-===
-
-#TODO Izzary paper
 
 Loading Data into Seurat
 ===
@@ -428,8 +427,20 @@ viz.pca(nbt, 1:2)
 
 <img src="single_cell_analysis-figure/unnamed-chunk-25-1.png" title="plot of chunk unnamed-chunk-25" alt="plot of chunk unnamed-chunk-25" style="display: block; margin: auto;" />
 
+tSNE: Nonlinear Dimensional Reduction
+===
+
+![tsne](images/cell_cycle_1.png)
+
+tSNE: Nonlinear Dimensional Reduction
+===
+
+![tsne](images/cell_cycle.png)
+
 tSNE: What and Why?
 ===
+
+![tsne](images/tsne.png)
 
 tSNE using Seurat
 ===
@@ -456,6 +467,11 @@ class:small-code
 ---
 
 ![plot of chunk unnamed-chunk-29](single_cell_analysis-figure/unnamed-chunk-29-1.png) 
+
+Quality Control in scData
+===
+
+![batch_effects](images/batch_effects.png)
 
 QC the Clusters!
 ===
@@ -494,15 +510,6 @@ Defining Clusters from PCA or TSNE
 
 <img src="single_cell_analysis-figure/unnamed-chunk-34-1.png" title="plot of chunk unnamed-chunk-34" alt="plot of chunk unnamed-chunk-34" style="display: block; margin: auto;" />
 
-Differential Expression in Defined Groups
-===
-
-- Biomarker discovery.
-- What are current options?
- - ROC / T-test / LRT / Tobit-censored LRT tests ( Seurat ).
- - ( Monocle ).
- - SCDE ( Single-Cell Differential Expression ).
-
 SCDE: in Quick Theory
 ===
 
@@ -536,9 +543,10 @@ class:small-code
 ```r
 # library(scde)
 
-## Calculate error models o.ifm <- scde.error.models( as.matrix( data.cleaned
-## ), groups = data.groups, n.cores=3, threshold.segmentation=TRUE,
-## save.crossfit.plot=FALSE, save.model.plots=FALSE, verbose=1 )
+## Calculate error models (Takes time) o.ifm <- scde.error.models( as.matrix(
+## data.cleaned ), groups = data.groups, n.cores=3,
+## threshold.segmentation=TRUE, save.crossfit.plot=FALSE,
+## save.model.plots=FALSE, verbose=1 )
 
 ## Filter out cell (QC) o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
 ```
@@ -572,6 +580,15 @@ Visualize Differentially Expressed Genes
 ---
 
 ![scde_output](images/scde_output.png)
+
+RaceID: Detecting Rare Cell Populations
+===
+class:small-code
+
+- Large clusters are identifed with K-means clustering
+- Within each cluster a ploynomial is fit to measure outlier variance
+  - Negative binomial
+- New outlier clusters are made from the outlier cells
 
 RaceID: Detecting Rare Cell Populations
 ===
@@ -717,19 +734,10 @@ plotsymbolstsne(race.data, type = sub("\\_\\d+$", "", names(race.data@ndata)))
 Time-series Analysis: Monocle
 ===
 
-TODO: the methodology briefly
-
-What to Expect
-===
-
-TODO:Can we tie this into SCDE?
-- Read in and prepare data.
-- Filter and quality control.
-- Select genes of interest.
- - Literature or differential expression analysis.
-- Order cells by expression.
-- Run pseudotemporal analysis.
-
+Orders expression into Pseudotime
+  - Quantitative measurement of progress through a biological process
+![monocle](images/monocle.png)
+  
 Moncole's Assumptions
 ===
 
@@ -737,7 +745,7 @@ Moncole's Assumptions
  - Genes not splice variants.
  - Assumes a log normal distribution.
  - Does NOT normalize (library size, depth, technical batch).
- - Do NOT give it raw counts.
+ - Do NOT use raw counts.
 
 Read In and Format
 ===
@@ -858,18 +866,6 @@ Genes Which Follow an Assumed Temporal Pattern
 class:small-code
 
 <img src="single_cell_analysis-figure/unnamed-chunk-53-1.png" title="plot of chunk unnamed-chunk-53" alt="plot of chunk unnamed-chunk-53" style="display: block; margin: auto;" />
-
-Diffusion Maps
-===
-
-#TODO Add theory about diffusion maps.
-
-What Did We Find ?
-===
-
-- Unsupervised discovery of substructure.
-- Inference on known structure.
-- How do we connect this to biology?
 
 Where Do We Go?
 ===

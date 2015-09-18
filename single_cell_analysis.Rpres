@@ -71,6 +71,7 @@ library(RColorBrewer)
 library(locfit)
 library(Seurat)
 library(vioplot)
+#library(scde)
 ```
 
 Load Code
@@ -210,8 +211,12 @@ Normalization in scData
 ===
 
 - Lack of publications / annecdotal .
-- Log( Count / cell sum * median magnitude ) + 1 .
-- Median magnitude = Median of cell medians .
+- $CPX = Log( Count / cell sum * median\_magnitude ) + 1$.
+- Median_magnitude = A magnitude more than the median of cell medians .
+  - Cell Medians = 6024, Median magnitude = 10000
+- Can also use TPX
+  - Use RSEM for TPM
+  - $TPM * 10^{6}/median\_mgnitude$
 
 Normalizing for Cell Sequencing Depth
 ===
@@ -246,12 +251,6 @@ Summary: of the Data
   - Very noisey.
   - Vary in library complexity.
 - Keeping these characteristics in analysis assumptions.
-
-
-Quality Control in scData
-===
-
-#TODO Izzary paper
 
 Loading Data into Seurat
 ===
@@ -383,8 +382,20 @@ class:small-code
 viz.pca(nbt,1:2)
 ```
 
+tSNE: Nonlinear Dimensional Reduction
+===
+
+![tsne](images/cell_cycle_1.png)
+
+tSNE: Nonlinear Dimensional Reduction
+===
+
+![tsne](images/cell_cycle.png)
+
 tSNE: What and Why?
 ===
+
+![tsne](images/tsne.png)
 
 tSNE using Seurat
 ===
@@ -417,6 +428,11 @@ pca.plot(nbt,1,2,pt.size = 3)
 ```{r,echo=FALSE,tidy=TRUE}
 tsne.plot(nbt,pt.size = 3)
 ```
+
+Quality Control in scData
+===
+
+![batch_effects](images/batch_effects.png)
 
 QC the Clusters!
 ===
@@ -460,15 +476,6 @@ nbt=buildClusterTree(nbt,do.reorder=TRUE,reorder.numeric=TRUE,pcs.use=1:11,do.pl
 tsne.plot(nbt,do.label=TRUE,label.pt.size=0.5)
 ```
 
-Differential Expression in Defined Groups
-===
-
-- Biomarker discovery.
-- What are current options?
- - ROC / T-test / LRT / Tobit-censored LRT tests ( Seurat ).
- - ( Monocle ).
- - SCDE ( Single-Cell Differential Expression ).
-
 SCDE: in Quick Theory
 ===
 
@@ -489,10 +496,10 @@ class:small-code
 ```{r,tidy=TRUE}
 ## Setting up cells groups
 ## Get groupings
-#data.groups <- rep( NA, ncol( data.cleaned ) )
-#data.groups[ grep( "MEF", names( data.cleaned )) ] <- "MEF"
-#data.groups[ grep( "ES", names( data.cleaned )) ] <- "ES"
-#data.groups <- factor( data.groups, levels = c("ES","MEF") )
+# data.groups <- rep( NA, ncol( data.cleaned ) )
+# data.groups[ grep( "MEF", names( data.cleaned )) ] <- "MEF"
+# data.groups[ grep( "ES", names( data.cleaned )) ] <- "ES"
+# data.groups <- factor( data.groups, levels = c("ES","MEF") )
 ```
 
 SCDE: in Code
@@ -502,11 +509,11 @@ class:small-code
 ```{r, eval=FALSE,tidy=TRUE}
 #library(scde)
 
-## Calculate error models
-#o.ifm <- scde.error.models( as.matrix( data.cleaned ), groups = data.groups, n.cores=3, threshold.segmentation=TRUE, save.crossfit.plot=FALSE, save.model.plots=FALSE, verbose=1 )
+## Calculate error models (Takes time)
+# o.ifm <- scde.error.models( as.matrix( data.cleaned ), groups = data.groups, n.cores=3, threshold.segmentation=TRUE, save.crossfit.plot=FALSE, save.model.plots=FALSE, verbose=1 )
 
 ## Filter out cell (QC)
-#o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
+# o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
 ```
 
 SCDE: in Code
@@ -515,11 +522,11 @@ class:small-code
 
 ```{r, eval=FALSE,tidy=TRUE}
 ## Set up the Prior (starting value)
-#o.prior <- scde.expression.prior(models=o.ifm,counts=as.matrix( data.cleaned ), length.out=400,show.plot=FALSE)
+# o.prior <- scde.expression.prior(models=o.ifm,counts=as.matrix( data.cleaned ), length.out=400,show.plot=FALSE)
 
 ## Perform T-test like analysis
-#ediff <- scde.expression.difference(o.ifm,as.matrix(data.cleaned), o.prior,groups=data.groups,n.randomizations=100, n.cores=1,verbose=1)
-#write.table(ediff[order(abs(ediff$Z),decreasing=T),], file="scde_results.txt",row.names=T,col.names=T, sep="\t",quote=F)
+# ediff <- scde.expression.difference(o.ifm,as.matrix(data.cleaned), o.prior,groups=data.groups,n.randomizations=100, n.cores=1,verbose=1)
+# write.table(ediff[order(abs(ediff$Z),decreasing=T),], file="scde_results.txt",row.names=T,col.names=T, sep="\t",quote=F)
 ```
 
 Visualize Differentially Expressed Genes
@@ -534,6 +541,15 @@ Visualize Differentially Expressed Genes
 ---
 
 ![scde_output](images/scde_output.png)
+
+RaceID: Detecting Rare Cell Populations
+===
+class:small-code
+
+- Large clusters are identifed with K-means clustering
+- Within each cluster a ploynomial is fit to measure outlier variance
+  - Negative binomial
+- New outlier clusters are made from the outlier cells
 
 RaceID: Detecting Rare Cell Populations
 ===
@@ -603,19 +619,10 @@ plotsymbolstsne( race.data, type=sub("\\_\\d+$","",names(race.data@ndata)))
 Time-series Analysis: Monocle
 ===
 
-TODO: the methodology briefly
-
-What to Expect
-===
-
-TODO:Can we tie this into SCDE?
-- Read in and prepare data.
-- Filter and quality control.
-- Select genes of interest.
- - Literature or differential expression analysis.
-- Order cells by expression.
-- Run pseudotemporal analysis.
-
+Orders expression into Pseudotime
+  - Quantitative measurement of progress through a biological process
+![monocle](images/monocle.png)
+  
 Moncole's Assumptions
 ===
 
@@ -623,7 +630,7 @@ Moncole's Assumptions
  - Genes not splice variants.
  - Assumes a log normal distribution.
  - Does NOT normalize (library size, depth, technical batch).
- - Do NOT give it raw counts.
+ - Do NOT use raw counts.
 
 Read In and Format
 ===
@@ -749,18 +756,6 @@ subset.pseudo <- subset.pseudo[,pData(subset.pseudo)$State != 3 ]
 subset.pseudo.diff <- differentialGeneTest( subset.pseudo, fullModelFormulaStr="expression~sm.ns(Pseudotime)")
 plot_genes_in_pseudotime( subset.pseudo, color_by="Hours")
 ```
-
-Diffusion Maps
-===
-
-#TODO Add theory about diffusion maps.
-
-What Did We Find ?
-===
-
-- Unsupervised discovery of substructure.
-- Inference on known structure.
-- How do we connect this to biology?
 
 Where Do We Go?
 ===
