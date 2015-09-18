@@ -149,7 +149,7 @@ print.pca(nbt, 1)
 viz.pca(nbt, 1:2)
 
 
-#tSNE using Seurat
+#t-SNE using Seurat
 #===
  
 # Run the t-SNE alogirthm
@@ -311,12 +311,10 @@ plot_spanning_tree(monocle.data)
 #===
  
 # Gene genes of interest in states 1 and 2
-monocle.data.diff.states <- monocle.data[monocle.expr.genes, pData(monocle.data)$State != 
-    3]
+monocle.data.diff.states <- monocle.data[monocle.expr.genes, pData(monocle.data)$State != 3]
 
 # Look at a subset of genes
-subset.for.plot <- subset_to_genes(monocle.data.diff.states, c("CDK1", "MEF2C", 
-    "MYH3"))
+subset.for.plot <- subset_to_genes(monocle.data.diff.states, c("CDK1", "MEF2C", "MYH3"))
 
 # Plot in pseudotime
 plot_genes_in_pseudotime(subset.for.plot, color_by = "Hours")
