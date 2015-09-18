@@ -390,6 +390,15 @@ gene_metadata_file
 }
 
 get_monocle_presentation_data <- function(){
+  data( HSMM_expr_matrix )
+  data( HSMM_gene_annotation )
+  data( HSMM_sample_sheet )
+  monocle.pheno <- new( "AnnotatedDataFrame", data=HSMM_sample_sheet )
+  monocle.feature.data <- new( "AnnotatedDataFrame", data=HSMM_gene_annotation )
+  return( newCellDataSet( as.matrix(HSMM_expr_matrix), phenoData=monocle.pheno, featureData=monocle.feature.data ) )
+}
+
+get_monocle_presentation_file <- function(){
   HSMM_expr_matrix = read.table( file.path( "data","hsmm_expr_matrix.txt" ) )
   HSMM_gene_annotation = read.table( file.path( "data", "hsmm_gene_annotation.txt" ))
   HSMM_sample_sheet = read.table( file.path( "data", "hsmm_sample_sheet.txt" ) )
