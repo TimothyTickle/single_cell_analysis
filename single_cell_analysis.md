@@ -54,23 +54,10 @@ class:small-code
 
 ```r
 # Load libraries
-library(fpc)  # Density based clustering dbscan
-library(gplots)  # Colorpanel
-library(scatterplot3d)  # 3D plotting
-library(monocle)
-library(tsne)  # Non-linear ordination
-library(pheatmap)
-library(MASS)
-library(cluster)
-library(mclust)
-library(flexmix)
-library(lattice)
-library(amap)
-library(RColorBrewer)
-library(locfit)
-library(Seurat)
-library(vioplot)
-# library(scde)
+library(vioplot) # violin plots
+library(Seurat) # Data Basics, QC, Spatial
+#library(scde) # Differential Expression
+library(monocle) # Pseudotemporal analysis
 ```
 
 Load Code
@@ -79,8 +66,8 @@ class:small-code
 
 
 ```r
-# Source code
-source(file.path("src", "Modules.R"))  # Helper functions
+# Source code Helper functions
+source(file.path("src", "Modules.R"))
 ```
 
 Briefly Single-cell Sequencing
@@ -122,6 +109,7 @@ class:small-code
 
 
 ```r
+# Gene names (row names)
 rownames(data.set)
 ```
 
@@ -141,7 +129,9 @@ class:small-code
 
 
 ```r
-colnames(data.set)
+# Column names
+# Sample / Cell names
+colnames( data.set )
 ```
 
 What are Our Cells?
@@ -159,8 +149,9 @@ class:small-code
 
 
 ```r
-# Plot genes per cell ( how many genes express )
-genes.per.cell <- apply(data.set, 2, function(x) sum(x > 0))
+# Plot genes per cell
+# How many genes express
+genes.per.cell <- apply( data.set, 2, function(x) sum( x>0 ))
 ```
 
 How Many Expressed Genes (Complexity)?
@@ -169,7 +160,8 @@ class:small-code
 
 
 ```r
-cell.outlier = plot.cell.complexity(genes.per.cell)
+# Each cell is a dot
+cell.outlier = plot.cell.complexity( genes.per.cell )
 ```
 
 <img src="single_cell_analysis-figure/unnamed-chunk-9-1.png" title="plot of chunk unnamed-chunk-9" alt="plot of chunk unnamed-chunk-9" style="display: block; margin: auto;" />
@@ -183,6 +175,7 @@ class:small-code
 
 
 ```r
+# Which outliers?
 cell.outlier
 ```
 
@@ -217,7 +210,9 @@ class:small-code
 
 
 ```r
-plot.quantiles(data.set)
+# Gene distribution through cells
+# By the gene's average expression (color)
+plot.quantiles( data.set ) 
 ```
 
 <img src="single_cell_analysis-figure/unnamed-chunk-11-1.png" title="plot of chunk unnamed-chunk-11" alt="plot of chunk unnamed-chunk-11" style="display: block; margin: auto;" />
@@ -229,7 +224,8 @@ class:small-code
 
 ```r
 # Remove low expressing genes
-data.cleaned <- func_filter_by_occurence(data.set, 10, 10)
+# Remove genes that do not have atleast 10 counts in 10 samples.
+data.cleaned <- func_filter_by_occurence( data.set, 10, 10 )
 ```
 
 Normalization in scData
@@ -241,7 +237,6 @@ Normalization in scData
   - Cell Medians = 6024, Median magnitude = 10000
 - Can also use TPX
   - Use RSEM for TPM
-  - $TPM * 10^{6}/median\_mgnitude$
 
 Normalizing for Cell Sequencing Depth
 ===
@@ -249,6 +244,7 @@ class:small-code
 
 
 ```r
+# Counts to CPX
 data.cleaned.norm <- func_cpx(data.cleaned)
 ```
 - Some perform TMM normalization afterwards.
@@ -287,8 +283,11 @@ class:small-code
 
 
 ```r
+# Read data in to Seurat
 nbt = read.into.seurat(file.path("data", "HiSeq301_RSEM_linear_values.txt"), 
     sep = "\t", header = TRUE, row.names = 1)
+
+# Sets up object, filters
 nbt = setup(nbt, project = "NBT", min.cells = 3, names.field = 2, names.delim = "_", 
     min.genes = 1000, is.expr = 1)
 ```
@@ -300,6 +299,7 @@ class:small-code
 - Check the identity of the cells!!!
 
 ```r
+# Plot gene expression throughout cell groups
 vlnPlot(nbt, c("DPPA4"))
 ```
 
@@ -317,6 +317,7 @@ class:small-code
 
 
 ```r
+# Plot a gene vs a gene
 cellPlot(nbt, nbt@cell.names[1], nbt@cell.names[2], do.ident = FALSE)
 ```
 
@@ -332,6 +333,7 @@ class:small-code
 
 
 ```r
+# Plot a cell vs a cell
 cellPlot(nbt, nbt@cell.names[3], nbt@cell.names[4], do.ident = FALSE)
 ```
 
@@ -383,7 +385,10 @@ class:small-code
 
 
 ```r
+# Prep data for PCA
 nbt = prep.pca.seurat(y.cutoff = 2, x.low.cutoff = 2)
+
+# Plot PCA
 pca.plot(nbt, 1, 2, pt.size = 3)
 ```
 
@@ -393,12 +398,13 @@ class:small-code
 
 <img src="single_cell_analysis-figure/unnamed-chunk-23-1.png" title="plot of chunk unnamed-chunk-23" alt="plot of chunk unnamed-chunk-23" style="display: block; margin: auto;" />
 
-Identifying Genes Contributing to Components
+Genes Contributing to Components
 ===
 class:small-code
 
 
 ```r
+# List driving PC1
 print.pca(nbt, 1)
 ```
 
@@ -416,12 +422,13 @@ print.pca(nbt, 1)
 [1] ""
 ```
 
-Identifying Genes Contributing to Components
+Genes Contributing to Components
 ===
 class:small-code
 
 
 ```r
+# View genes driving PC1
 viz.pca(nbt, 1:2)
 ```
 
@@ -448,7 +455,10 @@ class:small-code
 
 
 ```r
+# Run the t-SNE alogirthm
 nbt = run_tsne(nbt, dims.use = 1:11, max_iter = 2000)
+
+# Plot results
 tsne.plot(nbt, pt.size = 3)
 ```
 
@@ -479,7 +489,10 @@ class:small-code
 
 
 ```r
+# Paint PCA by complexity
 pca.plot(nbt, 1, 2, pt.size = 3, group.by = "nGene")
+
+# Paint the t-SNE by complexity
 tsne.plot(nbt, pt.size = 3, group.by = "nGene")
 ```
 
@@ -499,9 +512,14 @@ Defining Clusters from PCA or TSNE
 - Density based clustering.
 
 ```r
+# Perform clustering
 nbt = DBclust_dimension(nbt, 1, 2, reduction.use = "tsne", G.use = 8, set.ident = TRUE)
+
+# Identify groups
 nbt = buildClusterTree(nbt, do.reorder = TRUE, reorder.numeric = TRUE, pcs.use = 1:11, 
     do.plot = FALSE)
+
+# Plot
 tsne.plot(nbt, do.label = TRUE, label.pt.size = 0.5)
 ```
 
@@ -529,10 +547,12 @@ class:small-code
 
 
 ```r
-## Setting up cells groups Get groupings data.groups <- rep( NA, ncol(
-## data.cleaned ) ) data.groups[ grep( 'MEF', names( data.cleaned )) ] <-
-## 'MEF' data.groups[ grep( 'ES', names( data.cleaned )) ] <- 'ES'
-## data.groups <- factor( data.groups, levels = c('ES','MEF') )
+## Setting up cells groups
+
+# data.groups <- rep(NA, ncol(data.cleaned))
+# data.groups[ grep("MEF", names(data.cleaned)) ] <- "MEF"
+# data.groups[ grep("ES", names(data.cleaned)) ] <- "ES"
+# data.groups <- factor(data.groups, levels = c("ES","MEF"))
 ```
 
 SCDE: in Code
@@ -541,14 +561,13 @@ class:small-code
 
 
 ```r
-# library(scde)
+#library(scde)
 
-## Calculate error models (Takes time) o.ifm <- scde.error.models( as.matrix(
-## data.cleaned ), groups = data.groups, n.cores=3,
-## threshold.segmentation=TRUE, save.crossfit.plot=FALSE,
-## save.model.plots=FALSE, verbose=1 )
+## Calculate error models (Takes time)
+# o.ifm <- scde.error.models( as.matrix( data.cleaned ), groups = data.groups, n.cores=3, threshold.segmentation=TRUE, save.crossfit.plot=FALSE, save.model.plots=FALSE, verbose=1 )
 
-## Filter out cell (QC) o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
+## Filter out cell (QC)
+# o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
 ```
 
 SCDE: in Code
@@ -557,15 +576,13 @@ class:small-code
 
 
 ```r
-## Set up the Prior (starting value) o.prior <-
-## scde.expression.prior(models=o.ifm,counts=as.matrix( data.cleaned ),
-## length.out=400,show.plot=FALSE)
+## Set up the Prior (starting value)
+# o.prior <- scde.expression.prior(models=o.ifm, counts=as.matrix(data.cleaned),length.out=400, show.plot=FALSE)
 
-## Perform T-test like analysis ediff <-
-## scde.expression.difference(o.ifm,as.matrix(data.cleaned),
-## o.prior,groups=data.groups,n.randomizations=100, n.cores=1,verbose=1)
-## write.table(ediff[order(abs(ediff$Z),decreasing=T),],
-## file='scde_results.txt',row.names=T,col.names=T, sep='\t',quote=F)
+## Perform T-test like analysis
+# ediff <- scde.expression.difference(o.ifm, as.matrix(data.cleaned), o.prior, groups=data.groups, n.randomizations=100, n.cores=1,verbose=1)
+
+# write.table(ediff[order(abs(ediff$Z), decreasing=T),], file="scde_results.txt", row.names=T, col.names=T, sep="\t", quote=F)
 ```
 
 Visualize Differentially Expressed Genes
@@ -596,15 +613,30 @@ class:small-code
 
 
 ```r
+# Load code
 source(file.path("src", "RaceID_class.R"))
+
 # Load tutorial data
 race.in <- read.csv(file.path("data", "transcript_counts_intestine.xls"), sep = "\t", 
     header = TRUE)
+
+# Set up data
 rownames(race.in) <- race.in$GENEID
 race.in <- race.in[grep("ERCC", rownames(race.in), invert = TRUE), -1]
 race.data <- SCseq(race.in)
+```
+
+RaceID: Detecting Rare Cell Populations
+===
+class:small-code
+
+
+```r
+# Filter data
 race.data <- filterdata(race.data, mintotal = 3000, minexpr = 5, minnumber = 1, 
     maxexpr = 500, downsample = FALSE, dsn = 1, rseed = 17000)
+
+# Cluster data
 race.data <- clustexp(race.data, metric = "pearson", cln = 0, do.gap = TRUE, 
     clustnr = 20, B.gap = 50, SE.method = "Tibs2001SEmax", SE.factor = 0.25, 
     bootnr = 50, rseed = 17000)
@@ -669,10 +701,11 @@ class:small-code
 
 
 ```r
+# Check clusters
 plotgap(race.data)
 ```
 
-<img src="single_cell_analysis-figure/unnamed-chunk-39-1.png" title="plot of chunk unnamed-chunk-39" alt="plot of chunk unnamed-chunk-39" style="display: block; margin: auto;" />
+<img src="single_cell_analysis-figure/unnamed-chunk-40-1.png" title="plot of chunk unnamed-chunk-40" alt="plot of chunk unnamed-chunk-40" style="display: block; margin: auto;" />
 
 RaceID: Detecting Rare Cell Populations
 ===
@@ -680,8 +713,11 @@ class:small-code
 
 
 ```r
+# Find outliers
 race.data <- findoutliers(race.data, outminc = 5, outlg = 2, probthr = 0.001, 
     thr = 2^-(1:40), outdistquant = 0.75)
+
+# Project with t-SNE
 race.data <- comptsne(race.data, rseed = 15555)
 ```
 
@@ -691,18 +727,8 @@ class:small-code
 
 
 ```r
+# Plot t-SNE
 plottsne(race.data, final = FALSE)
-```
-
-<img src="single_cell_analysis-figure/unnamed-chunk-41-1.png" title="plot of chunk unnamed-chunk-41" alt="plot of chunk unnamed-chunk-41" style="display: block; margin: auto;" />
-
-RaceID: Detecting Rare Cell Populations
-===
-class:small-code
-
-
-```r
-plottsne(race.data, final = TRUE)
 ```
 
 <img src="single_cell_analysis-figure/unnamed-chunk-42-1.png" title="plot of chunk unnamed-chunk-42" alt="plot of chunk unnamed-chunk-42" style="display: block; margin: auto;" />
@@ -713,9 +739,7 @@ class:small-code
 
 
 ```r
-target.genes <- c("Apoa1__chr9", "Apoa1bp__chr3", "Apoa2__chr1", "Apoa4__chr9", 
-    "Apoa5__chr9")
-plotexptsne(race.data, target.genes)
+plottsne(race.data, final = TRUE)
 ```
 
 <img src="single_cell_analysis-figure/unnamed-chunk-43-1.png" title="plot of chunk unnamed-chunk-43" alt="plot of chunk unnamed-chunk-43" style="display: block; margin: auto;" />
@@ -726,10 +750,27 @@ class:small-code
 
 
 ```r
-plotsymbolstsne(race.data, type = sub("\\_\\d+$", "", names(race.data@ndata)))
+# Interesting genes
+target.genes <- c("Apoa1__chr9", "Apoa1bp__chr3", "Apoa2__chr1", "Apoa4__chr9", 
+    "Apoa5__chr9")
+
+# Plot expresssion of interesting genes
+plotexptsne(race.data, target.genes)
 ```
 
 <img src="single_cell_analysis-figure/unnamed-chunk-44-1.png" title="plot of chunk unnamed-chunk-44" alt="plot of chunk unnamed-chunk-44" style="display: block; margin: auto;" />
+
+RaceID: Detecting Rare Cell Populations
+===
+class:small-code
+
+
+```r
+# Plot t-SNE labeling groups with symbols
+plotsymbolstsne(race.data, type = sub("\\_\\d+$", "", names(race.data@ndata)))
+```
+
+<img src="single_cell_analysis-figure/unnamed-chunk-45-1.png" title="plot of chunk unnamed-chunk-45" alt="plot of chunk unnamed-chunk-45" style="display: block; margin: auto;" />
 
 Time-series Analysis: Monocle
 ===
@@ -792,10 +833,11 @@ class:small-code
 
 
 ```r
+# Check data
 plot_log_normal_monocle(monocle.data)
 ```
 
-<img src="single_cell_analysis-figure/unnamed-chunk-47-1.png" title="plot of chunk unnamed-chunk-47" alt="plot of chunk unnamed-chunk-47" style="display: block; margin: auto;" />
+<img src="single_cell_analysis-figure/unnamed-chunk-48-1.png" title="plot of chunk unnamed-chunk-48" alt="plot of chunk unnamed-chunk-48" style="display: block; margin: auto;" />
 
 Ordering by Expression: Study View
 ===
@@ -814,7 +856,6 @@ monocle.data <- order_cells_wrapper(monocle.data, ordering.genes, use_irlba = FA
     num_paths = 2, reverse = TRUE)
 # Plot all cells in study with ordering
 plot_spanning_tree(monocle.data)
-# Write data to file TODO
 ```
 
 Ordering by Expression: Study View
@@ -826,7 +867,7 @@ class:small-code
 <simpleError in lm.fit(X.vlm, y = z.vlm, ...): NA/NaN/Inf in 'y'>
 ```
 
-<img src="single_cell_analysis-figure/unnamed-chunk-49-1.png" title="plot of chunk unnamed-chunk-49" alt="plot of chunk unnamed-chunk-49" style="display: block; margin: auto;" />
+<img src="single_cell_analysis-figure/unnamed-chunk-50-1.png" title="plot of chunk unnamed-chunk-50" alt="plot of chunk unnamed-chunk-50" style="display: block; margin: auto;" />
 
 Ordering by Expression: Gene View
 ===
@@ -834,11 +875,15 @@ class:small-code
 
 
 ```r
+# Gene genes of interest in states 1 and 2
 monocle.data.diff.states <- monocle.data[monocle.expr.genes, pData(monocle.data)$State != 
     3]
-# TODO subset is not generic, needs gene_short_name attr
+
+# Look at a subset of genes
 subset.for.plot <- subset_to_genes(monocle.data.diff.states, c("CDK1", "MEF2C", 
     "MYH3"))
+
+# Plot in pseudotime
 plot_genes_in_pseudotime(subset.for.plot, color_by = "Hours")
 ```
 
@@ -846,7 +891,7 @@ Ordering by Expression: Gene View
 ===
 class:small-code
 
-<img src="single_cell_analysis-figure/unnamed-chunk-51-1.png" title="plot of chunk unnamed-chunk-51" alt="plot of chunk unnamed-chunk-51" style="display: block; margin: auto;" />
+<img src="single_cell_analysis-figure/unnamed-chunk-52-1.png" title="plot of chunk unnamed-chunk-52" alt="plot of chunk unnamed-chunk-52" style="display: block; margin: auto;" />
 
 Genes Which Follow an Assumed Temporal Pattern
 ===
@@ -856,8 +901,14 @@ class:small-code
 ```r
 # Get genes of interest
 subset.pseudo <- subset_to_genes(monocle.data, c("MYH3", "MEF2C", "CCNB2", "TNNT1"))
+
+# Reduce the genes to just state 1 and 2
 subset.pseudo <- subset.pseudo[, pData(subset.pseudo)$State != 3]
+
+# Perform differential expression test
 subset.pseudo.diff <- differentialGeneTest(subset.pseudo, fullModelFormulaStr = "expression~sm.ns(Pseudotime)")
+
+# Color plot by time
 plot_genes_in_pseudotime(subset.pseudo, color_by = "Hours")
 ```
 
@@ -865,7 +916,7 @@ Genes Which Follow an Assumed Temporal Pattern
 ===
 class:small-code
 
-<img src="single_cell_analysis-figure/unnamed-chunk-53-1.png" title="plot of chunk unnamed-chunk-53" alt="plot of chunk unnamed-chunk-53" style="display: block; margin: auto;" />
+<img src="single_cell_analysis-figure/unnamed-chunk-54-1.png" title="plot of chunk unnamed-chunk-54" alt="plot of chunk unnamed-chunk-54" style="display: block; margin: auto;" />
 
 Where Do We Go?
 ===
@@ -906,7 +957,7 @@ Thank You
 ===
 
 - Aviv Regev
-- Asma bankapur
+- Asma Bankapur
 - Brian Haas
 - Itay Tirosh
 - Karthik Shekhar
