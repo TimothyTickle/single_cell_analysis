@@ -23,7 +23,7 @@ biocLite("monocle")
 library( devtools )
 install_github("satijalab/seurat")
 require(devtools)
-devtools::install_github("hms-dbmi/scde", build_vignettes=FALSE)
+#devtools::install_github("hms-dbmi/scde", build_vignettes=FALSE)
 
 # 4. Check system
 ( Open RStudio, copy and past the following commands, in the R Console. If you get no errors then all librarys can load :-) )
@@ -43,7 +43,7 @@ library(RColorBrewer)
 library(locfit)
 library(Seurat)
 library(vioplot)
-library(scde)
+#library(scde)
 
 # 5. Links
 ( Please make sure that there is a link to RStudio on the desktop )
