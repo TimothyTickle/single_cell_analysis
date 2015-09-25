@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   viewBox="0 0 706.5 587.70001"
+   height="587.70001"
+   width="706.5"
+   version="1.1"
+   id="svg3476">
+  <metadata
+     id="metadata3482">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs3480" />
+  <rect
+     y="47.680607"
+     x="43.980606"
+     height="495.03879"
+     width="610.03876"
+     id="rect3486"
+     style="fill:#0000ff;fill-opacity:0;fill-rule:evenodd;stroke:#000000;stroke-width:0.96118468px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+  <text
+     id="text4502"
+     y="575.70001"
+     x="273"
+     style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     xml:space="preserve"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '"
+       y="575.70001"
+       x="273"
+       id="tspan4504">Log Expression</tspan></text>
+  <text
+     transform="matrix(0,-1,1,0,0,0)"
+     id="text8587"
+     y="30.016113"
+     x="-344.36066"
+     style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     xml:space="preserve"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '"
+       y="30.016113"
+       x="-344.36066"
+       id="tspan8589">Density</tspan></text>
+  <text
+     id="text8591"
+     y="31.700012"
+     x="16"
+     style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     xml:space="preserve"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '"
+       y="31.700012"
+       x="16"
+       id="tspan8593">Distribution of Expression of a Gene throughout a Study</tspan></text>
+  <path
+     id="path8599"
+     d="m 45.64274,540.20314 c 0,0 237.16168,24.76764 330.27,-35.1304 59.37275,-38.19542 71.88474,-181.68153 107.69675,-182.36648 30.6896,-0.58697 40.14737,124.25836 99.08101,184.46988 22.01857,22.49601 67.48995,30.15508 67.48995,30.15508"
+     style="fill:#0000fd;fill-rule:evenodd;stroke:#000000;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1" />
+  <path
+     style="fill:#0081fd;fill-rule:evenodd;stroke:#000000;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1"
+     d="m 45.078696,541.7494 c 0,0 93.269994,0.0672 163.699034,-20.1034 56.57398,-50.51415 18.44401,-59.02195 81.3774,-83.30255 38.16319,-6.25116 23.25306,12.47289 61.03548,8.73497 34.96552,-3.45925 34.97187,-23.71103 70.1087,-21.64151 66.32643,3.90655 51.79895,96.59192 136.41588,104.82483 41.47165,4.03504 91.90121,8.61574 91.90121,8.61574"
+     id="path8601" />
+  <path
+     id="path8603"
+     d="m 49.386565,537.44154 c 0,0 8.239954,-17.93266 13.795885,-71.41365 5.555931,-53.48098 8.42784,-168.35751 26.410882,-166.95516 17.473108,-0.49824 10.464478,111.0232 25.474548,189.94588 9.04218,47.54363 56.67814,37.52172 91.09111,28.42168 33.7552,-9.75399 59.38314,-26.58294 94.51997,-24.51342 66.32643,3.90655 46.05512,34.84579 130.67205,43.0787 41.47165,4.03504 216.82943,0 216.82943,0"
+     style="fill:#00cefd;fill-rule:evenodd;stroke:#000000;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1" />
+  <path
+     style="fill:#d8fffd;fill-rule:evenodd;stroke:#000000;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1"
+     d="M 47.950611,540.31344 C 53.950651,467.03412 50.026398,64.001469 70.434298,63.578469 89.062488,64.906239 81.240131,470.92545 85.285481,540.31344"
+     id="path8605" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     x="56.170563"
+     y="575.95618"
+     id="text8607"><tspan
+       id="tspan8609"
+       x="56.170563"
+       y="575.95618"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';fill:#0000fd;fill-opacity:1">0</tspan></text>
+  <rect
+     y="536.31342"
+     x="15.795522"
+     height="12.923608"
+     width="673.46362"
+     id="rect8611"
+     style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:5;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.55238097" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     x="410.85184"
+     y="299.99637"
+     id="text8613"><tspan
+       id="tspan8615"
+       x="410.85184"
+       y="299.99637"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '">Log Normal</tspan></text>
+  <text
+     id="text8617"
+     y="418.87289"
+     x="287.76849"
+     style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     xml:space="preserve"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '"
+       y="418.87289"
+       x="287.76849"
+       id="tspan8619">Bimodal</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     x="121.81328"
+     y="446.97629"
+     id="text8621"><tspan
+       id="tspan8623"
+       x="121.81328"
+       y="446.97629"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '">Zero</tspan><tspan
+       id="tspan8625"
+       x="121.81328"
+       y="484.47629"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '"> Inflated</tspan></text>
+  <text
+     id="text8627"
+     y="121.01414"
+     x="94.530098"
+     style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     xml:space="preserve"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '"
+       y="121.01414"
+       x="94.530098"
+       id="tspan8631">Noise</tspan></text>
+</svg>

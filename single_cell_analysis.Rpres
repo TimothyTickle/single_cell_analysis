@@ -75,7 +75,38 @@ Briefly Single-cell Sequencing
 ===
 
 [Drop Seq Video Abstract](http://www.sciencedirect.com/science/article/pii/S0092867415005498)
-![drop_seq](images/dropseq_1.jpg)
+
+![drop_seq](images/dropseq_2.png)
+
+Genes Have Different Distributions
+===
+class:small-code
+
+![genes_log_normal](images/scdistributions_log_normal.png)
+
+Genes Have Different Distributions
+===
+class:small-code
+
+![genes_bimodal](images/scdistributions_bimodal.png)
+
+Genes Have Different Distributions
+===
+class:small-code
+
+![genes_zeroinfl](images/scdistributions_zeroinfl.png)
+
+Genes Have Different Distributions
+===
+class:small-code
+
+![genes_noise](images/scdistributions_noise.png)
+
+Genes Have Different Distributions
+===
+class:small-code
+
+![professor corgi](images/scdistributions_all.png)
 
 Our First Data Set
 ===
@@ -183,15 +214,11 @@ class:small-code
   - Presence of marker genes
   - etc ...
 
-Genes Have Different Distributions
+Filter Genes: Using Prevalence
 ===
 class:small-code
 
-```{r,tidy=FALSE,fig.align="center"}
-# Gene distribution through cells
-# By the gene's average expression (color)
-plot.quantiles( data.set ) 
-```
+![professor corgi](images/prob_ave_expression.png)
 
 Filter Genes: Using Prevalence
 ===
@@ -212,6 +239,7 @@ Normalization in scData
   - Cell Medians = 6024, Median magnitude = 10000
 - Can also use TPX
   - Use RSEM for TPM
+- Same for 3', same level of complexity
 
 Normalizing for Cell Sequencing Depth
 ===
@@ -221,8 +249,6 @@ class:small-code
 # Counts to CPX
 data.cleaned.norm <- func_cpx( data.cleaned )
 ```
-- Some perform TMM normalization afterwards.
-  - See EdgeR package.
 
 Sequencing Saturation
 ====
@@ -442,7 +468,7 @@ tsne.plot(nbt,pt.size = 3)
 Quality Control in scData
 ===
 
-![batch_effects](images/batch_effects.png)
+![batch_effects](images/batch_effects_2.png)
 
 QC the Clusters!
 ===
@@ -570,6 +596,22 @@ class:small-code
   - Negative binomial
 - New outlier clusters are made from the outlier cells
 
+K-means Clustering
+===
+
+- Pick the number of clusters you want (K)
+- Randomly pick K points to be the groups to start with
+- Do the following until results do not change
+  - Assign all other points to the nearest group
+  - Update the group's center to the mean of the group
+
+K-Means Clustering
+===
+
+http://tech.nitoyon.com/en/blog/2013/11/07/k-means/
+
+https://www.youtube.com/watch?v=BVFG7fd1H30
+
 RaceID: Detecting Rare Cell Populations
 ===
 class:small-code
@@ -664,7 +706,63 @@ Time-series Analysis: Monocle
 Orders expression into Pseudotime
   - Quantitative measurement of progress through a biological process
 ![monocle](images/monocle.png)
-  
+
+Where Do We Go?
+===
+
+- Gene Set Enrichment.
+  - DAVID (online or R library RDAVIDWebService).
+  - GSEA (online or many libraries).
+    - wilcoxGST from the limma library.
+    - GSEABase.
+- GenePattern workshop.
+
+What Did We Miss?
+===
+
+- Seurat
+  - Data imputation and Spatial Inference.
+- SCDE
+  - Batch Effect Correction.
+- RaceIDs
+  - Alternative methods to evaluating clusters.
+  - Differential Expression between clusters.
+- Monocle Leftovers
+  - Simple Differential Expression.
+  - Multifactorial Differential Expression (batch effects).
+  - Clustering genes by pseudotime.
+
+Summary: of Today
+===
+
+- Created expectations for scData.
+- Performed QC.
+- Plotted genes and cells.
+- Detected novel structure.
+- Applied a statistical inference method.
+- Performed pseudotemporal analysis.
+
+Thank You
+===
+
+- Aviv Regev
+- Asma Bankapur
+- Brian Haas
+- Itay Tirosh
+- Karthik Shekhar
+- Today's Attendees
+
+References
+===
+
+Please note this is a collection of many peoples ideas.
+Included in the download is a references.txt to document sources, tutorials, software, and links to cute corgi pictures :-)
+
+Questions?
+===
+
+![gradute corgi](images/graduate_corgi.jpg)
+
 Moncole's Assumptions
 ===
 
@@ -806,62 +904,6 @@ subset.pseudo <- subset.pseudo[,pData(subset.pseudo)$State != 3 ]
 subset.pseudo.diff <- differentialGeneTest( subset.pseudo, fullModelFormulaStr="expression~sm.ns(Pseudotime)")
 plot_genes_in_pseudotime( subset.pseudo, color_by="Hours")
 ```
-
-Where Do We Go?
-===
-
-- Gene Set Enrichment.
-  - DAVID (online or R library RDAVIDWebService).
-  - GSEA (online or many libraries).
-    - wilcoxGST from the limma library.
-    - GSEABase.
-- GenePattern workshop.
-
-What Did We Miss?
-===
-
-- Seurat
-  - Data imputation and Spatial Inference.
-- SCDE
-  - Batch Effect Correction.
-- RaceIDs
-  - Alternative methods to evaluating clusters.
-  - Differential Expression between clusters.
-- Monocle Leftovers
-  - Simple Differential Expression.
-  - Multifactorial Differential Expression (batch effects).
-  - Clustering genes by pseudotime.
-
-Summary: of Today
-===
-
-- Created expectations for scData.
-- Performed QC.
-- Plotted genes and cells.
-- Detected novel structure.
-- Applied a statistical inference method.
-- Performed pseudotemporal analysis.
-
-Thank You
-===
-
-- Aviv Regev
-- Asma Bankapur
-- Brian Haas
-- Itay Tirosh
-- Karthik Shekhar
-- Today's Attendees
-
-References
-===
-
-Please note this is a collection of many peoples ideas.
-Included in the download is a references.txt to document sources, tutorials, software, and links to cute corgi pictures :-)
-
-Questions?
-===
-
-![gradute corgi](images/graduate_corgi.jpg)
 
 Notes: to Make a PDF
 ===
