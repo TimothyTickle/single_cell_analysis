@@ -57,8 +57,8 @@ class:small-code
 # Load libraries
 library(vioplot) # violin plots
 library(Seurat) # Data Basics, QC, Spatial
-#library(scde) # Differential Expression
-library(monocle) # Pseudotemporal analysis
+#library(scde) # Differential Expressions
+#library(monocle) # Pseudotemporal analysis
 ```
 
 Load Code
@@ -107,6 +107,9 @@ Genes Have Different Distributions
 class:small-code
 
 ![professor corgi](images/scdistributions_all.png)
+
+Underlying Biology
+===
 
 Our First Data Set
 ===
@@ -228,6 +231,8 @@ class:small-code
 # Remove low expressing genes
 # Remove genes that do not have atleast 10 counts in 10 samples.
 data.cleaned <- func_filter_by_occurence( data.set, 10, 10 )
+# Remove genes that their top 10 expression are not on average atleast 5
+data.cleaned <- filter_by_average_top_gene( data.set, 10, 5 )
 ```
 
 Normalization in scData
@@ -273,6 +278,10 @@ Summary: of the Data
   - Very noisey.
   - Vary in library complexity.
 - Keeping these characteristics in analysis assumptions.
+
+Seurat
+===
+
 
 Loading Data into Seurat
 ===
@@ -339,6 +348,11 @@ class:small-code
 ```{r,echo=FALSE,tidy=TRUE,fig.align="center"}
 cellPlot(nbt,nbt@cell.names[3],nbt@cell.names[4],do.ident = FALSE)
 ```
+
+Getting Your Data Out of R
+===
+
+
 
 Dimensionality Reduction and Ordination
 ===
@@ -520,6 +534,16 @@ nbt=buildClusterTree(nbt,do.reorder=TRUE,reorder.numeric=TRUE,pcs.use=1:11,do.pl
 tsne.plot(nbt,do.label=TRUE,label.pt.size=0.5)
 ```
 
+Getting Your Data Out of R
+===
+
+
+
+SCDE: Single Cell Differential Expression
+===
+
+![scde_intro](images/scde_intro.png)
+
 SCDE: in Quick Theory
 ===
 
@@ -589,6 +613,11 @@ Visualize Differentially Expressed Genes
 
 RaceID: Detecting Rare Cell Populations
 ===
+
+
+
+RaceID: Detecting Rare Cell Populations
+===
 class:small-code
 
 - Large clusters are identifed with K-means clustering
@@ -604,13 +633,6 @@ K-means Clustering
 - Do the following until results do not change
   - Assign all other points to the nearest group
   - Update the group's center to the mean of the group
-
-K-Means Clustering
-===
-
-http://tech.nitoyon.com/en/blog/2013/11/07/k-means/
-
-https://www.youtube.com/watch?v=BVFG7fd1H30
 
 RaceID: Detecting Rare Cell Populations
 ===
@@ -700,12 +722,10 @@ class:small-code
 plotsymbolstsne( race.data, type=sub("\\_\\d+$","",names(race.data@ndata)))
 ```
 
-Time-series Analysis: Monocle
+Getting Your Data Out of R
 ===
 
-Orders expression into Pseudotime
-  - Quantitative measurement of progress through a biological process
-![monocle](images/monocle.png)
+
 
 Where Do We Go?
 ===
@@ -727,10 +747,6 @@ What Did We Miss?
 - RaceIDs
   - Alternative methods to evaluating clusters.
   - Differential Expression between clusters.
-- Monocle Leftovers
-  - Simple Differential Expression.
-  - Multifactorial Differential Expression (batch effects).
-  - Clustering genes by pseudotime.
 
 Summary: of Today
 ===
@@ -740,7 +756,6 @@ Summary: of Today
 - Plotted genes and cells.
 - Detected novel structure.
 - Applied a statistical inference method.
-- Performed pseudotemporal analysis.
 
 Thank You
 ===
@@ -762,6 +777,17 @@ Questions?
 ===
 
 ![gradute corgi](images/graduate_corgi.jpg)
+
+Monocle
+===
+
+
+Time-series Analysis: Monocle
+===
+
+Orders expression into Pseudotime
+  - Quantitative measurement of progress through a biological process
+![monocle](images/monocle.png)
 
 Moncole's Assumptions
 ===
@@ -904,6 +930,19 @@ subset.pseudo <- subset.pseudo[,pData(subset.pseudo)$State != 3 ]
 subset.pseudo.diff <- differentialGeneTest( subset.pseudo, fullModelFormulaStr="expression~sm.ns(Pseudotime)")
 plot_genes_in_pseudotime( subset.pseudo, color_by="Hours")
 ```
+
+Getting Your Data Out of R
+===
+
+
+
+What Did We Miss?
+===
+
+- Monocle Leftovers
+  - Simple Differential Expression.
+  - Multifactorial Differential Expression (batch effects).
+  - Clustering genes by pseudotime.
 
 Notes: to Make a PDF
 ===

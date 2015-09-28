@@ -16,13 +16,12 @@
 install.packages( "knitr" )
 ( Select USA (PA 1), do this as needed )
 install.packages( c( "scatterplot3d","gplots","boot","mclust","flexmix","Cairo","devtools","Rook","rjson", "vioplot", "pheatmap", "amap", "locfit" ) )
-( The rest of this section is not compatible with a windows machine. One of the needed libraries has a dependency that will not work on windows but will on Mac or linux. )
 source( "http://bioconductor.org/biocLite.R" )
 biocLite("edgeR")
 biocLite("monocle")
 library( devtools )
-install_github("satijalab/seurat")
 require(devtools)
+install_github("satijalab/seurat")
 #devtools::install_github("hms-dbmi/scde", build_vignettes=FALSE)
 
 # 4. Check system

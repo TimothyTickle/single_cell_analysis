@@ -93,6 +93,15 @@ d_min_occurence
   return( df_data[ vctr_f_keep,] )
 }
 
+filter_by_average_top_gene <- function(
+df_data,
+i_top_ranked,
+d_min_average
+){
+  vctr_f_keep = apply( df_data, 1, function( x ){ return( mean( x[ order(x, decreasing=TRUE) ][1:i_top_ranked] ) > d_min_average )})
+  return( df_data[ vctr_f_keep,] )
+}
+
 func_cpx <- function(
 ### Normalize counts to counts per million
 ### Normalizes within columns
