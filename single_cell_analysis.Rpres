@@ -37,7 +37,7 @@ What We Will Attempt to Cover
 - Finding clusters of cells.
 - Performing differential expression.
 - Detecting rare cell population.
-- Psuedotemporal time-series analysis.
+- Psuedotemporal time-series analysis (time permitting).
 
 RStudio: Getting to Know You
 ===
@@ -58,7 +58,6 @@ class:small-code
 library(vioplot) # violin plots
 library(Seurat) # Data Basics, QC, Spatial
 #library(scde) # Differential Expressions
-#library(monocle) # Pseudotemporal analysis
 ```
 
 Load Code
@@ -71,12 +70,12 @@ class:small-code
 source(file.path("src","Modules.R"))
 ```
 
-Briefly Single-cell Sequencing
+Briefly Single-cell RNA-Seq Sequencing
 ===
 
 [Drop Seq Video Abstract](http://www.sciencedirect.com/science/article/pii/S0092867415005498)
 
-![drop_seq](images/dropseq_2.png)
+![drop_seq](images/dropseq.png)
 
 Genes Have Different Distributions
 ===
@@ -111,14 +110,29 @@ class:small-code
 Underlying Biology
 ===
 
-Our First Data Set
+Zero inflation
+- Drop-out event during reverse-transcription
+- Genes with more expression have less zeros
+- Complexity varies
+
+Transcription stochasticity
+- Transcription bursting
+- Coordinated transcription of multigene networks
+- Overdispersed counts
+
+---
+
+![scde_bio](images/scde_bio.png)
+
+Summary: of the Data
 ===
 
-Islam S et al. __Characterization of the single-cell transcriptional landscape by highly multiplex RNA-seq__ . Genome Research 2011
-
-- 92 Cells.
-  - Embryonic Stem Cells (ES).
-  - Embryonic Fibroblasts (MEF).
+- We are still understanding scData and how to apply it.
+  - Not normal.
+  - Zero-inflated.
+  - Very noisey.
+  - Vary in library complexity.
+- Keeping these characteristics in analysis assumptions.
 
 Data: Ready, Get Set, Load!
 ===
@@ -217,7 +231,7 @@ class:small-code
   - Presence of marker genes
   - etc ...
 
-Filter Genes: Using Prevalence
+Filter Genes: Averages are Less Useful
 ===
 class:small-code
 
@@ -231,9 +245,21 @@ class:small-code
 # Remove low expressing genes
 # Remove genes that do not have atleast 10 counts in 10 samples.
 data.cleaned <- func_filter_by_occurence( data.set, 10, 10 )
-# Remove genes that their top 10 expression are not on average atleast 5
-data.cleaned <- filter_by_average_top_gene( data.set, 10, 5 )
 ```
+
+![occurence](images/prob_ave_expression2.png)
+
+Filter Genes: Using Prevalence
+===
+class:small-code
+
+```{r,tidy=FALSE}
+# Remove low expressing genes
+# Remove genes that their top 10 expression are not on average atleast 5
+data.cleaned_2 <- filter_by_average_top_gene( data.set, 10, 5 )
+```
+
+![top_average](images/prob_ave_expression3.png)
 
 Normalization in scData
 ===
@@ -269,19 +295,18 @@ class:small-code
 func_plot_saturation_curve( data.cleaned[,1], 1000 )
 ```
 
-Summary: of the Data
+Getting Your Data Out of R
 ===
 
-- We are still understanding scData and how to apply it.
-  - Not normal.
-  - Zero-inflated.
-  - Very noisey.
-  - Vary in library complexity.
-- Keeping these characteristics in analysis assumptions.
+```{r,tidy=TRUE}
+# Write your data frame to your computer.
+write.table( data.cleaned, file="basic_table.txt")
+```
 
 Seurat
 ===
 
+![suerat](images/seurat_pubs.png)
 
 Loading Data into Seurat
 ===
@@ -352,7 +377,16 @@ cellPlot(nbt,nbt@cell.names[3],nbt@cell.names[4],do.ident = FALSE)
 Getting Your Data Out of R
 ===
 
+```{r,tidy=TRUE}
+# Log-scale expression matrix
+write.table(nbt@data, file="seurat_expression.txt")
 
+# Study metadata
+write.table(nbt@data.info, file="seurat_metadata.txt")
+
+# What is the metadata so far
+head( nbt@data.info )
+```
 
 Dimensionality Reduction and Ordination
 ===
@@ -482,7 +516,7 @@ tsne.plot(nbt,pt.size = 3)
 Quality Control in scData
 ===
 
-![batch_effects](images/batch_effects_2.png)
+![batch_effects](images/batch_effects_3.png)
 
 QC the Clusters!
 ===
@@ -537,7 +571,16 @@ tsne.plot(nbt,do.label=TRUE,label.pt.size=0.5)
 Getting Your Data Out of R
 ===
 
+```{r,tidy=TRUE}
+# Log-scale expression matrix
+write.table(nbt@data, file="seurat_expression_tsne.txt")
 
+# Study metadata
+write.table(nbt@data.info, file="seurat_metadata_tsne.txt")
+
+# What is the metadata so far
+head( nbt@data.info )
+```
 
 SCDE: Single Cell Differential Expression
 ===
@@ -609,12 +652,12 @@ Visualize Differentially Expressed Genes
 
 ---
 
-![scde_output](images/scde_output.png)
+![scde_output](images/scde_output_2.png)
 
 RaceID: Detecting Rare Cell Populations
 ===
 
-
+![raceid_pubs](images/raceid_pubs.png)
 
 RaceID: Detecting Rare Cell Populations
 ===
@@ -633,6 +676,8 @@ K-means Clustering
 - Do the following until results do not change
   - Assign all other points to the nearest group
   - Update the group's center to the mean of the group
+- Will give you K groups even if it is NOT appropriate
+- Not robust to outliers
 
 RaceID: Detecting Rare Cell Populations
 ===
@@ -725,7 +770,16 @@ plotsymbolstsne( race.data, type=sub("\\_\\d+$","",names(race.data@ndata)))
 Getting Your Data Out of R
 ===
 
+```{r,tidy=TRUE}
+# Write expression data
+write.table( race.data@expdata, file="race_id_expression.txt" )
 
+# Write kmeans clusters
+write.table( race.data@kmeans$kpart)
+
+# Write clusters with outlier refinement
+write.table( race.data@cpart )
+```
 
 Where Do We Go?
 ===
@@ -781,13 +835,14 @@ Questions?
 Monocle
 ===
 
+![monocle](images/monocle.png)
 
 Time-series Analysis: Monocle
 ===
 
 Orders expression into Pseudotime
   - Quantitative measurement of progress through a biological process
-![monocle](images/monocle.png)
+![monocle](images/monocle_2.png)
 
 Moncole's Assumptions
 ===
@@ -808,6 +863,8 @@ Needed files -
 - Gene Metadata ( Genes (row) x Medatatum (col) ) .
 
 ```{r,tidy=TRUE}
+library(monocle) # Pseudotemporal analysis
+
 # Do not run (For later)
 # monocle.data <- make_cell_data_set( expression_file="monocle_exprs.txt", cell_phenotype_file="monocle_cell_meta.txt", gene_metadata_file="monocle_gene_meta.txt" )
 
@@ -930,11 +987,6 @@ subset.pseudo <- subset.pseudo[,pData(subset.pseudo)$State != 3 ]
 subset.pseudo.diff <- differentialGeneTest( subset.pseudo, fullModelFormulaStr="expression~sm.ns(Pseudotime)")
 plot_genes_in_pseudotime( subset.pseudo, color_by="Hours")
 ```
-
-Getting Your Data Out of R
-===
-
-
 
 What Did We Miss?
 ===

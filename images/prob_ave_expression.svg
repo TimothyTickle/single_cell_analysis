@@ -24,7 +24,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -55,12 +55,12 @@
      inkscape:window-maximized="0"
      inkscape:current-layer="svg3476" />
   <rect
-     style="fill:#0000ff;fill-opacity:0;fill-rule:evenodd;stroke:#000000;stroke-width:0.66608822px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     style="fill:#0000ff;fill-opacity:0;fill-rule:evenodd;stroke:#000000;stroke-width:0.64053559px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
      id="rect3486"
-     width="280.33389"
-     height="517.33392"
-     x="51.833054"
-     y="33.533054" />
+     width="280.35944"
+     height="478.35947"
+     x="51.820278"
+     y="72.520279" />
   <rect
      style="fill:#00e9fd;fill-opacity:1;stroke:#000000;stroke-opacity:0.55238097"
      id="rect4288"
@@ -342,12 +342,12 @@
        id="tspan4516"
        sodipodi:role="line">Average ~ 2.7</tspan></text>
   <rect
-     y="33.533054"
-     x="375.83307"
-     height="517.33392"
-     width="280.33389"
+     y="111.50697"
+     x="375.80698"
+     height="439.38611"
+     width="280.38608"
      id="rect8452"
-     style="fill:#0000ff;fill-opacity:0;fill-rule:evenodd;stroke:#000000;stroke-width:0.66608822px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+     style="fill:#0000ff;fill-opacity:0;fill-rule:evenodd;stroke:#000000;stroke-width:0.61391723px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
   <rect
      transform="scale(-1,1)"
      y="264.70001"
@@ -628,4 +628,33 @@
        x="381"
        y="392.70001"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '">Average ~ 0.42</tspan></text>
+  <text
+     sodipodi:linespacing="125%"
+     id="text4137"
+     y="53.700012"
+     x="64"
+     style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     xml:space="preserve"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, '"
+       y="53.700012"
+       x="64"
+       id="tspan4139"
+       sodipodi:role="line">0s pull down average</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     x="513.40625"
+     y="53.700012"
+     id="text4141"
+     sodipodi:linespacing="125%"><tspan
+       sodipodi:role="line"
+       x="513.40625"
+       y="53.700012"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';text-align:center;text-anchor:middle"
+       id="tspan4145">Amount of 0s is arbitrary</tspan><tspan
+       sodipodi:role="line"
+       x="513.40625"
+       y="91.200012"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';text-align:center;text-anchor:middle"
+       id="tspan4149">(study size, diversity)</tspan></text>
 </svg>
