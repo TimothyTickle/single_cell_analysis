@@ -1,33 +1,28 @@
 #Logistics
 ##===
 
-# Load libraries
+# Load library
 library(vioplot) # violin plots
-library(Seurat) # Data Basics, QC, Spatial
-#library(scde) # Differential Expression
-library(monocle) # Pseudotemporal analysis
-
+library(Seurat)
 
 #Load Code
 ##===
 
-# Source code Helper functions
-source(file.path("src", "Modules.R"))
-
+# Source code
+# Helper functions
+source(file.path("src","Modules.R"))
 
 #Data: Ready, Get Set, Load!
 #===
 
 # Load tab delimited file
-data.set = read.delim(file.path("data", "GSE29087_L139_updated.txt"))
-
+data.set = read.delim( file.path("data","GSE29087_L139_updated.txt") )
 
 #What are Our Genes?
 #===
 
 # Gene names (row names)
-rownames(data.set)
-
+rownames( data.set )
 
 #What are Our Cells?
 #===
@@ -36,6 +31,12 @@ rownames(data.set)
 # Sample / Cell names
 colnames( data.set )
 
+#How to Show Expression?
+#===
+
+# Only the corner
+# The full data will be too large to see
+corner( data.set )
 
 #How Many Expressed Genes (Complexity)?
 #===
@@ -45,11 +46,17 @@ colnames( data.set )
 genes.per.cell <- apply( data.set, 2, function(x) sum( x>0 ))
 
 
-#How Many Expressed Genes (Complexity)?
+#Identifying Outliers?
 #===
  
 # Each cell is a dot
 cell.outlier = plot.cell.complexity( genes.per.cell )
+
+#Identifying Outliers?
+#===
+
+# Each cell is a dot
+cell.outlier = plot.cell.complexity( demo.complexity.outliers() )
 
 
 #Filter Cells: Removing the Outlier Cells
@@ -61,14 +68,6 @@ cell.outlier
 # Remove outlier cells
 data.set = data.set[, -1 * cell.outlier]
 ncol(data.set)
-
-
-#Genes Have Different Distributions
-#===
- 
-# Gene distribution through cells
-# By the gene's average expression (color)
-plot.quantiles( data.set ) 
 
 
 #Filter Genes: Using Prevalence
@@ -90,6 +89,13 @@ data.cleaned.norm <- func_cpx(data.cleaned)
 #===
  
 func_plot_saturation_curve(data.cleaned[, 1], 1000)
+
+
+#Getting Your Data Out of R
+#===
+
+# Write your data frame to your computer.
+write.table( data.cleaned, file="basic_table.txt")
 
 
 #Loading Data into Seurat
@@ -115,7 +121,7 @@ vlnPlot(nbt, c("DPPA4"))
 #===
 
 # Plot a gene vs a gene
-cellPlot(nbt, nbt@cell.names[1], nbt@cell.names[2], do.ident = FALSE)
+genePlot(nbt,"SOX11","BCL11A",cex.use = 1)
 
 
 #Viewing Cells vs Cells
@@ -123,6 +129,19 @@ cellPlot(nbt, nbt@cell.names[1], nbt@cell.names[2], do.ident = FALSE)
  
 # Plot a cell vs a cell
 cellPlot(nbt, nbt@cell.names[3], nbt@cell.names[4], do.ident = FALSE)
+
+
+#Getting Your Data Out of R
+#===
+
+# Log-scale expression matrix
+write.table(nbt@data, file="seurat_expression.txt")
+
+# Study metadata
+write.table(nbt@data.info, file="seurat_metadata.txt")
+
+# What is the metadata so far
+head( nbt@data.info )
 
 
 #PCA using Seurat
@@ -169,7 +188,7 @@ pca.plot(nbt, 1, 2, pt.size = 3, group.by = "nGene")
 tsne.plot(nbt, pt.size = 3, group.by = "nGene")
 
 
-#Defining Clusters from PCA or TSNE
+#Defining Clusters from PCA or t-SNE
 #===
  
 # Perform clustering
@@ -181,6 +200,19 @@ nbt = buildClusterTree(nbt, do.reorder = TRUE, reorder.numeric = TRUE, pcs.use =
 
 # Plot
 tsne.plot(nbt, do.label = TRUE, label.pt.size = 0.5)
+
+
+#Getting Your Data Out of R
+#===
+
+# Log-scale expression matrix
+write.table(nbt@data, file="seurat_expression_tsne.txt")
+
+# Study metadata
+write.table(nbt@data.info, file="seurat_metadata_tsne.txt")
+
+# What is the metadata so far
+head( nbt@data.info )
 
 
 #RaceID: Detecting Rare Cell Populations
@@ -224,7 +256,7 @@ plotgap(race.data)
  
 # Find outliers
 race.data <- findoutliers(race.data, outminc = 5, outlg = 2, probthr = 0.001, 
-    thr = 2^-(1:40), outdistquant = 0.75)
+    thr = 2**-(1:40), outdistquant = 0.75)
 
 # Project with t-SNE
 race.data <- comptsne(race.data, rseed = 15555)
@@ -261,85 +293,25 @@ plotexptsne(race.data, target.genes)
 plotsymbolstsne(race.data, type = sub("\\_\\d+$", "", names(race.data@ndata)))
 
 
-#Read In and Format
+#Getting Your Data Out of R
 #===
 
-# Do not run (For later) monocle.data <- make_cell_data_set(
-# expression_file='monocle_exprs.txt',
-# cell_phenotype_file='monocle_cell_meta.txt',
-# gene_metadata_file='monocle_gene_meta.txt' )
+# Write expression data
+write.table( race.data@expdata, file="race_id_expression.txt" )
 
-# Get data for today
-monocle.data <- get_monocle_presentation_data()
+# Write kmeans clusters
+write.table( race.data@kmeans$kpart)
 
-
-#Filter Genes
-#===
- 
-# Require a minimun of 0.1 expression
-monocle.data <- detectGenes(monocle.data, min_expr = 0.1)
-
-# Require atleast 50 cells to have the minimum 0.1 expression Get name of
-# genes pass these filters
-monocle.expr.genes <- row.names(subset(fData(monocle.data), num_cells_expressed >= 50))
-
- 
-#Confirm the Log-Normal Assumption
-#===
- 
-# Check data
-plot_log_normal_monocle(monocle.data)
-
-
-#Ordering by Expression: Study View
-#===
-
-# Marker genes of biological interest
-marker.genes <- get_monocle_presentation_marker_genes()
-# Select from those marker genes those important to the study
-ordering.genes <- select_ordering_genes(monocle.data, monocle.expr.genes, marker.genes, 
-    "expression~Media", 0.01)
-
-# Order the cells by expression
-monocle.data <- order_cells_wrapper(monocle.data, ordering.genes, use_irlba = FALSE, 
-    num_paths = 2, reverse = TRUE)
-# Plot all cells in study with ordering
-plot_spanning_tree(monocle.data)
-
-
-#Ordering by Expression: Gene View
-#===
- 
-# Gene genes of interest in states 1 and 2
-monocle.data.diff.states <- monocle.data[monocle.expr.genes, pData(monocle.data)$State != 3]
-
-# Look at a subset of genes
-subset.for.plot <- subset_to_genes(monocle.data.diff.states, c("CDK1", "MEF2C", "MYH3"))
-
-# Plot in pseudotime
-plot_genes_in_pseudotime(subset.for.plot, color_by = "Hours")
-
-
-#Genes Which Follow an Assumed Temporal Pattern
-#===
- 
-# Get genes of interest
-subset.pseudo <- subset_to_genes(monocle.data, c("MYH3", "MEF2C", "CCNB2", "TNNT1"))
-
-# Reduce the genes to just state 1 and 2
-subset.pseudo <- subset.pseudo[, pData(subset.pseudo)$State != 3]
-
-# Perform differential expression test
-subset.pseudo.diff <- differentialGeneTest(subset.pseudo, fullModelFormulaStr = "expression~sm.ns(Pseudotime)")
-
-# Color plot by time
-plot_genes_in_pseudotime(subset.pseudo, color_by = "Hours")
+# Write clusters with outlier refinement
+write.table( race.data@cpart )
 
 
 #Notes: to Make a PDF
 #===
 
-# pdf( 'data/my_file.pdf', useDingbats = FALSE ) # Start pdf plot( 1:10,
-# log(1:10 ) ) # plot in to the pdf file plot( seq(0,.9,.1), sin(0:9) ) #
-# another plot for the pdf file dev.off() # Close pdf file ( very important
-# )
+# Start pdf 
+pdf( 'data/my_file.pdf', useDingbats = FALSE )
+# plot in to the pdf file 
+plot( 1:10,log(1:10 ) ) 
+plot( seq(0,.9,.1), sin(0:9) ) #another plot for the pdf file 
+dev.off() # Close pdf file ( very important )
