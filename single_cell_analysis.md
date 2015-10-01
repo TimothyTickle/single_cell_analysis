@@ -429,7 +429,7 @@ class:small-code
 
 ```r
 # Plot a gene vs a gene
-cellPlot(nbt, nbt@cell.names[1], nbt@cell.names[2], do.ident = FALSE)
+genePlot(nbt, "SOX11", "BCL11A", cex.use = 1)
 ```
 
 Viewing Genes vs Genes
