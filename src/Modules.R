@@ -109,11 +109,10 @@ df_data,
 ### Count data to be transformed
 ...
 ){
-  d_median_medians = median( apply( df_data, 2, median ) )
-  d_magnitude = as.integer(paste( c(c( "1"), rep( "0", nchar(as.character(d_median_medians)))),collapse=""))
+  d_median_sums = median( apply( df_data, 2, sum ) )
+  d_magnitude = as.integer(paste( c(c( "1"), rep( "0", nchar(as.character(d_median_sums)))),collapse=""))
   return( log2( ( func_tss( df_data ) * d_magnitude ) + 1 ))
 }
-
 
 func_tss <- function(
 ### Total Sum Scaled
@@ -166,7 +165,7 @@ i_iterations = 10
   vctr_bootstrapped_genes_expressed=c(0,vctr_bootstrapped_genes_expressed)
   # Plot
   plot( vctr_d_depths, vctr_bootstrapped_genes_expressed, 
-        main="Saturation Curve", xlab="Depth", ylab="Genes Detected",
+        main="Saturation Curve", xlab="Depth (in Silico)", ylab="Genes Detected",
         pch=16, col="#0000ff55")
 }
 
@@ -178,12 +177,18 @@ plot.cell.complexity <- function(
   ...
 ){
   bx.qt = as.integer( boxplot( vctr_values, plot=FALSE )$stats )
-  lower.outlier = which( vctr_values <= bx.qt[1] )
-  higher.outlier = which( vctr_values >= bx.qt[5] )
-  vioplot( genes.per.cell, rectCol="white", col="cyan", colMed="black", border="purple" )
-  stripchart( genes.per.cell, add=TRUE, vertical=TRUE, pch=21, jitter= .1, method="jitter")
+  lower.outlier = which( vctr_values < bx.qt[1] )
+  higher.outlier = which( vctr_values > bx.qt[5] )
+  vioplot( vctr_values, rectCol="white", col="cyan", colMed="black", border="purple" )
+  stripchart( vctr_values, add=TRUE, vertical=TRUE, pch=21, jitter= .1, method="jitter")
   title( main="Cell Complexity", xlab="Study", ylab="Cell Complexity" )
   return( c( lower.outlier, higher.outlier ) )
+}
+
+demo.complexity.outliers <- function(
+  ### Returns a list of values that demostrate low outliers in complexity.
+){
+  return(c(200,300,212,354,213,2252,1633,1667,2162,2674,1819,1159,3176,2902,2827,2349,3001,1735,1904,1354,1952,1775,1799,1704,2410,2578,1935,2770,1914,1776,1428,2380,1773,2965,1978,1539,1371,1305,563,1583,1135,3164,1661,2300,1609,1997,2361,2750,1386,1787,1536,1577,2236,2681,2071,2278,1768,1578,2342,1775,2492,3070,4451,1785,1943,2084,1833,2969,1918,2882,2236,2946,1673,1407,4029,2731,2615,2262,2674,2081,1179,2301,2354,1885,1524,2766,1858,2153,1849,1387,1710,2137,2047,1738,2814,2131,1075,2187,2058,2667,2410,2125,2228,3330,2696))
 }
 
 ###########################################
