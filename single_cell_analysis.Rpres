@@ -616,8 +616,12 @@ Defining Clusters from PCA or t-SNE
 nbt=DBclust_dimension(nbt,1,2,reduction.use="tsne", G.use=8,set.ident=TRUE)
 
 # Identify groups
-nbt=buildClusterTree(nbt,do.reorder=TRUE,reorder.numeric=TRUE,pcs.use=1:11,do.plot=FALSE)
+nbt=buildClusterTree(nbt,do.reorder=TRUE,reorder.numeric=TRUE,pcs.use=1:11,do.plot=TRUE)
+```
 
+Defining Clusters from PCA or t-SNE
+===
+```{r, eval=FALSE,tidy=TRUE}
 # Plot
 tsne.plot(nbt,do.label=TRUE,label.pt.size=0.5)
 ```
@@ -627,7 +631,12 @@ Defining Clusters from PCA or t-SNE
 
 ```{r, echo=FALSE,tidy=TRUE,fig.align="center"}
 nbt=DBclust_dimension(nbt,1,2,reduction.use="tsne", G.use=8,set.ident=TRUE)
-nbt=buildClusterTree(nbt,do.reorder=TRUE,reorder.numeric=TRUE,pcs.use=1:11,do.plot=FALSE)
+nbt=buildClusterTree(nbt,do.reorder=TRUE,reorder.numeric=TRUE,pcs.use=1:11,do.plot=TRUE)
+```
+
+Defining Clusters from PCA or t-SNE
+===
+```{r,echo=FALSE,fig.align="center"}
 tsne.plot(nbt,do.label=TRUE,label.pt.size=0.5)
 ```
 
@@ -726,10 +735,12 @@ RaceID: Detecting Rare Cell Populations
 ===
 class:small-code
 
+- **Ra**re **Ce**ll Type **ID**entification
+- Raw expression, remove Spike-ins
 - Large clusters are identifed with K-means clustering.
-- Within each cluster a ploynomial is fit to measure outlier variance.
-  - Negative binomial.
-- New outlier clusters are made from the outlier cells.
+- Within each cluster outlier genes are identified with a negative binomial distribution.
+- Outlier cells are identified by containing a certain number of outlier genes.
+- New outlier clusters are made from the outlier cells in a k-means manner.
 
 K-means Clustering
 ===
@@ -767,7 +778,7 @@ class:small-code
 # Filter data
 race.data <- filterdata( race.data, mintotal=3000, minexpr=5, minnumber=1, maxexpr=500, downsample=FALSE, dsn=1, rseed=17000 )
 
-# Cluster data
+# K-Means cluster data
 race.data <- clustexp( race.data, metric="pearson", cln=0, do.gap=TRUE, clustnr=20, B.gap=50, SE.method="Tibs2001SEmax", SE.factor=.25, bootnr=50, rseed=17000 )
 ```
 

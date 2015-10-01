@@ -196,7 +196,11 @@ nbt = DBclust_dimension(nbt, 1, 2, reduction.use = "tsne", G.use = 8, set.ident 
 
 # Identify groups
 nbt = buildClusterTree(nbt, do.reorder = TRUE, reorder.numeric = TRUE, pcs.use = 1:11, 
-    do.plot = FALSE)
+    do.plot = TRUE)
+
+
+#Defining Clusters from PCA or t-SNE
+#===
 
 # Plot
 tsne.plot(nbt, do.label = TRUE, label.pt.size = 0.5)

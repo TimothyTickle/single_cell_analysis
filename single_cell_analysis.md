@@ -658,8 +658,13 @@ nbt = DBclust_dimension(nbt, 1, 2, reduction.use = "tsne", G.use = 8, set.ident 
 
 # Identify groups
 nbt = buildClusterTree(nbt, do.reorder = TRUE, reorder.numeric = TRUE, pcs.use = 1:11, 
-    do.plot = FALSE)
+    do.plot = TRUE)
+```
 
+Defining Clusters from PCA or t-SNE
+===
+
+```r
 # Plot
 tsne.plot(nbt, do.label = TRUE, label.pt.size = 0.5)
 ```
@@ -667,7 +672,11 @@ tsne.plot(nbt, do.label = TRUE, label.pt.size = 0.5)
 Defining Clusters from PCA or t-SNE
 ===
 
-<img src="single_cell_analysis-figure/unnamed-chunk-40-1.png" title="plot of chunk unnamed-chunk-40" alt="plot of chunk unnamed-chunk-40" style="display: block; margin: auto;" />
+<img src="single_cell_analysis-figure/unnamed-chunk-41-1.png" title="plot of chunk unnamed-chunk-41" alt="plot of chunk unnamed-chunk-41" style="display: block; margin: auto;" />
+
+Defining Clusters from PCA or t-SNE
+===
+<img src="single_cell_analysis-figure/unnamed-chunk-42-1.png" title="plot of chunk unnamed-chunk-42" alt="plot of chunk unnamed-chunk-42" style="display: block; margin: auto;" />
 
 Getting Your Data Out of R
 ===
@@ -778,10 +787,12 @@ RaceID: Detecting Rare Cell Populations
 ===
 class:small-code
 
+- **Ra**re **Ce**ll Type **ID**entification
+- Raw expression, remove Spike-ins
 - Large clusters are identifed with K-means clustering.
-- Within each cluster a ploynomial is fit to measure outlier variance.
-  - Negative binomial.
-- New outlier clusters are made from the outlier cells.
+- Within each cluster outlier genes are identified with a negative binomial distribution.
+- Outlier cells are identified by containing a certain number of outlier genes.
+- New outlier clusters are made from the outlier cells in a k-means manner.
 
 K-means Clustering
 ===
@@ -823,7 +834,7 @@ class:small-code
 race.data <- filterdata(race.data, mintotal = 3000, minexpr = 5, minnumber = 1, 
     maxexpr = 500, downsample = FALSE, dsn = 1, rseed = 17000)
 
-# Cluster data
+# K-Means cluster data
 race.data <- clustexp(race.data, metric = "pearson", cln = 0, do.gap = TRUE, 
     clustnr = 20, B.gap = 50, SE.method = "Tibs2001SEmax", SE.factor = 0.25, 
     bootnr = 50, rseed = 17000)
@@ -892,7 +903,7 @@ class:small-code
 plotgap(race.data)
 ```
 
-<img src="single_cell_analysis-figure/unnamed-chunk-47-1.png" title="plot of chunk unnamed-chunk-47" alt="plot of chunk unnamed-chunk-47" style="display: block; margin: auto;" />
+<img src="single_cell_analysis-figure/unnamed-chunk-49-1.png" title="plot of chunk unnamed-chunk-49" alt="plot of chunk unnamed-chunk-49" style="display: block; margin: auto;" />
 
 RaceID: Detecting Rare Cell Populations
 ===
@@ -918,7 +929,7 @@ class:small-code
 plottsne(race.data, final = FALSE)
 ```
 
-<img src="single_cell_analysis-figure/unnamed-chunk-49-1.png" title="plot of chunk unnamed-chunk-49" alt="plot of chunk unnamed-chunk-49" style="display: block; margin: auto;" />
+<img src="single_cell_analysis-figure/unnamed-chunk-51-1.png" title="plot of chunk unnamed-chunk-51" alt="plot of chunk unnamed-chunk-51" style="display: block; margin: auto;" />
 
 RaceID: Detecting Rare Cell Populations
 ===
@@ -929,7 +940,7 @@ class:small-code
 plottsne(race.data, final = TRUE)
 ```
 
-<img src="single_cell_analysis-figure/unnamed-chunk-50-1.png" title="plot of chunk unnamed-chunk-50" alt="plot of chunk unnamed-chunk-50" style="display: block; margin: auto;" />
+<img src="single_cell_analysis-figure/unnamed-chunk-52-1.png" title="plot of chunk unnamed-chunk-52" alt="plot of chunk unnamed-chunk-52" style="display: block; margin: auto;" />
 
 RaceID: Detecting Rare Cell Populations
 ===
@@ -949,29 +960,29 @@ RaceID: Detecting Rare Cell Populations
 ===
 class:small-code
 
-<img src="single_cell_analysis-figure/unnamed-chunk-52-1.png" title="plot of chunk unnamed-chunk-52" alt="plot of chunk unnamed-chunk-52" style="display: block; margin: auto;" />
-
-RaceID: Detecting Rare Cell Populations
-===
-class:small-code
-
-
-```r
-# Plot t-SNE labeling groups with symbols
-plotsymbolstsne(race.data, type = sub("\\_\\d+$", "", names(race.data@ndata)))
-```
-
-RaceID: Detecting Rare Cell Populations
-===
-class:small-code
-
-
-```r
-# Plot t-SNE labeling groups with symbols
-plotsymbolstsne(race.data, type = sub("\\_\\d+$", "", names(race.data@ndata)))
-```
-
 <img src="single_cell_analysis-figure/unnamed-chunk-54-1.png" title="plot of chunk unnamed-chunk-54" alt="plot of chunk unnamed-chunk-54" style="display: block; margin: auto;" />
+
+RaceID: Detecting Rare Cell Populations
+===
+class:small-code
+
+
+```r
+# Plot t-SNE labeling groups with symbols
+plotsymbolstsne(race.data, type = sub("\\_\\d+$", "", names(race.data@ndata)))
+```
+
+RaceID: Detecting Rare Cell Populations
+===
+class:small-code
+
+
+```r
+# Plot t-SNE labeling groups with symbols
+plotsymbolstsne(race.data, type = sub("\\_\\d+$", "", names(race.data@ndata)))
+```
+
+<img src="single_cell_analysis-figure/unnamed-chunk-56-1.png" title="plot of chunk unnamed-chunk-56" alt="plot of chunk unnamed-chunk-56" style="display: block; margin: auto;" />
 
 Getting Your Data Out of R
 ===
@@ -1588,7 +1599,7 @@ class:small-code
 plot_log_normal_monocle(monocle.data)
 ```
 
-<img src="single_cell_analysis-figure/unnamed-chunk-58-1.png" title="plot of chunk unnamed-chunk-58" alt="plot of chunk unnamed-chunk-58" style="display: block; margin: auto;" />
+<img src="single_cell_analysis-figure/unnamed-chunk-60-1.png" title="plot of chunk unnamed-chunk-60" alt="plot of chunk unnamed-chunk-60" style="display: block; margin: auto;" />
 
 Ordering by Expression: Study View
 ===
@@ -1618,7 +1629,7 @@ class:small-code
 <simpleError in lm.fit(X.vlm, y = z.vlm, ...): NA/NaN/Inf in 'y'>
 ```
 
-<img src="single_cell_analysis-figure/unnamed-chunk-60-1.png" title="plot of chunk unnamed-chunk-60" alt="plot of chunk unnamed-chunk-60" style="display: block; margin: auto;" />
+<img src="single_cell_analysis-figure/unnamed-chunk-62-1.png" title="plot of chunk unnamed-chunk-62" alt="plot of chunk unnamed-chunk-62" style="display: block; margin: auto;" />
 
 Ordering by Expression: Gene View
 ===
@@ -1642,7 +1653,7 @@ Ordering by Expression: Gene View
 ===
 class:small-code
 
-<img src="single_cell_analysis-figure/unnamed-chunk-62-1.png" title="plot of chunk unnamed-chunk-62" alt="plot of chunk unnamed-chunk-62" style="display: block; margin: auto;" />
+<img src="single_cell_analysis-figure/unnamed-chunk-64-1.png" title="plot of chunk unnamed-chunk-64" alt="plot of chunk unnamed-chunk-64" style="display: block; margin: auto;" />
 
 Genes Which Follow an Assumed Temporal Pattern
 ===
@@ -1667,7 +1678,7 @@ Genes Which Follow an Assumed Temporal Pattern
 ===
 class:small-code
 
-<img src="single_cell_analysis-figure/unnamed-chunk-64-1.png" title="plot of chunk unnamed-chunk-64" alt="plot of chunk unnamed-chunk-64" style="display: block; margin: auto;" />
+<img src="single_cell_analysis-figure/unnamed-chunk-66-1.png" title="plot of chunk unnamed-chunk-66" alt="plot of chunk unnamed-chunk-66" style="display: block; margin: auto;" />
 
 What Did We Miss?
 ===

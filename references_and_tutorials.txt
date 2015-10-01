@@ -1,13 +1,16 @@
 Text References:
 
-Tutorial on Seurat:
+Tutorial on Seurat
 http://www.satijalab.org/seurat-intro.html
 
-Tutorial on SCDE:
-http://pklab.med.harvard.edu/scde/Tutorials
+Tutorial on SCDE
+http://hms-dbmi.github.io/scde/tutorials.html
 
-Tutorial on Monocle:
+Tutorial on Monocle
 http://bioconductor.org/packages/release/bioc/vignettes/monocle/inst/doc/monocle-vignette.pdf
+
+Tutorial on RaceID
+https://github.com/dgrun/RaceID/blob/master/Reference_manual_RaceID.pdf
 
 Papers:
 (Drop-seq)
@@ -29,18 +32,18 @@ http://www.nature.com/nature/journal/v498/n7453/full/nature12172.html
 URL:
 -----
 
+K-means
 http://tech.nitoyon.com/en/blog/2013/11/07/k-means/
 https://www.youtube.com/watch?v=BVFG7fd1H30
 
 Tools:
 -----
 
-
 Monocle
 http://bioconductor.org/packages/release/bioc/html/monocle.html
 
 RaceID
-
+https://github.com/dgrun/RaceID
 
 SCDE
 http://pklab.med.harvard.edu/scde/index.html

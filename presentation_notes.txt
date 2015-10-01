@@ -1,0 +1,79 @@
+Intro RNA-Seq-
+-
+- RSEM - estimating gene and isoform expression levels
+-- Default bowtie1 but can turn on bowtie2
+- counts - number of reads aligning to a gene (confounded by depth and transcript length)
+- CPM = TSS * million
+- FPKM = count / effective length / read depth / * 10^9
+- RPKM - FPKM in single-end reads
+- TPM = count / effective length / (sum of all counts / effective lengths) * million
+
+Violin plot-
+- box plot + kernel density plot.
+
+Bowtie vs Bowtie2-
+- Bowtie is an ultrafast, memory-efficient short read aligner. It aligns short DNA sequences (reads) to the human genome at a rate of over 25 million 35-bp reads per hour. Bowtie indexes the genome with a Burrows-Wheeler index to keep its memory footprint small: typically about 2.2 GB for the human genome (2.9 GB for paired-end).
+- Bowtie 2 is an ultrafast and memory-efficient tool for aligning sequencing reads to long reference sequences. It is particularly good at aligning reads of about 50 up to 100s or 1,000s of characters, and particularly good at aligning to relatively long (e.g. mammalian) genomes. Bowtie 2 indexes the genome with an FM Index to keep its memory footprint small: for the human genome, its memory footprint is typically around 3.2 GB. Bowtie 2 supports gapped, local, and paired-end alignment modes.
+- TopHat is an efficient read-mapping algorithm designed to align reads from an RNA-Seq experiment to a reference genome without relying on known splice sites
+
+Seurat Marker Gene-
+- DPPA4 (Developmental pluripotency-associated 4) Expressed exclusively in pluripotent cells; associated with transcriptionally active chromatin.
+- iPS
+-- induced pluripotent steam cells (iPSCs) pluripotent stem cell that can be generated directly from adult cells.
+
+- Density Based clustering-
+- DBclust_dimension-
+-- DBSCAN - Spectral density based clustering
+--- a point is a core point if aleast a min number of points are within a certain diameter of it
+--- clusters are made out of the core point and collstions of core points within certain distances
+- buidClusterTree - build tree relating teh average cell from each identity class, estimated on expression or PCA space.
+-- average euclidean distance.
+
+SCDE-
+- RPM
+- Identify a subset of genes to be used to fit error models.
+-- FOr every pair of cells in a group.
+--- Transcripts are modelled into a 3 component mixture model (Posson X 2 (dropout in each cell, NB amplification in both cells) ).
+--- Multinomial logistic regression
+-- Genes in 20% of all pairwise combos as amplification are used.
+- A single cell's error model is fit with the subset of genes
+-- mixture of NB (amplificed), Poisson (Dropout)
+-Bayesian approach
+-- probability of observing a dropout event in the cell (given an expression of x/certain level) as amplification or dropout.
+- Figure
+-- lines are the posterior probability of each cell
+-- black line is joint probability of the gene
+
+
+RaceID-
+- Data should be raw expression values
+-- genes (rows) cells (columns)
+-- remove spikins
+- filtering-
+-- mintotal - remove less complex cells
+-- normalization - TSS * mean study complexity
+-- downsample  = TRUE downsamples to mintotal transcripts
+-- pseudo count of 0.1 is added
+-- minexpr / minnumber = occurence filter
+-- maxexpr (Inf turns off) filter gene with saturated UMI counts
+- kmeans clustering
+-- cln= number of clusters (0 = pick for you with gap, do.gap=TRUE is needed)
+-- clustnr = max clusters
+-- B.gap = bootstap itr # for gap
+-- Se.method = how the first local maximum of the gap stats are determined.
+-- Se.factor fraction of the standard deviation by which the local maximum is required to differ from the neighboring points
+-- bootnr - kmean it bootstrap
+- gap plot
+-- the difference between within cluster dispersion of the original data and a background ditribution modeled by a uniform distribution (made similar to original data).
+-- Want the first local maximum / the minimual cluster number at which the gap statistic begins to sturate.
+-- It is good to be low, later refinedments may add clusters.
+- findoutliers
+( outlier gene identification using NB distribution within clusters, cells with a BH corrected # of outlier genes are flagged as outliers, kmeans clustering is used to group outliers (given a required threshold)
+-- outlier identification and redefinition of the final clusters
+-- outminc - expression cutoff for outliers
+-- outlg - min number of outlier genes required to ide a cell as outlier
+-- probthr - probability threshold for outlier calling, if the probability is lower than this cutoff (NB distributionfor cell) then the gene is considered an outlier).
+-- thr - probability values for which the number of outliers is computed in order to plt the dependence of the number of outliers on the prob threshold.
+-- outdistquant - outlier cells are merged to outlier clusters if their similarity exceeds thei quantile of similarity distribution for all paors of cells that are together in one of the original clusters.
+- comptsne - project with tsne
+
