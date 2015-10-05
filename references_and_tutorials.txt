@@ -1,4 +1,4 @@
-Text References:
+Tutorials:
 
 Tutorial on Seurat
 http://www.satijalab.org/seurat-intro.html
@@ -12,6 +12,7 @@ http://bioconductor.org/packages/release/bioc/vignettes/monocle/inst/doc/monocle
 Tutorial on RaceID
 https://github.com/dgrun/RaceID/blob/master/Reference_manual_RaceID.pdf
 
+
 Papers:
 (Drop-seq)
 http://www.cell.com/abstract/S0092-8674(15)00549-8
@@ -20,8 +21,8 @@ http://www.cell.com/abstract/S0092-8674(15)00549-8
 http://www.nature.com/nrg/journal/v10/n1/full/nrg2484.html
 
 (SCDE paper)
-Characterization of the single-cell transcriptional landscape by highly multiplex RNA-seq
-http://genome.cshlp.org/content/21/7/1160
+Bayesian approach to single-cell differential expression analysis
+http://www.nature.com/nmeth/journal/v11/n7/abs/nmeth.2967.html
 
 Embryonic fibroblasts represent a connecting link between mesenchymal and embryonic stem cells.
 http://www.ncbi.nlm.nih.gov/pubmed/23441817
@@ -29,12 +30,20 @@ http://www.ncbi.nlm.nih.gov/pubmed/23441817
 Single-cell transcriptomics reveals bimodlity in expression and splicing in immune cells.
 http://www.nature.com/nature/journal/v498/n7453/full/nature12172.html
 
-URL:
+(Single-cell RNA-Seq QC and batch effects)
+On the widespread and critical impact of systematic bias and batch effects in single-cell RNA-Seq data
+http://biorxiv.org/content/early/2015/09/04/025528.full-text.pdf+html
+
+
+URLs:
 -----
 
-K-means
+K-means-
+( Interactive tool )
 http://tech.nitoyon.com/en/blog/2013/11/07/k-means/
+( Helpful video )
 https://www.youtube.com/watch?v=BVFG7fd1H30
+
 
 Tools:
 -----
@@ -51,10 +60,49 @@ http://pklab.med.harvard.edu/scde/index.html
 Seurat
 http://www.satijalab.org/seurat.html
 
+
 Images
 ------
-PCA-
+
+Slide: Briefly Single-cell RNA-Seq Sequencing (1)
+http://www.nature.com/nrg/journal/v10/n1/full/nrg2484.html (Figure 1)
+
+Slide: Briefly Single-cell RNA-Seq Sequencing (1)
+http://www.cell.com/abstract/S0092-8674(15)00549-8 (Figure 2)
+
+Underlying Biology-
+http://www.nature.com/nmeth/journal/v11/n7/abs/nmeth.2967.html (Figure 1)
+
+PCA: in Quick Theory-
 https://onlinecourses.science.psu.edu/stat857/sites/onlinecourses.science.psu.edu.stat857/files/lesson05/PCA_plot_02.gif
+
+Quality Control in scData-
+http://biorxiv.org/content/early/2015/09/04/025528.full-text.pdf+html (Figure 1)
+
+Visualize Differentially Expressed Genes-
+http://hms-dbmi.github.io/scde/diffexp.html
+
+
+Data
+---
+
+islam_MEFMES.txt
+http://genome.cshlp.org/content/21/7/1160
+
+GBM_*
+GSE29087_*
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE29nnn/GSE29087
+
+HiSeq301_RSEM_linear_values.txt
+http://www.satijalab.org/seurat-intro.html
+(Pollen et al., Nature Biotechnology, 2014)
+
+hsmm_*
+http://bioconductor.org/packages/release/data/experiment/html/HSMMSingleCell.html
+
+transcript_counts_intestine.xls
+https://github.com/dgrun/RaceID
+
 
 Corgi Images
 -----------
@@ -63,5 +111,4 @@ ninja_corgi: http://api.ning.com/files/vf4DkD4*4JTbec6DwPBwauaYrSZtHTku-xD5FnPqk
 outlier_corgi: http://i.imgur.com/t5yybLH.jpg
 professor_corgi: http://cdn.thebarkpost.com/wp-content/uploads/2014/05/tumblr_l3533tVA621qa8kz9o1_500.jpg
 driving corgi: http://41.media.tumblr.com/e26964fc43e6b8e0e953d0e890853de3/tumblr_moz6exf61b1soq6xbo1_1280.jpg
-wizard_corgi: http://kekiongacomics.files.wordpress.com/2013/02/dogwizard11-warp1.jpg 
 corgi saturation: http://corgidogsorg.tumblr.com/post/62503326175/theres-no-such-thing-as-too-many-corgis
