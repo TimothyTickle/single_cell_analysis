@@ -44,7 +44,7 @@ Let's take a moment.
   - https://github.com/TimothyTickle/single_cell_analysis
 - Set working directory
 - You can view this presentation on-line.
-  - http://rpubs.com/timothyltickle/115128
+  - http://rpubs.com/timothyltickle/intro_single_cell_rna_seq
 - Quick overview of RStudio.
 
 Briefly Single-cell RNA-Seq Sequencing
