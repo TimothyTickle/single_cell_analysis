@@ -1,139 +1,126 @@
-#Logistics
-##===
-
+# Logistics
+# ===
 # Load library
 library(vioplot) # violin plots
 library(Seurat)
 
-#Load Code
-##===
 
+# Load Code
+# ===
 # Source code
 # Helper functions
 source(file.path("src","Modules.R"))
 
-#Data: Ready, Get Set, Load!
-#===
 
+# Data: Ready, Get Set, Load!
+# ===
 # Load tab delimited file
 data.set = read.delim( file.path("data","GSE29087_L139_updated.txt") )
 
-#What are Our Genes?
-#===
 
+# What are Our Genes?
+# ===
 # Gene names (row names)
 rownames( data.set )
 
-#What are Our Cells?
-#===
 
+# What are Our Cells?
+# ===
 # Column names
 # Sample / Cell names
 colnames( data.set )
 
-#How to Show Expression?
-#===
 
+# How to Show Expression?
+# ===
 # Only the corner
 # The full data will be too large to see
 corner( data.set )
 
-#How Many Expressed Genes (Complexity)?
-#===
 
+# How Many Expressed Genes (Complexity)?
+# ===
 # Plot genes per cell
 # How many genes express
 genes.per.cell <- apply( data.set, 2, function(x) sum( x>0 ))
 
 
-#Identifying Outliers?
-#===
- 
+# Identifying Outliers?
+# ===
 # Each cell is a dot
 cell.outlier = plot.cell.complexity( genes.per.cell )
 
-#Identifying Outliers?
-#===
 
+# Identifying Outliers?
+# ===
 # Each cell is a dot
 cell.outlier = plot.cell.complexity( demo.complexity.outliers() )
 
 
-#Filter Cells: Removing the Outlier Cells
-#===
-
+# Filter Cells: Removing the Outlier Cells
+# ===
 # Which outliers?
 cell.outlier
- 
+
 # Remove outlier cells
-data.set = data.set[, -1 * cell.outlier]
-ncol(data.set)
+cells.to.drop = 1:ncol(data.set) %in% cell.outlier
+data.set = data.set[ ,! cells.to.drop ]
+ncol( data.set)
 
 
-#Filter Genes: Using Prevalence
-#===
-
+# Filter Genes: Using Prevalence
+# ===
 # Remove low expressing genes
-# Remove genes that do not have atleast 10 counts in 10 samples.
-data.cleaned <- func_filter_by_occurence( data.set, 10, 10 )
+# Remove genes that do not have atleast 5 counts in 10 samples.
+data.cleaned <- filter.by.occurence( data.set, 5, 10 )
 
 
-#Normalizing for Cell Sequencing Depth
-#===
- 
+# Normalizing for Cell Sequencing Depth
+# ===
 # Counts to CPX
-data.cleaned.norm <- func_cpx(data.cleaned)
+data.cleaned.norm <- normalize.cpx( data.cleaned )
 
 
-#Plotting Sequencing Saturation of a Cell
-#===
- 
-func_plot_saturation_curve(data.cleaned[, 1], 1000)
+# Plotting Sequencing Saturation of a Cell
+# ===
+plot.saturation.curve( data.cleaned[,1], 1000 )
 
 
-#Getting Your Data Out of R
-#===
-
+# Getting Your Data Out of R
+# ===
 # Write your data frame to your computer.
 write.table( data.cleaned, file="basic_table.txt")
 
 
-#Loading Data into Seurat
-#===
- 
+# Loading Data into Seurat
+# ===
 # Read data in to Seurat
-nbt = read.into.seurat(file.path("data", "HiSeq301_RSEM_linear_values.txt"), 
-    sep = "\t", header = TRUE, row.names = 1)
+nbt=read.into.seurat(file.path("data","HiSeq301_RSEM_linear_values.txt"),sep="\t",header=TRUE,row.names=1)
 
 # Sets up object, filters
-nbt = setup(nbt, project = "NBT", min.cells = 3, names.field = 2, names.delim = "_", 
-    min.genes = 1000, is.expr = 1)
+nbt=setup(nbt,project="NBT",min.cells = 3,names.field = 2,names.delim = "_",min.genes = 1000,is.expr=1)
 
 
-#Quality Control in scData
-#===
-
+# Quality Control in scData
+# ===
 # Plot gene expression throughout cell groups
-vlnPlot(nbt, c("DPPA4"))
+vlnPlot( nbt, c("DPPA4") )
 
 
-#Viewing Genes vs Genes
-#===
-
+# Viewing Genes vs Genes
+# ===
 # Plot a gene vs a gene
 genePlot(nbt,"SOX11","BCL11A",cex.use = 1)
 
 
-#Viewing Cells vs Cells
-#===
- 
+# Viewing Cells vs Cells
+# ===
 # Plot a cell vs a cell
-cellPlot(nbt, nbt@cell.names[3], nbt@cell.names[4], do.ident = FALSE)
+cellPlot(nbt, "Hi_2338_3", "Hi_2338_4",do.ident = FALSE)
 
 
-#Getting Your Data Out of R
-#===
-
+# Getting Your Data Out of R
+# ===
 # Log-scale expression matrix
 write.table(nbt@data, file="seurat_expression.txt")
 
@@ -144,71 +131,58 @@ write.table(nbt@data.info, file="seurat_metadata.txt")
 head( nbt@data.info )
 
 
-#PCA using Seurat
-#===
- 
-# Prep data for PCA
-nbt = prep.pca.seurat(y.cutoff = 2, x.low.cutoff = 2)
-
-# Plot PCA
-pca.plot(nbt, 1, 2, pt.size = 3)
+# PCA using Seurat
+# ===
+nbt=prep.pca.seurat( nbt, y.cutoff = 2,x.low.cutoff = 2 )
+pca.plot(nbt,1,2,pt.size = 3)
 
 
-#Genes Contributing to Components
-#===
-
+# Genes Contributing to Components
+# ===
 # List driving PC1
-print.pca(nbt, 1)
+print.pca(nbt,1)
 
 
-#Genes Contributing to Components
-#===
- 
+# Genes Contributing to Components
+# ===
 # View genes driving PC1
-viz.pca(nbt, 1:2)
+viz.pca(nbt,1:2)
 
 
-#t-SNE using Seurat
-#===
- 
+# t-SNE using Seurat
+# ===
 # Run the t-SNE alogirthm
-nbt = run_tsne(nbt, dims.use = 1:11, max_iter = 2000)
+nbt=run_tsne(nbt,dims.use = 1:11,max_iter=2000)
 
 # Plot results
-tsne.plot(nbt, pt.size = 3)
+tsne.plot(nbt,pt.size = 3)
 
 
-#QC the Clusters!
-#===
- 
+# QC the Clusters!
+# ===
 # Paint PCA by complexity
-pca.plot(nbt, 1, 2, pt.size = 3, group.by = "nGene")
+pca.plot(nbt,1,2,pt.size = 3,group.by="nGene")
 
 # Paint the t-SNE by complexity
-tsne.plot(nbt, pt.size = 3, group.by = "nGene")
+tsne.plot(nbt,pt.size = 3,group.by="nGene")
 
 
-#Defining Clusters from PCA or t-SNE
-#===
- 
+# Defining Clusters from PCA or t-SNE
+# ===
 # Perform clustering
-nbt = DBclust_dimension(nbt, 1, 2, reduction.use = "tsne", G.use = 8, set.ident = TRUE)
+nbt=DBclust_dimension(nbt,1,2,reduction.use="tsne", G.use=8,set.ident=TRUE)
 
 # Identify groups
-nbt = buildClusterTree(nbt, do.reorder = TRUE, reorder.numeric = TRUE, pcs.use = 1:11, 
-    do.plot = TRUE)
+nbt=buildClusterTree(nbt,do.reorder=TRUE,reorder.numeric=TRUE,pcs.use=1:11,do.plot=TRUE)
 
 
-#Defining Clusters from PCA or t-SNE
-#===
-
-# Plot
-tsne.plot(nbt, do.label = TRUE, label.pt.size = 0.5)
+# Defining Clusters from PCA or t-SNE
+# ===
+tsne.plot(nbt,do.label=TRUE,label.pt.size=0.5)
 
 
-#Getting Your Data Out of R
-#===
-
+# Getting Your Data Out of R
+# ===
 # Log-scale expression matrix
 write.table(nbt@data, file="seurat_expression_tsne.txt")
 
@@ -219,87 +193,102 @@ write.table(nbt@data.info, file="seurat_metadata_tsne.txt")
 head( nbt@data.info )
 
 
-#RaceID: Detecting Rare Cell Populations
-#===
- 
+# SCDE: in Code
+# ===
+# library(scde) # Differential Expressions
+## Setting up cells groups
+# data.groups <- rep(NA, ncol(data.cleaned))
+# data.groups[ grep("MEF", names(data.cleaned)) ] <- "MEF"
+# data.groups[ grep("ES", names(data.cleaned)) ] <- "ES"
+# data.groups <- factor(data.groups, levels = c("ES","MEF"))
+
+
+# SCDE: in Code
+# ===
+# library(scde)
+
+## Calculate error models (Takes time)
+# o.ifm <- scde.error.models( as.matrix( data.cleaned ), groups = data.groups, n.cores=3, threshold.segmentation=TRUE, save.crossfit.plot=FALSE, save.model.plots=FALSE, verbose=1 )
+
+## Filter out cell (QC)
+# o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
+
+
+# SCDE: in Code
+# ===
+## Set up the Prior (starting value)
+# o.prior <- scde.expression.prior(models=o.ifm, counts=as.matrix(data.cleaned),length.out=400, show.plot=FALSE)
+
+## Perform T-test like analysis
+# ediff <- scde.expression.difference(o.ifm, as.matrix(data.cleaned), o.prior, groups=data.groups, n.randomizations=100, n.cores=1,verbose=1)
+
+# write.table(ediff[order(abs(ediff$Z), decreasing=T),], file="scde_results.txt", row.names=T, col.names=T, sep="\t", quote=F)
+
+
+# RaceID: Detecting Rare Cell Populations
+# ===
 # Load code
-source(file.path("src", "RaceID_class.R"))
+source(file.path("src","RaceID_class.R"))
 
 # Load tutorial data
-race.in <- read.csv(file.path("data", "transcript_counts_intestine.xls"), sep = "\t", 
-    header = TRUE)
+race.in <-read.csv(file.path("data","transcript_counts_intestine.xls"), sep="\t", header=TRUE)
 
 # Set up data
-rownames(race.in) <- race.in$GENEID
-race.in <- race.in[grep("ERCC", rownames(race.in), invert = TRUE), -1]
+rownames( race.in ) <-race.in$GENEID
+race.in <- race.in[grep("ERCC",rownames(race.in),invert=TRUE),-1]
 race.data <- SCseq(race.in)
 
 
-#RaceID: Detecting Rare Cell Populations
-#===
- 
+# RaceID: Detecting Rare Cell Populations
+# ===
 # Filter data
-race.data <- filterdata(race.data, mintotal = 3000, minexpr = 5, minnumber = 1, 
-    maxexpr = 500, downsample = FALSE, dsn = 1, rseed = 17000)
+race.data <- filterdata( race.data, mintotal=3000, minexpr=5, minnumber=1, maxexpr=500, downsample=FALSE, dsn=1, rseed=17000 )
 
-# Cluster data
-race.data <- clustexp(race.data, metric = "pearson", cln = 0, do.gap = TRUE, 
-    clustnr = 20, B.gap = 50, SE.method = "Tibs2001SEmax", SE.factor = 0.25, 
-    bootnr = 50, rseed = 17000)
+# K-Means cluster data
+race.data <- clustexp( race.data, metric="pearson", cln=0, do.gap=TRUE, clustnr=20, B.gap=50, SE.method="Tibs2001SEmax", SE.factor=.25, bootnr=50, rseed=17000 )
 
 
-#RaceID: Detecting Rare Cell Populations
-#===
- 
+# RaceID: Detecting Rare Cell Populations
+# ===
 # Check clusters
 plotgap(race.data)
 
 
-#RaceID: Detecting Rare Cell Populations
-#===
- 
+# RaceID: Detecting Rare Cell Populations
+# ===
 # Find outliers
-race.data <- findoutliers(race.data, outminc = 5, outlg = 2, probthr = 0.001, 
-    thr = 2**-(1:40), outdistquant = 0.75)
+race.data <- findoutliers( race.data, outminc=5, outlg=2,probthr=1e-3,thr=2**-(1:40),outdistquant=.75)
 
 # Project with t-SNE
-race.data <- comptsne(race.data, rseed = 15555)
+race.data <- comptsne( race.data,rseed=15555 )
 
 
-#RaceID: Detecting Rare Cell Populations
-#===
- 
-# Plot t-SNE
-plottsne(race.data, final = FALSE)
+# RaceID: Detecting Rare Cell Populations
+# ===
+plottsne( race.data, final=FALSE )
 
 
-#RaceID: Detecting Rare Cell Populations
-#===
- 
-plottsne(race.data, final = TRUE)
+# RaceID: Detecting Rare Cell Populations
+# ===
+plottsne( race.data, final=TRUE )
 
 
-#RaceID: Detecting Rare Cell Populations
-#===
- 
+# RaceID: Detecting Rare Cell Populations
+# ===
 # Interesting genes
-target.genes <- c("Apoa1__chr9", "Apoa1bp__chr3", "Apoa2__chr1", "Apoa4__chr9", 
-    "Apoa5__chr9")
+target.genes <- c("Apoa1__chr9", "Apoa1bp__chr3", "Apoa2__chr1", "Apoa4__chr9", "Apoa5__chr9")
 
 # Plot expresssion of interesting genes
-plotexptsne(race.data, target.genes)
+plotexptsne( race.data, target.genes )
 
-
-#RaceID: Detecting Rare Cell Populations
-#===
- 
+# RaceID: Detecting Rare Cell Populations
+# ===
 # Plot t-SNE labeling groups with symbols
-plotsymbolstsne(race.data, type = sub("\\_\\d+$", "", names(race.data@ndata)))
+plotsymbolstsne( race.data, type=sub("\\_\\d+$","",names(race.data@ndata)))
 
 
-#Getting Your Data Out of R
-#===
-
+# Getting Your Data Out of R
+# ===
 # Write expression data
 write.table( race.data@expdata, file="race_id_expression.txt" )
 
@@ -308,14 +297,3 @@ write.table( race.data@kmeans$kpart)
 
 # Write clusters with outlier refinement
 write.table( race.data@cpart )
-
-
-#Notes: to Make a PDF
-#===
-
-# Start pdf 
-pdf( 'data/my_file.pdf', useDingbats = FALSE )
-# plot in to the pdf file 
-plot( 1:10,log(1:10 ) ) 
-plot( seq(0,.9,.1), sin(0:9) ) #another plot for the pdf file 
-dev.off() # Close pdf file ( very important )

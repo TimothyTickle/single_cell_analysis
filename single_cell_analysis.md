@@ -44,7 +44,7 @@ Let's take a moment.
   - https://github.com/TimothyTickle/single_cell_analysis
 - Set working directory
 - You can view this presentation on-line.
-  - http://rpubs.com/timothyltickle/single_cell_analysis
+  - http://rpubs.com/timothyltickle/115128
 - Quick overview of RStudio.
 
 Briefly Single-cell RNA-Seq Sequencing
@@ -293,7 +293,8 @@ cell.outlier
 
 ```r
 # Remove outlier cells
-data.set = data.set[, -1 * cell.outlier]
+cells.to.drop = 1:ncol(data.set) %in% cell.outlier
+data.set = data.set[, !cells.to.drop]
 ncol(data.set)
 ```
 
@@ -327,8 +328,8 @@ class:small-code
 
 ```r
 # Remove low expressing genes
-# Remove genes that do not have atleast 10 counts in 10 samples.
-data.cleaned <- func_filter_by_occurence( data.set, 10, 10 )
+# Remove genes that do not have atleast 5 counts in 10 samples.
+data.cleaned <- filter.by.occurence( data.set, 5, 10 )
 ```
 
 ![occurence](images/prob_ave_expression2.png)
@@ -352,7 +353,7 @@ class:small-code
 
 ```r
 # Counts to CPX
-data.cleaned.norm <- func_cpx(data.cleaned)
+data.cleaned.norm <- normalize.cpx(data.cleaned)
 ```
 
 Sequencing Saturation
@@ -369,7 +370,7 @@ class:small-code
 
 
 ```r
-func_plot_saturation_curve(data.cleaned[, 1], 1000)
+plot.saturation.curve(data.cleaned[, 1], 1000)
 ```
 
 <img src="single_cell_analysis-figure/unnamed-chunk-18-1.png" title="plot of chunk unnamed-chunk-18" alt="plot of chunk unnamed-chunk-18" style="display: block; margin: auto;" />
@@ -445,7 +446,7 @@ class:small-code
 
 ```r
 # Plot a cell vs a cell
-cellPlot(nbt, nbt@cell.names[3], nbt@cell.names[4], do.ident = FALSE)
+cellPlot(nbt, "Hi_2338_3", "Hi_2338_4", do.ident = FALSE)
 ```
 
 Viewing Cells vs Cells
@@ -522,7 +523,7 @@ class:small-code
 
 ```r
 # Prep data for PCA
-nbt = prep.pca.seurat(y.cutoff = 2, x.low.cutoff = 2)
+nbt = prep.pca.seurat(nbt, y.cutoff = 2, x.low.cutoff = 2)
 
 # Plot PCA
 pca.plot(nbt, 1, 2, pt.size = 3)
@@ -1538,155 +1539,6 @@ Questions?
 ===
 
 ![gradute corgi](images/graduate_corgi.jpg)
-
-Moncole's Assumptions
-===
-
-- Monocle's Assumptions.
- - Genes not splice variants.
- - Assumes a log normal distribution.
- - Does NOT normalize (library size, depth, technical batch).
- - Do NOT use raw counts.
-
-Read In and Format
-===
-class:small-code
-
-Needed files -
-- Expression file ( Genes (row) x Cells (col) ) .
-- Cell Phenotype Metadata ( Cells (row) x Metadatum (col) ) .
-- Gene Metadata ( Genes (row) x Medatatum (col) ) .
-
-
-```r
-library(monocle)  # Pseudotemporal analysis
-
-# Do not run (For later) monocle.data <- make_cell_data_set(
-# expression_file='monocle_exprs.txt',
-# cell_phenotype_file='monocle_cell_meta.txt',
-# gene_metadata_file='monocle_gene_meta.txt' )
-
-# Get data for today
-monocle.data <- get_monocle_presentation_data()
-```
-
-Filter Genes
-===
-class:small-code
-
-
-```r
-# Require a minimun of 0.1 expression
-monocle.data <- detectGenes(monocle.data, min_expr = 0.1)
-
-# Require atleast 50 cells to have the minimum 0.1 expression Get name of
-# genes pass these filters
-monocle.expr.genes <- row.names(subset(fData(monocle.data), num_cells_expressed >= 
-    50))
-```
-
-Other QC can be performed.
- - Depth, accurate capture of 1 cell, ...
- - Can be added to phenotype or feature metadata files.
- 
-Confirm the Log-Normal Assumption
-===
-class:small-code
-
-
-```r
-# Check data
-plot_log_normal_monocle(monocle.data)
-```
-
-<img src="single_cell_analysis-figure/unnamed-chunk-60-1.png" title="plot of chunk unnamed-chunk-60" alt="plot of chunk unnamed-chunk-60" style="display: block; margin: auto;" />
-
-Ordering by Expression: Study View
-===
-class:small-code
-
-
-```r
-# Marker genes of biological interest
-marker.genes <- get_monocle_presentation_marker_genes()
-# Select from those marker genes those important to the study
-ordering.genes <- select_ordering_genes(monocle.data, monocle.expr.genes, marker.genes, 
-    "expression~Media", 0.01)
-
-# Order the cells by expression
-monocle.data <- order_cells_wrapper(monocle.data, ordering.genes, use_irlba = FALSE, 
-    num_paths = 2, reverse = TRUE)
-# Plot all cells in study with ordering
-plot_spanning_tree(monocle.data)
-```
-
-Ordering by Expression: Study View
-===
-class:small-code
-
-
-```
-<simpleError in lm.fit(X.vlm, y = z.vlm, ...): NA/NaN/Inf in 'y'>
-```
-
-<img src="single_cell_analysis-figure/unnamed-chunk-62-1.png" title="plot of chunk unnamed-chunk-62" alt="plot of chunk unnamed-chunk-62" style="display: block; margin: auto;" />
-
-Ordering by Expression: Gene View
-===
-class:small-code
-
-
-```r
-# Gene genes of interest in states 1 and 2
-monocle.data.diff.states <- monocle.data[monocle.expr.genes, pData(monocle.data)$State != 
-    3]
-
-# Look at a subset of genes
-subset.for.plot <- subset_to_genes(monocle.data.diff.states, c("CDK1", "MEF2C", 
-    "MYH3"))
-
-# Plot in pseudotime
-plot_genes_in_pseudotime(subset.for.plot, color_by = "Hours")
-```
-
-Ordering by Expression: Gene View
-===
-class:small-code
-
-<img src="single_cell_analysis-figure/unnamed-chunk-64-1.png" title="plot of chunk unnamed-chunk-64" alt="plot of chunk unnamed-chunk-64" style="display: block; margin: auto;" />
-
-Genes Which Follow an Assumed Temporal Pattern
-===
-class:small-code
-
-
-```r
-# Get genes of interest
-subset.pseudo <- subset_to_genes(monocle.data, c("MYH3", "MEF2C", "CCNB2", "TNNT1"))
-
-# Reduce the genes to just state 1 and 2
-subset.pseudo <- subset.pseudo[, pData(subset.pseudo)$State != 3]
-
-# Perform differential expression test
-subset.pseudo.diff <- differentialGeneTest(subset.pseudo, fullModelFormulaStr = "expression~sm.ns(Pseudotime)")
-
-# Color plot by time
-plot_genes_in_pseudotime(subset.pseudo, color_by = "Hours")
-```
-
-Genes Which Follow an Assumed Temporal Pattern
-===
-class:small-code
-
-<img src="single_cell_analysis-figure/unnamed-chunk-66-1.png" title="plot of chunk unnamed-chunk-66" alt="plot of chunk unnamed-chunk-66" style="display: block; margin: auto;" />
-
-What Did We Miss?
-===
-
-- Monocle Leftovers
-  - Simple Differential Expression.
-  - Multifactorial Differential Expression (batch effects).
-  - Clustering genes by pseudotime.
 
 Notes: to Make a PDF
 ===
