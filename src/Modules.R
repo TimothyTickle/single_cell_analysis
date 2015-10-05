@@ -1,109 +1,24 @@
-
-# Constants
-C_STR_DENSITY_COLOR = "cyan" #"darkmagenta" # #BB00BB
-### Color
-STR_COLOR_AFTER = "#00660075" # green
-### Used for after a method (used as a secondary to STR_COLOR_BEFORE)
-STR_COLOR_BEFORE = "#DD640075" # orange
-### USed for the before color in a before / after picture.
-### Also used as the selection color for plots.
-STR_COLOR_STANDARD = "#00000075" # transparent black ( grey )
-### Color to be used for normal plotting
-
-
-################################
-# Color palettes
-################################
-
-monochromatic_palette <- function(
-### Return the standard monochromatic color scheme
-i_number_colors = 100
-){
-  return( colorpanel( i_number_colors, "white", "violet", "purple" ) )
-}
-
-polychromatic_palette <- function(
-### Return the standard polychromatic color scheme
-i_number_colors = 100
-){
-  return( colorpanel( i_number_colors, "purple", "black", "yellow" ) )
-}
-
-metadata_palette <- function(
-### Return the standard color scheme for metadata
-i_number_colors = 100
-){
-  return( rainbow( i_number_colors ) )
-}
-
-min_occurence_at_min_value <- function(
-### Returns if a vector has a minimum occurence of values at or equal to the given min value
-### This is a helper function for func_filter_by_percentile_percentage
-vctr_values_to_evaluate,
-### Values to check if the are greater or equal to the min value
-vctr_min_values,
-### Minimum values (positionally) a value must be to be counted
-d_min_occurence,
-### Minimum counts a feature must have above the value
-...
-){
-  return( length( which( vctr_values_to_evaluate >= vctr_min_values ) ) )
-}
-
-############################################
-# Data plots
-############################################
-plot.quantiles <- function(
-  ### Plot data arbitrarly selected for the quantiles of the data
-  data
-){
-  # Get the sorted order for the genes
-  feature.sum.order <- order( apply( data, 1, sum) )
-  feature.summary <- summary( 1:length(feature.sum.order))
-  # Get the 10 most sparse genes
-  index_min <- feature.sum.order[ 1:10 ]
-  # 1 quartile sparsity genes
-  index_q1 <- feature.sum.order[ floor(feature.summary[[2]]):(floor(feature.summary[[2]])+9) ]
-  # Median sparsity genes
-  index_median <- feature.sum.order[ floor(feature.summary[[3]]):(floor(feature.summary[[3]])+9) ]
-  # 3rd quartile sparsity genes
-  index_q3 <- feature.sum.order[ floor(feature.summary[[5]]):(floor(feature.summary[[5]])+9) ]
-  # Get the least sparse genes
-  index_max <- feature.sum.order[ (length(feature.sum.order)-9):length(feature.sum.order) ]
-  plot( x=0,y=0,type="p", xlim=c(0,log(max(data)+1)), ylim=c(0,.75), main="Gene Count Distributions by Sparsity", ylab="Density of gene counts", xlab="Gene count value (Log)" )
-  for( i_q3_plot in index_q3 ){ lines( density( as.matrix( log(data[ i_q3_plot, ]+1))), col = "#0000ff75")}
-  for( i_median_plot in index_median ){ lines( density( as.matrix( log(data[ i_median_plot, ]+1))), col = "#00ffff75")}
-  for( i_min_plot in index_min ){ lines( density( as.matrix( log(data[ i_min_plot, ]+1))), col = "#ff000075")}
-  for( i_q1_plot in index_q1 ){ lines( density( as.matrix( log(data[ i_q1_plot, ]+1))), col = "#EE82EE75")}
-  for( i_max_plot in index_max ){ lines( density( as.matrix( log(data[ i_max_plot, ]+1))), col = "#00ff0075")}
-  legend( "topright", c("Min","Q1","Median","Q3","MAX"), fill=c("#ff0000","#EE82EE","#00ffff","#0000ff","#00ff00"), title="Sparsity group" )
-  
-}
-
 ###########################################
 # Data QC and Normalization methods
 ###########################################
 
-func_filter_by_occurence <- function(
+filter.by.occurence <- function(
+### Filter genes (rows) by require those kept to have atleast a min values in a min number of samples.
+### This avoids using averages and it stable when adding samples to the study.
 df_data,
+### Data frame to be filtered
 d_min_value,
+### Minimum value a measurement of gene must be to be counted in a sample.
 d_min_occurence
+### Minimum times a gene must be found in a sample (at the d_min_value) in order to not be filtered.
 ){
   vctr_f_keep = apply( df_data, 1, function( x ){ return( length( which( x >= d_min_value ) ) >= d_min_occurence ) } )
   return( df_data[ vctr_f_keep,] )
 }
 
-filter_by_average_top_gene <- function(
-df_data,
-i_top_ranked,
-d_min_average
-){
-  vctr_f_keep = apply( df_data, 1, function( x ){ return( mean( x[ order(x, decreasing=TRUE) ][1:i_top_ranked] ) > d_min_average )})
-  return( df_data[ vctr_f_keep,] )
-}
 
-func_cpx <- function(
-### Normalize counts to counts per million
+normalize.cpx <- function(
+### Normalize counts to counts per a X where X is a median depth of the sample.
 ### Normalizes within columns
 df_data,
 ### Count data to be transformed
@@ -111,10 +26,11 @@ df_data,
 ){
   d_median_sums = median( apply( df_data, 2, sum ) )
   d_magnitude = as.integer(paste( c(c( "1"), rep( "0", nchar(as.character(d_median_sums)))),collapse=""))
-  return( log2( ( func_tss( df_data ) * d_magnitude ) + 1 ))
+  return( log2( ( normalize.tss( df_data ) * d_magnitude ) + 1 ))
 }
 
-func_tss <- function(
+
+normalize.tss <- function(
 ### Total Sum Scaled
 ### Normalize columns of the data set buy dividing each observation by the total of the sample
 df_data,
@@ -124,11 +40,17 @@ df_data,
   return( sweep( df_data, 2, colSums( df_data), "/" ) )
 }
 
-func_plot_saturation_curve <- function( 
+
+plot.saturation.curve <- function(
+### in Silico bootstrap cell complexity at varying levels to get a saturation curve for sample depth
 vctr_values,
+### Sample expression
 i_depth_increment,
+### Depth increment for sampling from 0 to d_max_depth 
 d_max_depth = NA,
+### Make depth to explore (if NA will be set to the depth of the sample).
 i_iterations = 10
+### How many times a specific depth is sampled (increasing this increases the stability of each depth's measurement on the graph). 
 ){
   # Set up a population to sample from
   vctr_i_population = c()
@@ -169,6 +91,7 @@ i_iterations = 10
         pch=16, col="#0000ff55")
 }
 
+
 plot.cell.complexity <- function(
   ### This is only a demonstration of how outlier samples can be identified by complexity.
   ### Plot cell complexity and identify outliers
@@ -185,182 +108,24 @@ plot.cell.complexity <- function(
   return( c( lower.outlier, higher.outlier ) )
 }
 
+
 demo.complexity.outliers <- function(
   ### Returns a list of values that demostrate low outliers in complexity.
+  ### This is just for the presentation.
 ){
   return(c(200,300,212,354,213,2252,1633,1667,2162,2674,1819,1159,3176,2902,2827,2349,3001,1735,1904,1354,1952,1775,1799,1704,2410,2578,1935,2770,1914,1776,1428,2380,1773,2965,1978,1539,1371,1305,563,1583,1135,3164,1661,2300,1609,1997,2361,2750,1386,1787,1536,1577,2236,2681,2071,2278,1768,1578,2342,1775,2492,3070,4451,1785,1943,2084,1833,2969,1918,2882,2236,2946,1673,1407,4029,2731,2615,2262,2674,2081,1179,2301,2354,1885,1524,2766,1858,2153,1849,1387,1710,2137,2047,1738,2814,2131,1075,2187,2058,2667,2410,2125,2228,3330,2696))
 }
 
-###########################################
-# Unsupervised ordination
-###########################################
-
-
-heatmap <- function(
-### Create a heatmap of data frame
-df_frame,
-### Data for which to show a heatmap
-str_cor = "euclidean",
-### The correlation metric to use
-str_linkage = "average",
-### Any valid linkage method for hclust
-vctr_grouping = NULL,
-### Optional Groups the samples
-str_output_dir = NULL,
-### The directory to output figure and such
-plt_colors = NULL,
-### Color pallette, if not given polychromatic default will be used
-str_title = "Data Heatmap",
-### Title of plot
-...
-){
-  ## TODO Tranform (center and such) should happen before this
-
-  # Get a consistent color scheme for the plotting
-  if( is.null( plt_colors ) )
-  {
-    plt_colors = polychromatic_palette( )
-  }
-
-  # Get distance matrix
-  dist_row = dist( df_frame, method = str_cor )
-  dist_col = dist_row
-  if( !nrow( df_frame ) == ncol( df_frame ) )
-  {
-    dist_col = dist( t( df_frame ), method = str_cor )
-  }
-
-  # Visualize heatmap and possibly record in pdf file
-  if( ! is.null( str_output_dir ) )
-  {
-    pdf( paste( str_output_dir, "data_heatmap.pdf" ) )
-  }
-
-  if( !is.null( vctr_grouping ) )
-  {
-    # Set the groupings to colors
-    lret_coloring = func_factor_to_metadata_color( vctr_grouping )
-    vctr_grouping_colors = matrix( lret_coloring$vctr_grouping_colors, nrow = 1 )
-    names( vctr_grouping_colors ) = names( lret_coloring$vctr_grouping_colors )
-    heatmap.3b( x=df_frame, dendrogram='both', 
-              Rowv=as.dendrogram( hclust( dist_row ), method = str_linkage ), 
-              Colv=as.dendrogram( hclust( dist_col ), method = str_linkage ), 
-              scale='none', symm=TRUE, key=TRUE, col = plt_colors,
-              density.info='histogram', denscol = C_STR_DENSITY_COLOR, trace='none', 
-              symkey=FALSE, margins=c(10,10), cexCol=1, ColSideColors = vctr_grouping_colors,
-              cexRow=1, cex.main=0.75, main = str_title, ...)
-  } else {
-    heatmap.3b( x=df_frame, dendrogram='both',
-              Rowv=as.dendrogram( hclust( dist_row ), method = str_linkage ),
-              Colv=as.dendrogram( hclust( dist_col ), method = str_linkage ),
-              scale='none', symm=TRUE, key=TRUE, col = plt_colors,
-              density.info='histogram', denscol = C_STR_DENSITY_COLOR, trace='none',
-              symkey=FALSE, margins=c(10,10), cexCol=1,
-              cexRow=1, cex.main=0.75, main = str_title, ...)
-  }
-
-  if( ! is.null( str_output_dir ) )
-  {
-    dev.off()
-  }
-}
-
-
-cor_matrix <- function(
-### Show the correlation of the date in the data frame (samples or features)
-df_frame,
-### Data for which to show correlation
-str_cor = "spearman",
-### The correlation metric to use
-vctr_grouping = NULL,
-### Grouping of samples or features by color
-str_linkage = "average",
-### Any valid linkage method for hclust
-str_output_dir = NULL,
-### The directory to output figure and such
-f_correlate_samples = TRUE,
-### Indicates if samples (TRUE; columns) or features (FALSE; rows) are correlated
-str_title = NULL,
-### Title for plot
-...
-){
-  # Get a consistent color scheme for the plotting
-  plt_colors = polychromatic_palette( )
-
-  # Create correlation matrix
-  mtrx_cor = NA
-  if( f_correlate_samples )
-  {
-    mtrx_cor = cor( df_frame, method = str_cor, use = 'pairwise.complete.obs' )
-  } else {
-    mtrx_cor = cor( t( df_frame ), method = str_cor, use = 'pairwise.complete.obs' )
-  }
-
-  # Remove diag
-  diag( mtrx_cor ) = NA
-
-  # Distance between samples
-  dgrm_samples = as.dendrogram( hclust( as.dist( 1-mtrx_cor ), method = str_linkage ) )
-
-  # Visualize heatmap and possibly record in pdf file
-  if( ! is.null( str_output_dir ) )
-  {
-    str_file_name = "sample_correlation_matrix.pdf"
-    if( ! f_correlate_samples )
-    {
-      str_file_name = "feature_corrleation_matrix.pdf"
-    }
-    pdf( paste( str_output_dir, str_file_name ) )
-  }
-
-  if( is.null( str_title ) )
-  {
-    str_title = "Sample Correlation Matrix"
-    if( ! f_correlate_samples )
-    {
-      str_title = "Feature Correlation Matrix"
-    }
-  }
-
-  if( !is.null( vctr_grouping ) )
-  {
-      lret_grouping_colors = func_factor_to_metadata_color( vctr_grouping )
-      vctr_grouping_colors = matrix( lret_grouping_colors$vctr_grouping_colors, nrow = 1 )
-      names( vctr_grouping_colors ) = names( lret_grouping_colors$vctr_grouping_colors )
-      heatmap.3b( mtrx_cor, dendrogram = "both", Rowv = dgrm_samples, Colv = dgrm_samples, col = plt_colors, scale = "none", revC = TRUE, key = TRUE, density.info = "histogram", trace = "none", margin.for.labRow = 10, margin.for.labCol = 10, cexCol = 1, cexRow = 1, cex.main = 0.75, main = str_title, sep.color = "black", sep.lwd = 1, denscol = C_STR_DENSITY_COLOR, ColSideColors = vctr_grouping_colors, RowSideColors = t( vctr_grouping_colors ), ... ) 
-  } else {
-      heatmap.3b( mtrx_cor, dendrogram = "both", Rowv = dgrm_samples, Colv = dgrm_samples, col = plt_colors, scale = "none", revC = TRUE, key = TRUE, density.info = "histogram", trace = "none", margin.for.labRow = 10, margin.for.labCol = 10, cexCol = 1, cexRow = 1, cex.main = 0.75, main = str_title, sep.color = "black", sep.lwd = 1, denscol = C_STR_DENSITY_COLOR, ... ) 
-  }
-
-  if( ! is.null( str_output_dir ) )
-  {
-    dev.off()
-  }
-}
-
-
-func_factor_to_metadata_color <- function(
-vctr_factors
-### Factors to turn to metadata colors
-){
-  vctr_grouping_colors = rep("NA", length( vctr_factors ) )
-  names( vctr_grouping_colors ) = as.character( vctr_factors )
-  vctr_levels = levels( vctr_factors )
-  vctr_colors = metadata_palette( length( vctr_levels ) )
-  for( i_color_index in 1:length( vctr_levels ) )
-  {
-    vctr_grouping_colors[ which( vctr_factors == vctr_levels[ i_color_index ] ) ] = vctr_colors[ i_color_index ]
-  }
-  return( list( vctr_grouping_colors = vctr_grouping_colors, vctr_levels = vctr_levels, vctr_colors = vctr_colors ) )
-}
 
 #####################################
 # Seurat Associated
 #####################################
 
 read.into.seurat <- function(
-  str_data_file,
-  ...
+### Read data into a seurat object
+str_data_file,
+### Text file of expression
+...
 ){
   # Read table
   nbt.data=read.table( str_data_file, ... )
@@ -370,100 +135,17 @@ read.into.seurat <- function(
   return( new( "seurat", raw.data=nbt.data ) )
 }
 
+
 prep.pca.seurat <- function(
   ### Wrapper function to simpily prep for PCA.
+  data.seurat,
+  ### Data to prep
   y.cutoff,
+  ### Dispersion lowest value cut-off
   x.low.cutoff
+  ### Average expression lowest value cut-off
 ){
-  nbt=mean.var.plot(nbt,y.cutoff=y.cutoff,x.low.cutoff=x.low.cutoff,fxn.x = expMean,fxn.y = logVarDivMean,do.plot=FALSE)
-  nbt=pca(nbt,do.print=FALSE)
-  return( nbt )
-}
-
-#####################################
-### Monocle associated
-#####################################
-
-make_cell_data_set <- function(
-expression_file,
-cell_phenotype_file,
-gene_metadata_file
-){
-  # Read in expression as matrix
-  monocle.exprs <- as.matrix( read.table(expression_file ) )
-  # Read in cell phenotype
-  monocle.cell.meta <- read.table( cell_phenotype_file )
-  # Read in gene metadata
-  monocle.gene.meta <- read.table( gene_metadata_file )
-  # Prep cell phenotype data
-  monocle.pheno <- new( "AnnotationDataFrame", data=monocle.cell.meta )
-  # Prep gene metadata
-  monocle.feature.data <- new( "AnnotatedDataFrame", data=monocle.gene.meta )
-  # Hold everything in a CellDataSet object
-  return( newCellDataSet( monocle.exprs, phenoData=monocle.pheno, featureData=monocle.feature.data ) )
-}
-
-get_monocle_presentation_data <- function(){
-  data( HSMM_expr_matrix )
-  data( HSMM_gene_annotation )
-  data( HSMM_sample_sheet )
-  monocle.pheno <- new( "AnnotatedDataFrame", data=HSMM_sample_sheet )
-  monocle.feature.data <- new( "AnnotatedDataFrame", data=HSMM_gene_annotation )
-  return( newCellDataSet( as.matrix(HSMM_expr_matrix), phenoData=monocle.pheno, featureData=monocle.feature.data ) )
-}
-
-get_monocle_presentation_file <- function(){
-  HSMM_expr_matrix = read.table( file.path( "data","hsmm_expr_matrix.txt" ) )
-  HSMM_gene_annotation = read.table( file.path( "data", "hsmm_gene_annotation.txt" ))
-  HSMM_sample_sheet = read.table( file.path( "data", "hsmm_sample_sheet.txt" ) )
-  monocle.pheno <- new( "AnnotatedDataFrame", data=HSMM_sample_sheet )
-  monocle.feature.data <- new( "AnnotatedDataFrame", data=HSMM_gene_annotation )
-  return( newCellDataSet( as.matrix(HSMM_expr_matrix), phenoData=monocle.pheno, featureData=monocle.feature.data ) )
-}
-
-get_monocle_presentation_marker_genes <- function(){
-  return( c("MEF2C","MEF2D","MYF5","ANPEP","PDGFRA","MYOG","TPM1","TPM2","MYH2","MYH3","NCAM1","TNNT1","TNNT2","TNNC1","CDK1","CDK2","CCNB1","CNNB2","CCND1","CCNA1","ID1") )
-}
-
-plot_log_normal_monocle <- function(
-  data.set
-){
-  # Log transform data
-  data.logged <- log(exprs(data.set[ monocle.expr.genes,]))
-  # Standardize each gene
-  data.logged <- t(scale(t(data.logged)))
-  # Plot
-  qplot(value, geom="density", data=melt(data.logged)) + stat_function(fun=dnorm, size=0.5, color="red") + xlab("Standarized log") + ylab("Density")
-}
-
-select_ordering_genes <- function(
-data.set,
-genes.expressed,
-genes.of.interest,
-model.formula,
-qvalue.threshold
-){
-  data.set.subset <- subset_to_genes( data.set, genes.of.interest )
-  diff.marker.genes <- differentialGeneTest(data.set.subset, fullModelFormulaStr=model.formula)
-  sig.marker.genes <- row.names(subset(diff.marker.genes, qval < qvalue.threshold))
-  return( intersect( sig.marker.genes, genes.expressed ) )
-}
-
-order_cells_wrapper <- function( 
-data.set, 
-genes, 
-use_irlba, 
-num_paths, 
-reverse 
-){
-  data.set <- setOrderingFilter( data.set, genes )
-  data.set <- reduceDimension( data.set, use_irlba=use_irlba )
-  return( orderCells( data.set, num_paths=num_paths, reverse=reverse) );
-}
-
-subset_to_genes <- function(
-data.set,
-genes
-){
-  return( data.set[ row.names( subset(fData( data.set ), gene_short_name %in% genes ) ),] )
+  data.seurat=mean.var.plot( data.seurat, y.cutoff=y.cutoff, x.low.cutoff=x.low.cutoff, fxn.x=expMean, fxn.y=logVarDivMean, do.plot=FALSE)
+  data.seurat=pca( data.seurat, do.print=FALSE)
+  return( data.seurat )
 }
