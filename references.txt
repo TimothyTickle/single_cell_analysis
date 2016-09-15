@@ -1,26 +1,11 @@
-Tutorials:
-
-Tutorial on Seurat
-http://www.satijalab.org/seurat-intro.html
-
-Tutorial on SCDE
-http://hms-dbmi.github.io/scde/tutorials.html
-
-Tutorial on Monocle
-http://bioconductor.org/packages/release/bioc/vignettes/monocle/inst/doc/monocle-vignette.pdf
-
-Tutorial on RaceID
-https://github.com/dgrun/RaceID/blob/master/Reference_manual_RaceID.pdf
-
-
 Papers:
-(Drop-seq)
+Drop-seq
 http://www.cell.com/abstract/S0092-8674(15)00549-8
 
-(RNA-Seq review)
+RNA-Seq reviews
 http://www.nature.com/nrg/journal/v10/n1/full/nrg2484.html
 
-(SCDE paper)
+SCDE paper
 Bayesian approach to single-cell differential expression analysis
 http://www.nature.com/nmeth/journal/v11/n7/abs/nmeth.2967.html
 
@@ -30,7 +15,7 @@ http://www.ncbi.nlm.nih.gov/pubmed/23441817
 Single-cell transcriptomics reveals bimodlity in expression and splicing in immune cells.
 http://www.nature.com/nature/journal/v498/n7453/full/nature12172.html
 
-(Single-cell RNA-Seq QC and batch effects)
+Single-cell RNA-Seq QC and batch effects
 On the widespread and critical impact of systematic bias and batch effects in single-cell RNA-Seq data
 http://biorxiv.org/content/early/2015/09/04/025528.full-text.pdf+html
 
@@ -43,22 +28,6 @@ K-means-
 http://tech.nitoyon.com/en/blog/2013/11/07/k-means/
 ( Helpful video )
 https://www.youtube.com/watch?v=BVFG7fd1H30
-
-
-Tools:
------
-
-Monocle
-http://bioconductor.org/packages/release/bioc/html/monocle.html
-
-RaceID
-https://github.com/dgrun/RaceID
-
-SCDE
-http://pklab.med.harvard.edu/scde/index.html
-
-Seurat
-http://www.satijalab.org/seurat.html
 
 
 Images
@@ -81,27 +50,6 @@ http://biorxiv.org/content/early/2015/09/04/025528.full-text.pdf+html (Figure 1)
 
 Visualize Differentially Expressed Genes-
 http://hms-dbmi.github.io/scde/diffexp.html
-
-
-Data
----
-
-islam_MEFMES.txt
-http://genome.cshlp.org/content/21/7/1160
-
-GBM_*
-GSE29087_*
-ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE29nnn/GSE29087
-
-HiSeq301_RSEM_linear_values.txt
-http://www.satijalab.org/seurat-intro.html
-(Pollen et al., Nature Biotechnology, 2014)
-
-hsmm_*
-http://bioconductor.org/packages/release/data/experiment/html/HSMMSingleCell.html
-
-transcript_counts_intestine.xls
-https://github.com/dgrun/RaceID
 
 
 Corgi Images

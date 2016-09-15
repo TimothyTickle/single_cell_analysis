@@ -1,6 +1,9 @@
 Introduction to Single-cell RNA-Seq Analysis
 ===============
 
+Please also visit https://github.com/TimothyTickle/single_cell_analysis/wiki for ongoing updates and continued learning.
+
+
 Summary: These are the materials for a single-cell RNA-Seq analysis workshop. 
 
 Included are:
@@ -8,11 +11,9 @@ Included are:
 
 * cut_and_paste.txt - You can cut/copy and paste code from this document into your RStudio console to work through the presentation. (On a windows machine word pad or RStudio worked best for opening this document.)
 
-* install_notes.txt - How to install the libraries in this presentation.
-
 * reading.txt - Some publications to get you started, have fun these are great reads!
 
-* references_and_tutorials.txt - References for information used in the presentation and online tutorials for further reading.
+* references.txt - References for information used in the presentation.
 
 * single_cell_analysis.Rpres - The presentation in RStudio format (the environment I used to build the presentation).
 
