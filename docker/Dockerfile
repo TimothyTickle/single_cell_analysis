@@ -54,7 +54,7 @@ RUN echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs
     echo "biocLite(\"YosefLab/scone\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
     echo "devtools::install_github(\"satijalab/seurat\")" >> ${SRC}/install_pkgs.R && \
     echo "biocLite(c(\"RcppArmadillo\", \"Rook\", \"rjson\", \"RMTstat\", \"extRemes\", \"pcaMethods\", \"Cairo\"), dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
-    echo "biocLite(c(\"pheatmap\", \"amap\", \"useful\"), dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    echo "biocLite(c(\"pheatmap\", \"amap\", \"useful\", \"vioplot\"), dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
     echo "biocLite(c(\"scater\"), dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
     echo "biocLite(c(\"org.Hs.eg.db\"), dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
     echo "biocLite()" >> ${SRC}/install_pkgs.R && \
