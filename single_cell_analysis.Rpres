@@ -24,7 +24,7 @@ Before We Get Started
   - Strengthen those R ninja skills!
   - If you need, cut and pasting is available (cut_and_paste.txt).
   - There will many cute corgi pics.
-  
+
 ---
 
 ![ninja corgis](images/corgis/ninja_corgi.jpeg)
@@ -57,7 +57,7 @@ Welcome to day 1
 - Why normalize gene expression and common types of normalization?
 - Using Scone for normalization.
 
-SECTION: Overview of single-cell assays (SmartSeq2, Dropseq, 10X) (TODO)
+Overview of assays (SmartSeq2, Dropseq, 10X)
 ===
 
 ![scientist](images/corgis/scientist.jpg)
@@ -65,50 +65,207 @@ SECTION: Overview of single-cell assays (SmartSeq2, Dropseq, 10X) (TODO)
 SmartSeq2
 ===
 
-Add description of assay.
+![smartseq_paper](images/smartseq_paper.png)
+
+---
+
+![smartseq_protocols](images/smartseq_protocols.png)
+
+SmartSeq2: Description
+===
+
+
+SmartSeq2: Assay Overview
+===
+
+![smartseq2_seq](images/smart_seq2.jpg)
+
+SmartSeq2: Equipment
+===
+
+![sequencer](images/nextseq-large.jpg)
+
+---
+
+![plate](images/plate.jpg)
+
+SmartSeq2: Pointers
+===
+
+- Plate-based methods get lysed in wells and so do not leak.
 
 Dropseq
 ===
 
-![drop_seq](images/dropseq.png)
+![drop_seq](images/dropseq_paper.png)  
+
+Dropseq: Description
+===
+
+- Droplet-based using microfluidics
+
+Dropseq: Assay Overview
+===
+
 [Drop Seq Video Abstract](http://www.sciencedirect.com/science/article/pii/S0092867415005498)
 
-Add Description of Assay
+Dropseq: UMI Construction
+===
+
+![drop_umi](images/dropseq_assay_umi.png)
+
+Dropseq: Assay Overview
+===
+
+![dropseq_assay_1](images/dropseq_assay_1.png)
+
+Dropseq: Microfluidics
+===
+
+![drop_beads](images/dropseq_drops.gif)
+
+Dropseq: Equipment
+===
+
+![dropseq_eq](images/drop_seq_equipment.jpeg)
+
+---
+
+![dropseq_single](images/dropseq_fluidics.png)
+![dropseq_large](images/Drop-seq-chip-large.jpg)
+
+Dropseq: Pointers
+===
+
+- Droplet-based assays can have leaky RNA.
+- Before library generation wash off any medium (inhibits library generation).
+- Adding PBS and BSA (0.05-0.01%) can protect the cell.
+  - Too much produces a residue making harvesting the beads difficult.
+- Filter all reagent with a 80 micron strainer before microfluidics.
+- Some purchased devices add a hydrophobic coating.
+  - Can deteriorate (2 months at best).
+  - Recoating does work (in-house).
 
 10X
 ===
 
-- Add description of Assay
+![10x_paper](images/10X_paper.png)
+
+
+10X: Description
+===
+
 - Droplet-based, 3' mRNA
 - Standardized instrumentation and reagents
 - Less processing time
 - More high-throughput 1-6K cell for sample
 - Up to 50% capture rate.
 
-SECTION: Overview of Smartseq sequence analysis pipeline (TODO)
+10X: Assay Overview
 ===
 
-- Describe standard processing pipeline
+![10x_assay](images/10X_wet.png)
 
-SECTION: Overview of Dropseq sequence analysis pipeline (TODO)
+10X: Sequences
 ===
 
-- Describe DropSeq Pipeline
+![10x_sequence](images/10X_wet_mol.png)
 
-SECTION: Overview of 10X sequence analysis pipeline (TODO)
+10X: Equipment
 ===
 
-- Describe CellRanger Guts
+![10x_gem](images/10X_gem.png)
 
-SECTION: Sequence level quality control (TODO)
+---
+
+![10x_chip](images/dropseq_fluidics_big.png)
+
+Comparing Assays
 ===
 
-- Describe useful picard tools and FastQC and when where they go in the pipeline
+![comparing_paper](images/compare_power_paper.png)
 
-Morning Summary (TODO)
+Comparing Assays
 ===
 
-Add Summary
+![comparing_assays](images/compare_assays.png)
+
+Comparing Assays
+===
+
+![comparing_umi](images/compare_umi.png)
+
+Comparing Assays
+===
+
+- Plate-based methods get lysed in wells and so do not leak.
+  - Droplet-based can have leaky RNA.
+- In Dropseq assays RT happends outside the droplets
+  - Can use harsher lysis buffers.
+  - 10X needs lysis buffers compatiable with the RT enzyme.
+
+A Word on Sorting
+===
+
+- After disassociating cells cells can be performed.
+- Know your cells, are they sticky, are they big?
+  - Select an appropriate sized nozzle.
+- Don't sort too quickly (1-2k cells per second or lower)
+  - the slower the more time cells sit in lysis after sorting
+    - 10 minutes max in lysis (some say 30 minutes)
+- Callibrate speed of instrument with beads
+  - Check alignment every 5-6 plates
+- Afterwards spin down to make sure all cells are in lysis buffer
+  - Flash freeze
+- Chloe Villani on Sorting https://youtu.be/HiKY0eHDhIs
+
+Sequence Pipeline Overviews
+===
+
+![corgi_can](images/corgis/corgi_can.jpg)
+
+Smartseq2: Pipeline Overview
+===
+
+![smart_seq_seq](images/population_rnaseq.png)
+
+---
+
+![normal_align](images/aligncount.png)
+
+Dropseq: Pipeline Overview
+===
+
+![drop_seq_seq](images/dropseq_rnaseq.png)
+
+Dropseq: Further Help
+===
+
+![drop_seq_web](images/drop_seq_web.png)
+
+10X: Pipeline Overview
+===
+
+![10_seq](images/10x_rnaseq.png)
+
+10X: Further Help
+===
+
+![10_help](images/10x_web.png)
+
+Sequence level quality control
+===
+
+![seq_qc](images/population_rnaseq_qc.png)
+
+Morning Summary
+===
+
+- Single-cell RNA-Seq is a diverse ecosystem of assays.
+  - Each assay has pros and cons.
+- Sequences derived from these assays are complex and vary.
+- Different pipelines are needed to address different sequence formats.
+  - Common steps like aligning, QC, and reads counting are in common.
 
 What does single cell expression data look like and why?
 ===
@@ -162,6 +319,10 @@ Transcription stochasticity.
 - Transcription bursting.
 - Coordinated transcription of multigene networks.
 - Overdispersed counts.
+
+Higher Resolution.
+- More sources of signal
+  - Cell cycle
 
 ---
 
@@ -217,6 +378,7 @@ library(Matrix) # Sparse matrices
 library(useful) # Corner function
 library(vioplot) # Violin pots
 library(scater) # Single Cell QC
+source("src/Modules.R")
 ```
 
 Representing Sparse Matrices
@@ -489,7 +651,7 @@ class:small-code
   - other metadata ...
 - Picard Tools and RNASeQC
 
-Quality control for expression matrices (TODO)
+Quality control for expression matrices
 ===
 
 ![puppies](images/corgis/puppies.jpg)
@@ -552,20 +714,6 @@ pbmc.seurat <- SubsetData(pbmc.seurat, subset.name = "percent.mitochodrial", acc
 dim(pbmc.seurat@data)
 ```
 
-How Much Sequencing Depth
-====
-
-- The correct depth of sequencing will depend on the cell and the question.
-- Can view saturation levels.
-
-Plotting Sequencing Saturation of a Cell
-===
-class:small-code
-
-```{r, eval=FALSE, echo=FALSE, tidy=TRUE,fig.align="center"}
-plot.saturation.curve(pbmc.seurat@data[,1], 1000)
-```
-
 Saving as an R Object
 ===
 class:small-code
@@ -579,7 +727,7 @@ Saving as Text Files
 
 ```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
 # Log-scale expression matrix
-write.table(pbmc.seurat@data, file="seurat_data.txt")
+write.table(as.matrix(pbmc.seurat@data), file="seurat_data.txt")
 
 # Study metadata
 write.table(pbmc.seurat@data.info, file="seurat_metadata_tsne.txt")
