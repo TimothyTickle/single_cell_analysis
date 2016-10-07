@@ -258,7 +258,7 @@ Sequence level quality control
 
 ![seq_qc](images/population_rnaseq_qc.png)
 
-Morning Summary
+Section Summary
 ===
 
 - Single-cell RNA-Seq is a diverse ecosystem of assays.
@@ -378,7 +378,6 @@ library(Matrix) # Sparse matrices
 library(useful) # Corner function
 library(vioplot) # Violin pots
 library(scater) # Single Cell QC
-source("src/Modules.R")
 ```
 
 Representing Sparse Matrices
@@ -880,16 +879,23 @@ Why Not Use Population Based RNA-Seq Normalizations
 ===
 
 Scone PPT
+===
+
+
 
 Using Scone for normalization (TODO)
 ===
 
 Scone tutorial.
 
-Afternoon Summary (TODO)
+Section Summary
 ===
 
-Add summary
+- Conservative Gene Filtering Based on Gene Level and Prevalance is often used.
+- Cells are oftern filtered by complexity or certain metadata.
+  - This can be confounded with biological cohort (caution!)
+- Plotting metadata on projects of data is an important QC tool.
+- Methodology is beginning to be created for normalization.
 
 Good Morning!
 ===
@@ -908,7 +914,7 @@ Welcome to day 2!
 - Pathway analysis.
 - Overview of available methodology.
 
-Using Seurat to plot genes (TODO)
+Using Seurat to plot genes
 ===
 
 ![tea](images/corgis/tea.jpg)
@@ -1116,7 +1122,7 @@ class:small-code
 ```{r, eval=FALSE, echo=TRUE}
 # Time Intensive
 # Jackstraw
-pbmc.seurat <- JackStraw(pbmc.seurat, num.replicate = 100, do.print = FALSE)
+# pbmc.seurat <- JackStraw(pbmc.seurat, num.replicate = 100, do.print = FALSE)
 ```
 
 Seurat: Choosing Components
@@ -1143,7 +1149,7 @@ Seurat: Choosing Components
 class:small-code
 
 ```{r, eval=TRUE, echo=FALSE}
-# Tiem Efficient but more ad hoc
+# Time Efficient but more ad hoc
 # Scree (elbow) plot
 PCElbowPlot(pbmc.seurat)
 ```
@@ -1230,10 +1236,15 @@ class:small-code
 - Many assays use sorting.
 - Could have contaminants or unexpected diversity.
 
-Morning Summary (TODO)
+Section Summary
 ===
 
-Add Summary Here
+- Dimensionality reduction help reduce data while *hopefully* keeping important signal.
+  - tSNE on PCA is often used in analysis
+- Created several types of plot often seen in publications.
+  - Plotting genes (through subgroups).
+  - Ordinating cells in tSNE space.
+  - Heatmaps of genes associated with PC components.
 
 Confounding by Design
 ===
@@ -1326,7 +1337,7 @@ SCDE: Create Lables
 ===
 class:small-code
 
-```{r,eval=TRUE, echo=TRUE,tidy=FALSE}
+```{r,eval=FALSE, echo=TRUE,tidy=FALSE}
 library(scde) # Differential Expressions
 data(es.mef.small)
 ## Setting up cells groups
@@ -1342,7 +1353,7 @@ SCDE: filter if not already
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE,tidy=FALSE}
+```{r, eval=FALSE, echo=TRUE,tidy=FALSE}
 dim(es.mef.small)
 cd <- clean.counts(es.mef.small, min.lib.size=1000, min.reads = 1, min.detected = 1)
 dim(cd)
@@ -1352,7 +1363,7 @@ SCDE: filter if not already
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE,tidy=FALSE}
+```{r, eval=FALSE, echo=TRUE,tidy=FALSE}
 ## Calculate error models
 ## Time Intensive step
 # o.ifm <- scde.error.models(counts=cd, groups= data.groups, n.cores=4,
@@ -1380,7 +1391,7 @@ SCDE: Model Details
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=FALSE,tidy=FALSE}
+```{r, eval=FALSE, echo=FALSE,tidy=FALSE}
 head(o.ifm)
 ```
 
@@ -1388,7 +1399,7 @@ SCDE: Filter Out Poor Fits
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE,tidy=FALSE}
+```{r, eval=FALSE, echo=TRUE,tidy=FALSE}
 dim(o.ifm)
 valid.cells <- o.ifm$corr.a > 0
 table(valid.cells)
@@ -1400,7 +1411,7 @@ SCDE: Estimate a Prior to Start
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE,tidy=FALSE}
+```{r, eval=FALSE, echo=TRUE,tidy=FALSE}
 ## Calculate the Prior (starting value)
 o.prior <- scde.expression.prior(models=o.ifm, counts=cd, length.out=400, show.plot=FALSE)
 ```
@@ -1408,7 +1419,7 @@ o.prior <- scde.expression.prior(models=o.ifm, counts=cd, length.out=400, show.p
 SCDE: Perform Differential Tests
 ===
 
-```{r, eval=TRUE, echo=TRUE, tidy=FALSE}
+```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
 ## Setting up cells groups
 data.groups <- rep(NA, nrow(o.ifm))
 data.groups[ grep("MEF", rownames(o.ifm)) ] <- "MEF"
@@ -1417,7 +1428,7 @@ data.groups <- factor(data.groups, levels = c("ESC","MEF"))
 names(data.groups) <- row.names(o.ifm)
 
 ## Perform T-test like analysis
-ediff <- scde.expression.difference(o.ifm, cd, o.prior, groups=data.groups, n.randomizations=100, n.cores=1, verbose=1)
+ediff <- scde.expression.difference(o.ifm, cd, o.prior, groups=data.groups, n.randomizations=100, n.cores=2, verbose=1)
 ```
 
 Visualize Differentially Expressed Genes
@@ -1436,14 +1447,14 @@ Visualize Differentially Expressed Genes
 SCDE: Top Upregulated Genes
 ===
 
-```{r, eval=TRUE, echo=TRUE, tidy=FALSE}
+```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
 head(ediff[order(ediff$Z, decreasing  =  TRUE), ])
 ```
 
 SCDE: Write Data to Text File
 ===
 
-```{r, eval=TRUE, echo=TRUE, tidy=FALSE}
+```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
 write.table(ediff[order(abs(ediff$Z), decreasing = TRUE), ],
             file = "./data/results.txt", row.names = TRUE, col.names = TRUE, sep = "\t", quote = FALSE)
 ```
@@ -1458,7 +1469,7 @@ scde.test.gene.expression.difference("Tdh", models = o.ifm, counts = cd, prior =
 SCDE: Plot a Gene
 ===
 
-```{r, eval=TRUE, echo=FALSE, tidy=FALSE}
+```{r, eval=FALSE, echo=FALSE, tidy=FALSE}
 scde.test.gene.expression.difference("Tdh", models = o.ifm, counts = cd, prior = o.prior)
 ```
 
@@ -1474,21 +1485,21 @@ Pathway analysis
 
 ![saturation](images/corgis/corgi_saturation.jpg)
 
+Pagoda
+===
+
+![pagoda_paper](images/pagoda_paper.png)
+
 Pagoda: Overview Methodology
 ===
 
-Add overview
-
-Pagoda: Overview KNN
-===
-
-Add Visual tool for KNN
+![pagoda_methodology](images/pagoda_methodology.png)
 
 Pagoda: Load Data
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
+```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
 data(pollen)
 # Original genes and samples (count matrix)
 dim(pollen)
@@ -1502,7 +1513,7 @@ Pagoda: Create a Color Legend
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
+```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
 name.keys <- gsub("^Hi_(.*)_.*", "\\1", colnames(pollen.clean))
 name.keys
 ```
@@ -1511,7 +1522,7 @@ Pagoda: Create a Color Legend
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
+```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
 l2cols <- c("coral4", "olivedrab3", "skyblue2", "slateblue3")[as.integer(factor(name.keys, levels = c("NPC", "GW16", "GW21", "GW21+3")))]
 l2cols
 ```
@@ -1520,9 +1531,9 @@ Pagoda: Create Error Models
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
+```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
 #knn <- knn.error.models(pollen.clean, k=ncol(pollen.clean)/4,
-#                         n.cores=1, min.count.threshold=2,
+#                         n.cores=2, min.count.threshold=2,
 #                         min.nonfailed=5, max.model.plots=10)
 # Check number of cores
 detectCores()
@@ -1534,10 +1545,32 @@ Pagoda: Normalize the Variance
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
+```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
 varinfo <- pagoda.varnorm(knn, counts=pollen.clean,
                           trim=3/ncol(pollen.clean), max.adj.var=5,
-                          n.cores=1, plot=TRUE)
+                          n.cores=2, plot=TRUE)
+# list top overdispersed genes
+sort(varinfo$arv, decreasing = TRUE)[1:10]
+# Control for complexity
+varinfo <- pagoda.subtract.aspect(varinfo, colSums(pollen.clean[, rownames(knn)]>0))
+```
+
+Pagoda: Normalize the Variance
+===
+class:small-code
+
+```{r, eval=FALSE, echo=FALSE, tidy=TRUE}
+varinfo <- pagoda.varnorm(knn, counts=pollen.clean,
+                          trim=3/ncol(pollen.clean), max.adj.var=5,
+                          n.cores=2, plot=TRUE)
+```
+
+
+Pagoda: Normalize the Variance
+===
+class:small-code
+
+```{r, eval=FALSE, echo=FALSE, tidy=TRUE}
 # list top overdispersed genes
 sort(varinfo$arv, decreasing = TRUE)[1:10]
 # Control for complexity
@@ -1548,11 +1581,19 @@ Pagoda: Load Precomputed Gene Groups
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
+```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
 library(org.Hs.eg.db)
 # translate gene names to ids
 ids <- unlist(lapply(mget(rownames(pollen.clean), org.Hs.egALIAS2EG, ifnotfound = NA), function(x) x[1]))
 rids <- names(ids); names(rids) <- ids 
+```
+
+
+Pagoda: Load Precomputed Gene Groups
+===
+class:small-code
+
+```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
 # convert GO lists from ids to gene names
 gos.interest <- unique(c(ls(org.Hs.egGO2ALLEGS)[1:100],"GO:0022008","GO:0048699", "GO:0000280", "GO:0007067")) 
 go.env <- lapply(mget(gos.interest, org.Hs.egGO2ALLEGS), function(x) as.character(na.omit(rids[x]))) 
@@ -1564,8 +1605,18 @@ Pagoda: Know Gene Groups Overdispersion
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
-pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components = 1, n.cores = 1)
+```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
+pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components = 1, n.cores = 2)
+df <- pagoda.top.aspects(pwpca, return.table = TRUE, plot = TRUE, z.score = 1.96)
+```
+
+
+Pagoda: Know Gene Groups Overdispersion
+===
+class:small-code
+
+```{r, eval=FALSE, echo=FALSE, tidy=TRUE}
+pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components = 1, n.cores = 2)
 df <- pagoda.top.aspects(pwpca, return.table = TRUE, plot = TRUE, z.score = 1.96)
 ```
 
@@ -1573,7 +1624,7 @@ Pagoda: Know Gene Groups Overdispersion
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
+```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
 head(df)
 ```
 
@@ -1581,7 +1632,7 @@ Pagoda: Novel Gene Group Overdispersion
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
+```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
 clpca <- pagoda.gene.clusters(varinfo, trim = 7.1/ncol(varinfo$mat), n.clusters = 50, n.cores = 2, plot = TRUE)
 ```
 
@@ -1589,7 +1640,15 @@ Pagoda: Novel Gene Group Overdispersion
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
+```{r, eval=FALSE, echo=FALSE, tidy=TRUE}
+clpca <- pagoda.gene.clusters(varinfo, trim = 7.1/ncol(varinfo$mat), n.clusters = 50, n.cores = 2, plot = TRUE)
+```
+
+Pagoda: Novel Gene Group Overdispersion
+===
+class:small-code
+
+```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
 df <- pagoda.top.aspects(pwpca, clpca, return.table = TRUE, plot = TRUE, z.score = 1.96)
 ```
 
@@ -1597,16 +1656,37 @@ Pagoda: Novel Gene Group Overdispersion
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
-head(df)
+```{r, eval=FALSE, echo=FALSE, tidy=TRUE}
+df <- pagoda.top.aspects(pwpca, clpca, return.table = TRUE, plot = TRUE, z.score = 1.96)
 ```
 
+Pagoda: Novel Gene Group Overdispersion
+===
+class:small-code
+
+```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
+head(df)
+```
 
 Pagoda: Cell Clustering
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
+```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
+# Get full info on the top aspects
+tam <- pagoda.top.aspects(pwpca, clpca, n.cells = NULL, z.score = qnorm(0.01/2, lower.tail = FALSE))
+# Determine overall cell clustering
+hc <- pagoda.cluster.cells(tam, varinfo)
+tamr <- pagoda.reduce.loading.redundancy(tam, pwpca, clpca)
+tamr2 <- pagoda.reduce.redundancy(tamr, distance.threshold = 0.9, plot = TRUE, cell.clustering = hc, labRow = NA, labCol = NA, box = TRUE, margins = c(0.5, 0.5), trim = 0)
+col.cols <- rbind(groups = cutree(hc, 3))
+```
+
+Pagoda: Cell Clustering
+===
+class:small-code
+
+```{r, eval=FALSE, echo=FALSE, tidy=TRUE}
 # Get full info on the top aspects
 tam <- pagoda.top.aspects(pwpca, clpca, n.cells = NULL, z.score = qnorm(0.01/2, lower.tail = FALSE))
 # Determine overall cell clustering
@@ -1620,7 +1700,7 @@ Pagoda: Visualize Clustering
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
+```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
 pagoda.view.aspects(tamr2, cell.clustering = hc, box = TRUE, labCol = NA, margins = c(0.5, 20), col.cols = rbind(l2cols))
 ```
 
@@ -1646,10 +1726,15 @@ What Did We Miss?
 - So many more tools are emerging
 -- https://github.com/seandavi/awesome-single-cell
 
-Afternoon Summary
+Section Summary
 ===
 
-Add Summary
+- Generated groups of cells (labels) from subclusters.
+- DE can be performed on cell subclusters.
+  - Addresses the specific characteristics of the underlying data.
+  - Is a t-test not an ANOVA
+  - Can be time intensive.
+- Pathway enrichment analysis can be performed using de novo and established gene groupings.
 
 Thank You
 ===
@@ -1658,8 +1743,10 @@ Thank You
 - Anindita Basu
 - Asma Bankapur
 - Brian Haas
+- Chloe Villani
 - Karthik Shekhar
-- Michel cole
+- Matan Hofree
+- Michel Cole
 - Monika Kowalczyk
 - Nir Yosef
 - Regev Single Cell Working Group
