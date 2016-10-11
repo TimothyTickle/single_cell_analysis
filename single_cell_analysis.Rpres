@@ -8,22 +8,74 @@ author: Timothy Tickle and Brian Haas
 css: single_cell_analysis.css
 date: October 10, 2016
 
+We Know Tissues are Complex
+===
+
+![complex](images/complex_tissues.png)
+
+We can Separate Populations of Cells
+===
+
+<div align="center">
+<img src="images/dropseq_paper.png" height=500>
+</div>
+
+We can Separate Populations of Cells
+===
+
+<div align="center">
+<img src="images/dropseq_seperating_cells.png" height=500>
+</div>
+
+Heterogeneity can Help Describe Cell Type
+===
+
+<div align="center">
+<img src="images/karthik_retina_paper.png" height=500>
+</div>
+
+Heterogeneity can Help Describe Cell Type
+===
+
+<div align="center">
+<img src="images/shekhar_cell_type.png" height=500>
+</div>
+
+Heterogeneity can Describe Phenotypes
+===
+
+<div align="center">
+<img src="images/itay_paper.png" height=500>
+</div>
+
+Heterogeneity can Describe Phenotypes
+===
+
+<div align="center">
+<img src="images/single_cell_clinical.png" height=500>
+</div>
+
 Before We Get Started
 ===
 
-- Single-cell analysis is new.
+- Single-cell RNA-Seq analysis is developing.
   - Give you a feel for the data.
-  - Give you some options to explore.
+  - Walk different analysis in a couple data sets.
+- There is a vivid diversity of methodology
   - These techniques will grow as the field does.
+  - Why these tools were chosen.
+- This is a guided conversation through scRNA-Seq Analysis
+  - Breadth and targeted depth
+  - If you have expertise to add, let's have that conversation!
 
 Before We Get Started
 ===
 
-- This is VERY hands on.
+- This is VERY hands-on.
   - Much can be applied to other analyses.
   - Strengthen those R ninja skills!
   - If you need, cut and pasting is available (cut_and_paste.txt).
-  - There will many cute corgi pics.
+  - There will many cute corgi pictures.
 
 ---
 
@@ -32,15 +84,15 @@ Before We Get Started
 What We Will Attempt to Cover
 ===
 
-### Day 1  
-__Morning:__ Overview of laboratory prep and sequence analysis.  
-__Afternoon:__ Characteristics of expression data and QC.  
+### Section 1  
+__Part 1:__ Overview of laboratory prep and sequence analysis.  
+__Part 2:__ Characteristics of expression data and QC.  
 
-### Day 2  
-__Morning:__ Plotting Single Cell RNA-Seq data.  
-__Afternoon:__ Evaluating and defining cell populations.  
+### Section 2  
+__Part 1:__ Plotting Single Cell RNA-Seq data.  
+__Part 2:__ Evaluating and defining cell populations.  
 
-Welcome to day 1
+Welcome to Section 1
 ===
 
 - Overview of assays (SmartSeq2, Dropseq, 10X).
@@ -52,19 +104,31 @@ Welcome to day 1
 - Introduction to RStudio.
 - Initial data exploration.
 - Quality control for expression matrices.
-- Filtering genes and samples.
-- Considerations in data analysis when using UMIs.
-- Why normalize gene expression and common types of normalization?
-- Using Scone for normalization.
+- Filtering genes and cells.
+- Data analysis using UMIs.
 
-Overview of assays (SmartSeq2, Dropseq, 10X)
+Overview of assays
 ===
 
-![scientist](images/corgis/scientist.jpg)
+<div align="center">
+<img src="images/corgis/scientist.jpg" height=500>
+</div>
+
+Starting Sequences
+===
+
+<div align="center">
+<img src="images/fastq.png" height=500>
+</div>
+
+Assays have Different Formats
+===
+
+![fastq_seq](images/sc_sequences.png)
 
 SmartSeq2
 ===
-
+  
 ![smartseq_paper](images/smartseq_paper.png)
 
 ---
@@ -74,11 +138,32 @@ SmartSeq2
 SmartSeq2: Description
 ===
 
+- Developed for single cell but can performed using total RNA.
+- Selects for poly-A tail.
+- Full transcript assay.
+  - Uses template switching for 5' end capture.
+- Standard illumina sequencing.
+  - Off-the-shelf products.
+- Hundreds of samples.
+- Often do not see UMI used.
 
 SmartSeq2: Assay Overview
 ===
 
-![smartseq2_seq](images/smart_seq2.jpg)
+<div> 
+<img src="images/smart_seq2.png" height=400>
+</div>
+
+---
+
+- Poly-A capture with 30nt polyT and 25nt 5' anchor sequence.
+- RT adding untemplated C
+- Template switching
+  - Locked Nucleic Acid binds to untemplated C
+  - RT switches template
+- Preamplification / cleanup
+- DNA fragmentation and adapter ligation together.
+- Gap Repair, enrich, purify
 
 SmartSeq2: Equipment
 ===
@@ -89,35 +174,44 @@ SmartSeq2: Equipment
 
 ![plate](images/plate.jpg)
 
-SmartSeq2: Pointers
-===
-
-- Plate-based methods get lysed in wells and so do not leak.
-
 Dropseq
 ===
 
-![drop_seq](images/dropseq_paper.png)  
+<div>
+<img src="images/dropseq_paper.png" height=500>
+</div>
 
 Dropseq: Description
 ===
 
-- Droplet-based using microfluidics
+- Moved throughput from hundreds to thousands.
+- Droplet-based processing using microfluidics
+  - Nanoliter scale aqueous drops in oil.
+  - 3' End
+- Bead based (STAMPs).
+  - Single-cell transcriptomes attached to microparticles.
+  - Cell barcodes use split-pool synthesis.
+- Uses UMI (Unique Molecular Identifier).
+  - RMT (Random Molecular Tag).
+  - Degenerate synthesis.
 
 Dropseq: Assay Overview
 ===
 
-[Drop Seq Video Abstract](http://www.sciencedirect.com/science/article/pii/S0092867415005498)
+[Click Here for Dropseq Video Abstract](http://www.sciencedirect.com/science/article/pii/S0092867415005498)
 
-Dropseq: UMI Construction
+Dropseq: Assay and UMI Construction
 ===
 
-![drop_umi](images/dropseq_assay_umi.png)
+![drop_umi](images/dropseq_assay_umi.png)   
+Macosko et al. 2015
 
-Dropseq: Assay Overview
+Dropseq: Sequencing Overview
 ===
 
-![dropseq_assay_1](images/dropseq_assay_1.png)
+<div>
+<img src="images/dropseq_assay_1.png" height=500>
+</div>
 
 Dropseq: Microfluidics
 ===
@@ -127,12 +221,7 @@ Dropseq: Microfluidics
 Dropseq: Equipment
 ===
 
-![dropseq_eq](images/drop_seq_equipment.jpeg)
-
----
-
-![dropseq_single](images/dropseq_fluidics.png)
-![dropseq_large](images/Drop-seq-chip-large.jpg)
+![dropseq_eq](images/dropseq_equipment.png)
 
 Dropseq: Pointers
 ===
@@ -146,30 +235,36 @@ Dropseq: Pointers
   - Can deteriorate (2 months at best).
   - Recoating does work (in-house).
 
-10X
+10X: Massively Parallel Sequencing
 ===
 
-![10x_paper](images/10X_paper.png)
-
+<div>
+<img src="images/10X_paper.png" height=500>
+</div>
 
 10X: Description
 ===
 
-- Droplet-based, 3' mRNA
-- Standardized instrumentation and reagents
-- Less processing time
-- More high-throughput 1-6K cell for sample
+- Droplet-based, 3' mRNA.
+  - GEM (Gel Bead in Emulsion)
+- Standardized instrumentation and reagents.
+- More high-throughput scaling to tens of thousands.
+- Less processing time.
 - Up to 50% capture rate.
+- Cell Ranger software is available for install.
 
 10X: Assay Overview
 ===
 
-![10x_assay](images/10X_wet.png)
+![10x_assay](images/10X_wet.png)   
+Zheng et al.
 
 10X: Sequences
 ===
 
 ![10x_sequence](images/10X_wet_mol.png)
+
+- 14nt barcode, 10nt UMI, 30nt polyT + sequencing adaptor and primers.
 
 10X: Equipment
 ===
@@ -183,26 +278,41 @@ Dropseq: Pointers
 Comparing Assays
 ===
 
-![comparing_paper](images/compare_power_paper.png)
+<div>
+<img src="images/compare_power_paper.png" height=500>
+</div>
 
 Comparing Assays
 ===
 
-![comparing_assays](images/compare_assays.png)
+Based on ERCC spike-ins.   
+
+**Accuracy:** How well the abundance levels correlated with known spiked-in amounts.   
+
+**Sensitivity:** Minimum number of input RNA molecules required to detect a spike-in.   
 
 Comparing Assays
 ===
 
-![comparing_umi](images/compare_umi.png)
+Svensson et al. 2016
+<div>
+<img src="images/compare_assays.png" height=500>
+</div>
 
 Comparing Assays
 ===
 
+- Different assays have different throughput.
+  - SmartSeq2 < Dropseq < 10X
+- SmartSeq2 is full transcript.
 - Plate-based methods get lysed in wells and so do not leak.
   - Droplet-based can have leaky RNA.
-- In Dropseq assays RT happends outside the droplets
+- In Dropseq assays RT happens outside the droplets
   - Can use harsher lysis buffers.
-  - 10X needs lysis buffers compatiable with the RT enzyme.
+  - 10X needs lysis buffers compatible with the RT enzyme.
+- 10X is more standardized and comes with a pipeline.
+  - Dropseq is more customizable but more hands-on.
+- Cost per library varies greatly.
 
 A Word on Sorting
 ===
@@ -213,11 +323,11 @@ A Word on Sorting
 - Don't sort too quickly (1-2k cells per second or lower)
   - the slower the more time cells sit in lysis after sorting
     - 10 minutes max in lysis (some say 30 minutes)
-- Callibrate speed of instrument with beads
+- Calibrate speed of instrument with beads
   - Check alignment every 5-6 plates
-- Afterwards spin down to make sure all cells are in lysis buffer
+- Afterwards spin down to make sure cells are in lysis buffer
   - Flash freeze
-- Chloe Villani on Sorting https://youtu.be/HiKY0eHDhIs
+- Chloe Villani on sorting https://youtu.be/HiKY0eHDhIs
 
 Sequence Pipeline Overviews
 ===
@@ -229,14 +339,15 @@ Smartseq2: Pipeline Overview
 
 ![smart_seq_seq](images/population_rnaseq.png)
 
----
-
-![normal_align](images/aligncount.png)
-
 Dropseq: Pipeline Overview
 ===
 
 ![drop_seq_seq](images/dropseq_rnaseq.png)
+
+---
+
+- Common functionality: trimming, alignment, generating count matrix.
+- Adds book keeping for cell barcodes and UMIs, bead error detection, cell barcode collapsing, UMI collapsing.
 
 Dropseq: Further Help
 ===
@@ -248,6 +359,10 @@ Dropseq: Further Help
 
 ![10_seq](images/10x_rnaseq.png)
 
+---
+
+- Steps very similar to the Dropseq pipeline.
+
 10X: Further Help
 ===
 
@@ -258,6 +373,10 @@ Sequence level quality control
 
 ![seq_qc](images/population_rnaseq_qc.png)
 
+---
+
+- Much of the QC that is performed is using traditional tools.
+
 Section Summary
 ===
 
@@ -267,7 +386,7 @@ Section Summary
 - Different pipelines are needed to address different sequence formats.
   - Common steps like aligning, QC, and reads counting are in common.
 
-What does single cell expression data look like and why?
+Let's Describe scRNA-Seq Count Data
 ===
 
 ![driving](images/corgis/driving_corgi.jpg)
@@ -326,15 +445,21 @@ Higher Resolution.
 
 ---
 
-![scde_bio](images/scde_bio.png)
+![scde_bio](images/scde_bio.png)  
+Karchenko et al.
 
-Considerations in data analysis when using UMIs
+Data analysis when using UMIs
 ===
 
- Points
- - Same sequence aligned to the same gene
- - Show example of UMI collapse
- - Can filter more conservatively when collapsing by UMI
+**Read Counts**
+ 
+![reads](images/reads.png)
+
+---
+
+ **Counts by UMIs**
+ 
+![umi](images/umi.png)
 
 Summary of the Data
 ===
@@ -342,16 +467,27 @@ Summary of the Data
 - We are still understanding scData and how to apply it.
   - Data can be NOT normal.
   - Data can be Zero-inflated.
-  - Data can be very noisey.
+  - Data can be very noisy.
   - Cells vary in library complexity.
 - Keeping these characteristics in analysis assumptions.
+- Trend to filter more conservatively with UMIs.
 
 Introduction to RStudio
 ===
 
 ![bed](images/corgis/dogbutt.jpg)
 
-RStudio Integrative Development Environment
+Motivation: Why Am I Using R?
+===
+
+- A lot of method development is happening in R.
+- Free / open source / open science.
+- Many supplemental computational biology packages.
+- Data science is an art.
+  - Data often requires one to create and manipulate analysis.
+- This will allow you to experience key concepts in analysis.
+
+RStudio (IDE)
 ===
 
 ![rstudio_overview](images/Rstudio_overview.png)
@@ -366,18 +502,34 @@ Seurat
 
 ![suerat](images/seurat_pubs.png)
 
+Seurat: Today's Data
+===
+
+- Using data provided by 10X (2700 cells).
+- Peripheral blood mononuclear cells (PBMCs).
+  - Any peripheral blood cell with a round nucleus.
+  - Lymphocytes (T cells, B cells, NK cells)
+  - Monocytes
+- Complex mix cell populations used in immunity.
+
 Logistics
 ===
 class:small-code
 
+- R allows methodology written by others to be imported.
+  - Leverage other code.
+  - Make your code available to others.  
+
 ```{r, eval=TRUE, echo=TRUE, tidy=FALSE}
 # Load libraries
-library(Seurat) # Single cell General Analysis
 library(dplyr) # Dataframe manipulation
 library(Matrix) # Sparse matrices
 library(useful) # Corner function
 library(vioplot) # Violin pots
 library(scater) # Single Cell QC
+library(scde) # Differential Expression
+library(org.Hs.eg.db) # Gene name manipulation
+library(Seurat) # Single cell General Analysis
 ```
 
 Representing Sparse Matrices
@@ -400,7 +552,7 @@ How are Sparse Representations Made?
 
 - Sparse Matrix: A matrix where most of the elements are 0.
 - Dense Matrix: A matrix where most elements are not 0.
-- Underlying structure is a coordinate list.
+- In this case, underlying data structure is a coordinate list.
 
 2D Arrays vs Coordinate List
 ===
@@ -419,7 +571,7 @@ pbmc.seurat <- new("seurat", raw.data=pbmc.10X)
 What is in a Seurat Object?
 ===
 
-```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
+```{r, eval=TRUE, echo=TRUE, tidy=FALSE}
 # Display the internal pieces of the Seurat Object
 slotNames(pbmc.seurat)
 ```
@@ -449,7 +601,7 @@ What is in a Seurat Object?
 - __cell.names__ Column (cell) names 
 - __gene.names__ Row (gene) names
 
-```{r, eval=TRUE, echo=TRUE, tidy=FALSE}
+```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
 ?seurat
 ```
 
@@ -480,7 +632,7 @@ head(colnames(pbmc.seurat@raw.data))
 length(colnames(pbmc.seurat@raw.data))
 ```
 
-How to Show Expression?
+How to Show Counts?
 ===
 class:small-code
 
@@ -490,7 +642,7 @@ class:small-code
 corner(as.matrix(pbmc.seurat@raw.data))
 ```
 
-How to Show Expression?
+How to Show Counts?
 ===
 class:small-code
 
@@ -500,16 +652,23 @@ class:small-code
 corner(as.matrix(pbmc.seurat@raw.data))
 ```
 
+Complexity of Libraries
+===
+
+- Very important metadata.
+- How many genes had a count of more than 1 in a cell.
+  - Simplest, most common definition.
+
 How Many Expressed Genes (Complexity)?
 ===
 class:small-code
 
 ```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
 # Plot genes per cell
-# How many genes expressed per sample
+# How many genes expressed per cells
 complexity.per.cell <- apply(pbmc.seurat@raw.data, 2, function(x) sum(x>0))
-# How much expression per cell.
-expression.per.cell <- colMeans(pbmc.seurat@raw.data)
+# Mean count per cell.
+mean.count.per.cell <- apply(pbmc.seurat@raw.data, 2, function(x) mean(x))
 # Gene prevalence
 gene.prevalence <- apply(pbmc.seurat@raw.data, 1, function(x) sum(x>0))
 ```
@@ -520,22 +679,48 @@ class:small-code
 
 ```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
 # Plot genes per cell
-# How many genes expressed per sample
+# How many genes expressed per cell
 vioplot(complexity.per.cell)
 stripchart(complexity.per.cell, add=TRUE, vertical=TRUE, method="jitter", jitter=0.3, pch=19)
 abline(h=200, col="red")
 abline(h=2500, col="blue")
+title("Study Complexity")
+axis(side=1,at=1,labels=c("Study"))
 ```
+
+How Many Expressed Genes (Complexity)?
+===
+class:small-code
+
+```{r, eval=TRUE, echo=FALSE, tidy=TRUE}
+# Plot genes per cell
+# How many genes expressed per cell
+vioplot(complexity.per.cell)
+stripchart(complexity.per.cell, add=TRUE, vertical=TRUE, method="jitter", jitter=0.3, pch=19)
+abline(h=200, col="red")
+abline(h=2500, col="blue")
+title("Study Complexity")
+axis(side=1,at=1,labels=c("Study"))
+```
+
+---
+
+- Shown complexity of all cells in a study. 
+- Wide range of complexity.
+- Prefiltered data at red line.
+- Will define points about the blue line as outlier.
 
 Box Plots vs Violin Plots
 ===
 class:small-code
 
 **Boxplot:**  
-Roboust representation of a distribution using quantiles
+Robust representation of a distribution using quantiles
 
-```{r, echo=FALSE, eval=TRUE, tidy=TRUE}
+```{r, eval=TRUE, echo=FALSE, tidy=TRUE}
 boxplot(complexity.per.cell)
+title("Study Complexity")
+axis(side=1,at=1,labels=c("Study"))
 ```
 
 ---
@@ -543,33 +728,21 @@ boxplot(complexity.per.cell)
 **Violin Plot:**  
 Box plot with kernel density plot mirrored on sides.
 
-```{r, echo=FALSE, eval=TRUE, tidy=TRUE}
-vioplot(complexity.per.cell)
-```
-
-How Many Expressed Genes (Complexity)?
-===
-class:small-code
-
-Complexity of all samples in a study.  
 ```{r, eval=TRUE, echo=FALSE, tidy=TRUE}
-# Plot genes per cell
-# How many genes expressed per sample
 vioplot(complexity.per.cell)
-stripchart(complexity.per.cell, add=TRUE, vertical=TRUE, method="jitter", jitter=0.3, pch=19)
-abline(h=200, col="red")
-abline(h=2500, col="blue")
+title("Study Complexity")
+axis(side=1,at=1,labels=c("Study"))
 ```
 
 Identifying Outliers?
 ===
 class:small-code
 
-- Cells that are unusually simple (or no expression)
+- Cells that are unusually simple (or no counts)
 - Cells that are unusually complex (doublets?)
 
 ```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
-plot(complexity.per.cell,log2(expression.per.cell+1))
+plot(complexity.per.cell,log2(mean.count.per.cell+1))
 abline(v=200, col="red")
 abline(h=log2(4))
 ```
@@ -578,11 +751,11 @@ Identifying Outliers?
 ===
 class:small-code
 
-- Cells that are unusually simple (or no expression)
-- Cells that are unusually complex (doublets?)
+- We will filter in a standard way, we are just describing the data.
+- Red line shows a point of prefiltering.
 
 ```{r, eval=TRUE, echo=FALSE, tidy=TRUE}
-plot(complexity.per.cell,expression.per.cell+1)
+plot(complexity.per.cell,mean.count.per.cell+1)
 abline(v=200, col="red")
 abline(h=log2(4))
 ```
@@ -600,6 +773,9 @@ abline(v=3, col="red")
 Identifying Noise?
 ===
 class:small-code
+
+- People tend to filter very conservatively.
+- 3 is where we will filter (red line).
 
 ```{r, eval=TRUE, echo=FALSE, tidy=TRUE}
 #hist(gene.prevalence)
@@ -611,6 +787,8 @@ Filter Cells: Removing the Outlier Cells
 ===
 class:small-code
 
+- Genes must be in 3 cells with alteast 200 genes.
+- Scaled by 1000 (Total Sum Scaling)
 ```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
 pbmc.seurat <- Setup(pbmc.seurat,
                     min.cells=3, min.genes=200,
@@ -618,6 +796,20 @@ pbmc.seurat <- Setup(pbmc.seurat,
                     total.expr=1e4,
                     project="Tutorial")
 ```
+
+Expression: Definition
+===
+
+**Population based RNA-Seq**
+- Different ways to move from counts to expression.
+- EM algorithms (RSEM)
+- TPM with TMM normalization.
+  - Control for transcript length and force the depth to be 10^6.
+  - Trimmed means weighted focusing on invariant genes through samples.
+
+**Today we are using**
+- log2( ( cell_counts / cell_sum ) * 1000 + 1 )
+- Account for sequencing depth.
 
 Filter Genes: Averages are Less Useful
 ===
@@ -633,39 +825,62 @@ class:small-code
 
 Filter Genes: Using Prevalence
 ===
+
+**Filtering with gene prevalence:**   
+How many times a gene's count is greater than or equal to an expression threshold throughout cells.
+
+![prevalence](images/prevalence.png)
+
+Filter Genes: Using Prevalence
+===
 class:small-code
 
 ![occurence](images/prob_ave_expression2.png)
+
+Filtering Using Metadata
+===
+
+![puppies](images/corgis/puppies.jpg)
+
+What is Metadata?
+===
+
+Other information that describes your measurements.
+- Patient information.
+  - Life style (smoking), Patient Biology (age), Comorbidity
+- Study information.
+  - Treatment, Cage, Sequencing Site, Sequencing Date
+- Sequence QC on cells.
+  - Useful in filtering.
 
 Filter Cells: Removing the Outlier Cells
 ===
 class:small-code
 
-- Outlier samples are not just measured by complexity
-  - Percent Reads Mapping
-  - Percent Mitochondrial Reads
-  - Presence of marker genes
-  - Intergenic/ exonic rate
-  - 5' or 3' bias
-  - other metadata ...
-- Picard Tools and RNASeQC
-
-Quality control for expression matrices
-===
-
-![puppies](images/corgis/puppies.jpg)
+- Outlier cells are not just measured by complexity
+  - **Useful Metrics**
+     - Percent Reads Mapping
+     - Percent Mitochondrial Reads
+     - Presence of marker genes
+     - Intergenic/ exonic rate
+     - 5' or 3' bias
+     - other metadata ...
+  - **Useful Tools**
+     - Picard Tools and RNASeQC
 
 Seurat: Filtering on Metadata
 ===
 class:small-code
 
-- Data driven features
+- Filtering on mitochondrial reads in Seurat.  
 ```{r, echo=TRUE, eval=TRUE}
 # Get gene names
 mito.gene.names <- grep("^MT-", rownames(pbmc.seurat@data), value=TRUE)
+
 # Get TSS normalized mitochodrial counts
-col.total.counts <- colSums(expm1(pbmc.seurat@data))
-mito.percent.counts <- colSums(expm1(pbmc.seurat@data[mito.gene.names, ]))/col.total.counts
+col.total.counts <- Matrix::colSums(expm1(pbmc.seurat@data))
+mito.percent.counts <- Matrix::colSums(expm1(pbmc.seurat@data[mito.gene.names, ]))/col.total.counts
+
 # Add to seurat object as a metadata
 pbmc.seurat <- AddMetaData(pbmc.seurat, mito.percent.counts, "percent.mitochodrial")
 ```
@@ -674,7 +889,12 @@ Seurat: Filtering on Metadata
 ===
 class:small-code
 
-```{r, echo=TRUE, eval=FALSE}
+- Plot current metadata in Seurat Object.
+ - Number gene.
+ - Number UMI.
+ - Percent mitochondrial counts.
+ 
+```{r, eval=FALSE, echo=FALSE,}
 VlnPlot(pbmc.seurat, c("nGene", "nUMI", "percent.mitochodrial"), nCol=3)
 ```
 
@@ -682,7 +902,7 @@ Seurat: Filtering on Metadata
 ===
 class:small-code
 
-```{r, echo=FALSE, eval=TRUE}
+```{r,  eval=TRUE, echo=FALSE}
 VlnPlot(pbmc.seurat, c("nGene", "nUMI", "percent.mitochodrial"), nCol=3)
 ```
 
@@ -690,7 +910,7 @@ Seurat: Filtering on Metadata
 ===
 class:small-code
 
-```{r, echo=TRUE, eval=TRUE}
+```{r, eval=FALSE, echo=TRUE}
 GenePlot(pbmc.seurat, "nUMI", "percent.mitochodrial")
 ```
 
@@ -698,7 +918,18 @@ Seurat: Filtering on Metadata
 ===
 class:small-code
 
-```{r, echo=TRUE, eval=TRUE}
+- Outlier percent mitochondria are very low expression.
+- Very high expression low percent mitochondrial reads.
+
+```{r, eval=TRUE, echo=FALSE}
+GenePlot(pbmc.seurat, "nUMI", "percent.mitochodrial")
+```
+
+Seurat: Filtering on Metadata
+===
+class:small-code
+
+```{r,  eval=TRUE, echo=FALSE}
 GenePlot(pbmc.seurat, "nUMI", "nGene")
 ```
 
@@ -706,7 +937,7 @@ Seurat: Filtering on Metadata
 ===
 class:small-code
 
-```{r, echo=TRUE, eval=TRUE}
+```{r, eval=TRUE, echo=TRUE}
 dim(pbmc.seurat@data)
 pbmc.seurat <- SubsetData(pbmc.seurat, subset.name = "nGene", accept.high = 2500)
 pbmc.seurat <- SubsetData(pbmc.seurat, subset.name = "percent.mitochodrial", accept.high = 0.05)
@@ -717,197 +948,169 @@ Saving as an R Object
 ===
 class:small-code
 
+Saving the Seurat object
+- Contains all manipulation so far.
+- Can be loaded or shared.
+- Does not contain environment.
+
 ```{r, eval=FALSE, echo=TRUE}
-save(pbmc.seurat, file = "~/seurat_tutorial.Robj")
+# How to save the intact object.
+save(pbmc.seurat, file = "seurat_tutorial.Robj")
+```
+```{r, eval=FALSE, echo=TRUE}
+# How to retrieve the intact object.
+load("seurat_tutorial.Robj")
 ```
 
 Saving as Text Files
 ===
+
+You may need to export data to import into other applications.
 
 ```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
 # Log-scale expression matrix
 write.table(as.matrix(pbmc.seurat@data), file="seurat_data.txt")
 
 # Study metadata
-write.table(pbmc.seurat@data.info, file="seurat_metadata_tsne.txt")
+write.table(pbmc.seurat@data.info, file="seurat_metadata.txt")
 
 # What is the metadata so far
 head(pbmc.seurat@data.info)
 ```
 
-Exploring QC with Scater
+Scater: Complex QC Plotting
+===
+
+![scater_paper](images/scater_paper.png)
+
+Scater: Motivation
+===
+
+- Clinical studies are often rich with metadata.
+- Most differential expression methodology is T-test.
+  - Much like using covariates in linear regression to control here we stratify by metadata to describe the impact of the metadatum.
+- More than what we are covering here.
+- Online tutorial [Click Here](//bioconductor.org/packages/devel/bioc/vignettes/scater/inst/doc/vignette.html)
+
+Scater: Skipping Ahead
 ===
 class:small-code
 
-```{r, echo=TRUE, eval=TRUE}
+```{r,  eval=TRUE, echo=TRUE}
 # Load Data
 data("sc_example_counts")
 data("sc_example_cell_info")
+pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
+rownames(pd) <- pd$Cell
+example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
+keep_feature <- rowSums(exprs(example_sceset)) > 0
+example_sceset <- example_sceset[keep_feature,]
+example_sceset <- calculateQCMetrics(example_sceset, feature_controls = 1:40)
 ```
+
+Scater: Describe the Data
+===
+
+Small data set of 40 cells.
+- Constructed metadata
+- Metadata including
+  - Mutation status (positive, negative)
+  - Cell Cycle (S, G0, G1, G2M)
+  - Treament (treat1, treat2)
 
 Scater: What is the Data?
 ===
 class:small-code
 
-```{r, echo=TRUE, eval=TRUE}
+```{r, eval=TRUE, echo=TRUE}
 corner(sc_example_counts)
 ```
 
-Scater: What is the Info?
+Scater: What is the info?
 ===
 class:small-code
 
-```{r, echo=TRUE, eval=TRUE}
+```{r, eval=TRUE, echo=TRUE}
 corner(sc_example_cell_info)
 ```
 
-Scater: Create Scater Object
+Scater: Stratifying for Metadata
 ===
 class:small-code
 
-```{r, echo=TRUE, eval=TRUE}
-pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
-rownames(pd) <- pd$Cell
-example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
+```{r, eval=FALSE, echo=TRUE}
+plot(example_sceset, block1 = "Mutation_Status", block2 = "Treatment",
+     colour_by = "Cell_Cycle", nfeatures = 300, exprs_values = "counts")
 ```
 
-Scater: Quick Filter
+Scater: Stratifying for Metadata
 ===
 class:small-code
 
-```{r, echo=TRUE, eval=TRUE}
-keep_feature <- rowSums(exprs(example_sceset)) > 0
-example_sceset <- example_sceset[keep_feature,]
+```{r, eval=TRUE, echo=FALSE}
+plot(example_sceset, block1 = "Mutation_Status", block2 = "Treatment",
+     colour_by = "Cell_Cycle", nfeatures = 300, exprs_values = "counts")
 ```
 
-Scater: Calculare QC Metrics
+Scater: Stratifying for Metadata
 ===
 class:small-code
 
-```{r, echo=TRUE, eval=TRUE}
-example_sceset <- calculateQCMetrics(example_sceset, feature_controls = 1:40)
+```{r, eval=FALSE, echo=TRUE}
+plotExpression(example_sceset, rownames(example_sceset)[1:6],
+               x = "Mutation_Status", exprs_values = "exprs", colour = "Treatment")
+```
+
+Scater: Stratifying for Metadata
+===
+class:small-code
+
+```{r, eval=TRUE, echo=FALSE}
+plotExpression(example_sceset, rownames(example_sceset)[1:6],
+               x = "Mutation_Status", exprs_values = "exprs", colour = "Treatment")
 ```
 
 Scater: Interactive Exploration
 ===
 class:small-code
 
-```{r, echo=TRUE, eval=FALSE}
+```{r, eval=FALSE, echo=TRUE}
 scater_gui(example_sceset)
 ```
-
-Scater: Plotting 2 Metadata with Counts
-===
-class:small-code
-
-```{r, echo=TRUE, eval=FALSE}
-plot(example_sceset, block1 = "Mutation_Status", block2 = "Treatment",
-     colour_by = "Cell_Cycle", nfeatures = 300, exprs_values = "counts")
-```
-
-Scater: Plotting 2 Metadata with Counts
-===
-class:small-code
-
-```{r, echo=FALSE, eval=TRUE}
-plot(example_sceset, block1 = "Mutation_Status", block2 = "Treatment",
-     colour_by = "Cell_Cycle", nfeatures = 300, exprs_values = "counts")
-```
-
-Scater: Plotting 2 Metadata with Gene Expression
-===
-class:small-code
-
-```{r, echo=TRUE, eval=FALSE}
-plotExpression(example_sceset, rownames(example_sceset)[1:6],
-               x = "Mutation_Status", exprs_values = "exprs", colour = "Treatment")
-```
-
-Scater: Plotting 2 Metadata with Gene Expression
-===
-class:small-code
-
-```{r, echo=FALSE, eval=TRUE}
-plotExpression(example_sceset, rownames(example_sceset)[1:6],
-               x = "Mutation_Status", exprs_values = "exprs", colour = "Treatment")
-```
-
-Scater: Plotting Expression Trends Given Metadata
-===
-class:small-code
-
-```{r, echo=TRUE, eval=FALSE}
-plotExpression(example_sceset, rownames(example_sceset)[7:12],
-               x = "Mutation_Status", exprs_values = "counts", colour = "Cell_Cycle",
-               show_median = TRUE, show_violin = FALSE,  xlab = "Mutation Status",
-               log = TRUE)
-```
-
-Scater: Plotting Expression Trends Given Metadata
-===
-class:small-code
-
-```{r, echo=FALSE, eval=TRUE}
-plotExpression(example_sceset, rownames(example_sceset)[7:12],
-               x = "Mutation_Status", exprs_values = "counts", colour = "Cell_Cycle",
-               show_median = TRUE, show_violin = FALSE,  xlab = "Mutation Status",
-               log = TRUE)
-```
-
-Scater: Plotting Technical Noise
-===
-class:small-code
-
-```{r, echo=TRUE, eval=FALSE}
-plotQC(example_sceset, type = "exprs-freq-vs-mean")
-```
-
-Scater: Plotting Technical Noise
-===
-class:small-code
-
-```{r, echo=FALSE, eval=TRUE}
-plotQC(example_sceset, type = "exprs-freq-vs-mean")
-```
-
-Normalization in Single Cell Data (TODO)
-===
-
-![fall](images/corgis/fall.jpg)
-
-Why Not Use Population Based RNA-Seq Normalizations
-===
-
-Scone PPT
-===
-
-
-
-Using Scone for normalization (TODO)
-===
-
-Scone tutorial.
 
 Section Summary
 ===
 
-- Conservative Gene Filtering Based on Gene Level and Prevalance is often used.
-- Cells are oftern filtered by complexity or certain metadata.
-  - This can be confounded with biological cohort (caution!)
-- Plotting metadata on projects of data is an important QC tool.
-- Methodology is beginning to be created for normalization.
+- scRNA-Seq is complex and can NOT be treated as population based measurements.
+- Cell complexity is an important metadatum for QC.
+- Conservative gene filtering based on gene count and prevalence is often used.
+- Cells can be filtered by complexity and also other metadatum.
 
-Good Morning!
+Where are we at?
 ===
 
-![pillows](images/corgis/pillows.jpg)
+We have now
+- Loaded in data into R.
+- Explored and plotted the data for QC.
+- Filtered on counts and metadata.
 
-Welcome to day 2!
+Next
+- Focus on plotting Genes and Cells.
+- View cell groups to later use in DE.
+
+Let's Get Started!
+===
+
+<div align="center">
+<img src="images/corgis/pillows.jpg" height=500>
+</div>
+
+Welcome to section 2!
 ===
 
 - Using Seurat to plot genes
-- Dimensionality reduction and plotting (PCA, tSNE).
-- Plotting Samples.
+- Dimensionality reduction and plotting (PCA, t-SNE).
+- Plotting cells.
 - Batch effects and study confounding.
 - Moving from clusters to populations of cells.
 - Differential Expression (SCDE).
@@ -924,6 +1127,7 @@ Seurat: Viewing Specific Genes
 class:small-code
 
 - Check the identity of the cells!!!
+- Notice many zeros.
 
 ```{r,eval=FALSE, echo=TRUE,tidy=TRUE,fig.align="center"}
 VlnPlot(pbmc.seurat, c("GAPDH"))
@@ -934,8 +1138,9 @@ Seurat: Viewing Specific Genes
 class:small-code
 
 - Check the identity of the cells!!!
+- Notice many zeros.
 
-```{r,eval=TRUE, echo=FALSE,tidy=TRUE,fig.align="center"}
+```{r,eval=FALSE, echo=TRUE,tidy=TRUE,fig.align="center"}
 VlnPlot(pbmc.seurat, c("GAPDH"))
 ```
 
@@ -952,11 +1157,11 @@ Seurat: Plotting Genes vs Genes
 ===
 class:small-code
 
-```{r,eval=TRUE, echo=FALSE,tidy=TRUE,fig.align="center"}
+```{r,eval=TRUE, echo=TRUE,tidy=TRUE,fig.align="center"}
 GenePlot(pbmc.seurat,"CD79A","CD79B",cex.use=1)
 ```
 
-Dimensionality reduction and plotting (PCA, tSNE)
+Dimensionality reduction and plotting (PCA, t-SNE)
 ===
 
 ![outlier_corgi](images/corgis/outlier_corgi.jpg)
@@ -969,7 +1174,8 @@ Dimensionality Reduction and Ordination
 - One way is to extract features based on capturing groups of variance.
 - Another could be to preferentially select some of the current features.
   - We have already done this.
-- We need this to plot the cells in 2D (or ordinate them).
+- We need this to plot the cells in 2D (or ordinate them)
+- In scRNA-Seq PC1 may be complexity.
 
 PCA: in Quick Theory
 ===
@@ -1013,43 +1219,46 @@ t-SNE: What and Why?
 
 ![tsne](images/tsne.png)
 
-PCA and tSNE Together
+PCA and t-SNE Together
 ===
 
-Often tSNE is performed on PCA components
+Often t-SNE is performed on PCA components
 - Liberal number of components.
 - Removes mild signal (assumption of noise).
 - Faster, on less data but, hopefully the same signal.
 
-Plotting Samples
+Plotting Cells
 ===
 
 ![fancy](images/corgis/fancy.jpg)
 
-PCA using Seurat
+Seurat: Performing PCA
 ===
 class:small-code
 
+- Calculating PCA with the highly variable genes.   
+
 ```{r, eval=TRUE, echo=TRUE,fig.align="center"}
-# Select Highly variable genese
+# Select highly variable genese
 pbmc.seurat <- MeanVarPlot(pbmc.seurat,fxn.x=expMean,fxn.y=logVarDivMean,
                            x.low.cutoff=0.0125,x.high.cutoff=3,
                            y.cutoff=0.5,do.contour=FALSE)
 pbmc.seurat <- PCA(pbmc.seurat,pc.genes=pbmc.seurat@var.genes,do.print=FALSE)
 ```
 
-PCA using Seurat
+Seurat: Performing PCA
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=TRUE,tidy=TRUE,fig.align="center"}
+```{r, eval=TRUE, echo=TRUE,tidy=TRUE,fig.align="center"}
 # Calculate PCA projection
 pbmc.seurat <- ProjectPCA(pbmc.seurat)
+
 # Can plot top genes for top components
-PrintPCA(pbmc.seurat,pcs.print=1:5,genes.print=5,use.full=TRUE)
+PrintPCA(pbmc.seurat,pcs.print=1:2,genes.print=5,use.full=TRUE)
 ```
 
-PCA using Seurat
+Seurat: Performing PCA
 ===
 class:small-code
 
@@ -1058,32 +1267,36 @@ class:small-code
 pbmc.seurat <- ProjectPCA(pbmc.seurat)
 ```
 
-PCA using Seurat
+Seurat: Performing PCA
 ===
 class:small-code
 
-```{r, eval=TRUE, echo=FALSE,tidy=TRUE,fig.align="center"}
+- Top 5 genes in the loading for PC1 and PC2.
+
+```{r, eval=TRUE, echo=TRUE,tidy=TRUE,fig.align="center"}
 # Can plot top genes for top components
-PrintPCA(pbmc.seurat,pcs.print=1:5,genes.print=5,use.full=TRUE)
+PrintPCA(pbmc.seurat,pcs.print=1:2,genes.print=5,use.full=TRUE)
 ```
 
-PCA Visualizations
+Seurat: PCA Visualizations
 ===
 class:small-code
 
+- Top 30 genes associated with the first two components.
+
 ```{r, eval=FALSE, echo=TRUE}
-VizPCA(pbmc.seurat, 1:2)
+VizPCA(pbmc.seurat, pcs.use=1:2)
 ```
 
-PCA Visualizations
+Seurat: PCA Visualizations
 ===
 class:small-code
 
 ```{r, eval=TRUE, echo=FALSE}
-VizPCA(pbmc.seurat, 1:2)
+VizPCA(pbmc.seurat, pcs.use=1:2)
 ```
 
-PCA Visualizations
+Seurat: PCA Visualizations
 ===
 class:small-code
 
@@ -1091,7 +1304,7 @@ class:small-code
 PCAPlot(pbmc.seurat, 1, 2)
 ```
 
-PCA Visualizations
+Seurat: PCA Visualizations
 ===
 class:small-code
 
@@ -1099,15 +1312,17 @@ class:small-code
 PCAPlot(pbmc.seurat, 1, 2)
 ```
 
-PCA Visualizations
+Seurat: PCA Visualizations
 ===
 class:small-code
+
+- Plot top 30 genes in top 100 cells for PC1.
 
 ```{r, eval=FALSE, echo=TRUE}
 PCHeatmap(pbmc.seurat, pc.use=1, cells.use=100, do.balanced=TRUE)
 ```
 
-PCA Visualizations
+Seurat: PCA Visualizations
 ===
 class:small-code
 
@@ -1129,6 +1344,10 @@ Seurat: Choosing Components
 ===
 class:small-code
 
+How do we choose how many components to use?   
+ - When there is diminishing returns to include it.
+ - Selection is performed more liberally in our setting.
+
 ```{r, eval=FALSE, echo=TRUE}
 # Scree (elbow) plot
 PCElbowPlot(pbmc.seurat)
@@ -1139,7 +1358,7 @@ Seurat: Choosing Components
 class:small-code
 
 ```{r, eval=FALSE, echo=TRUE}
-# Tiem Efficient but more ad hoc
+# Time Efficient but more ad hoc
 # Scree (elbow) plot
 PCElbowPlot(pbmc.seurat)
 ```
@@ -1158,7 +1377,13 @@ Seurat: Store Clusters
 ===
 class:small-code
 
+- Determine subclusters for the plot.
+- Separate graph based approach.
+   - is not aware of the t-SNE projection.
+- Using PC 1-10
+
 ```{r, eval=TRUE, echo=TRUE}
+# 1 minute
 pbmc.seurat <- FindClusters(pbmc.seurat, pc.use = 1:10, resolution = 0.6, print.output = 0, save.SNN = TRUE)
 ```
 
@@ -1166,8 +1391,13 @@ Seurat: Run t-SNE
 ===
 class:small-code
 
+- Calculate and plot t-SNE on PC 1- 10.   
+- Uses Barnes-hut implementation.
+
 ```{r, eval=FALSE, echo=TRUE}
+# Calculate t-SNE Ordination
 pbmc.seurat <- RunTSNE(pbmc.seurat, dims.use = 1:10, do.fast = TRUE)
+# Plot
 TSNEPlot(pbmc.seurat)
 ```
 
@@ -1179,6 +1409,12 @@ class:small-code
 pbmc.seurat <- RunTSNE(pbmc.seurat, dims.use = 1:10, do.fast = TRUE)
 TSNEPlot(pbmc.seurat)
 ```
+
+---
+
+This is not PCA
+- Distance is best understood in close neighbors.
+- The measurement of distance is difficult to understand.
 
 Seurat: Side by side
 ===
@@ -1200,6 +1436,9 @@ Seurat: Plotting Genes Through Clusters
 ===
 class:small-code
 
+Now that we have subclusters of cell populations plotting genes through subclusters is identical to before.
+- Seurat stores and groups by subclusters automatically.
+
 ```{r, eval=FALSE, echo=TRUE}
 VlnPlot(pbmc.seurat, c("MS4A1","CD79A"))
 ```
@@ -1215,6 +1454,10 @@ VlnPlot(pbmc.seurat, c("MS4A1","CD79A"))
 Seurat: Plotting Genes on Clusters
 ===
 class:small-code
+
+You can also gene expression through out the cell ordination.
+- Marker genes can help identify cell groups.
+- Metadata can help visualize batch affects.
 
 ```{r, eval=FALSE, echo=TRUE}
 FeaturePlot(pbmc.seurat, c("MS4A1","CD3E", "GNLY", "FCER1A"), cols.use = c("grey","blue"))
@@ -1232,23 +1475,10 @@ Confirm Cell Identity
 ===
 class:small-code
 
+It is important to know cells are expressing expected genes.
 - Many cell populations have known expressing genes.
 - Many assays use sorting.
 - Could have contaminants or unexpected diversity.
-
-Section Summary
-===
-
-- Dimensionality reduction help reduce data while *hopefully* keeping important signal.
-  - tSNE on PCA is often used in analysis
-- Created several types of plot often seen in publications.
-  - Plotting genes (through subgroups).
-  - Ordinating cells in tSNE space.
-  - Heatmaps of genes associated with PC components.
-
-Confounding by Design
-===
-![batch_effects](images/batch_effects_3.png)
 
 QC the Clusters!
 ===
@@ -1269,6 +1499,8 @@ FeaturePlot(pbmc.seurat, c("nGene"), cols.use = c("grey","blue"))
 QC the Clusters!
 ===
 class:small-code
+
+We are going to make a fake batch affect (site) and plot this as an example of how one can visualize unwanted signal.
 
 ```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
 # Making Fake Data
@@ -1294,11 +1526,6 @@ pbmc.seurat <- AddMetaData(pbmc.seurat, fake.sites, "site")
 FeaturePlot(pbmc.seurat, c("site"), cols.use = c("orange","purple"))
 ```
 
-Differential Expression (SCDE)
-===
-
-![clump](images/corgis/corgi_clump.jpg)
-
 Seurat: Getting your labels
 ===
 
@@ -1315,6 +1542,75 @@ cell.labels <- pbmc.seurat@ident
 corner(cell.labels)
 ```
 
+Section Summary
+===
+
+- Dimensionality reduction help reduce data while *hopefully* keeping important signal.
+  - t-SNE on PCA is often used in analysis
+- Created several types of plot often seen in publications.
+  - Plotting genes (through subgroups).
+  - Ordinating cells in t-SNE space.
+  - Heat maps of genes associated with PC components.
+  - Plotting metadata on projects of data is an important QC tool.
+
+Where are we at now?
+===
+
+- Can plot genes vs genes, and throughout cells.
+- Can plot cells.
+- Can break plotted cells into subgroups.
+  - These can become labels for later DE.
+- Can plot across subgroups (maker genes).
+- Can use plots of cells for batch affect visualization?
+
+Single Cell RNA-Seq and Batch Affects
+===
+
+![fall](images/corgis/fall.jpg)
+
+Single Cell RNA-Seq and Batch Affects
+===
+
+![confounding_paper](images/confounding_paper.png)
+
+What is Confounding?
+===
+
+<div align="center">
+<img src="images/confounding.png" height=500>
+</div>
+
+Confounding by Design
+===
+
+![batch_effects](images/batch_effects_4.png)
+
+Between Sample Normalization and Batch Affect Correction
+===
+
+- The nature of scRNA-Seq assays can make them prone to confounding with batch affects.
+  - Normalization and batch affect correction can help.
+- Some are moving away from relying on a specific method.
+  - Exploring the idea of combining or selecting from a collection of normalization or correction methods best for a specific study.
+- Some believe UMI based analysis need not be normalized between samples given the absolute count of the molecules are being reported.
+- For advanced analysis try [SCONE](//niryosef.wordpress.com/tools/scone) or another tool from the [awesome list](https://github.com/seandavi/awesome-single-cell).
+  - Be careful not to remove biological signal with good experimental design (avoiding confounding by design).
+
+Differential Expression (SCDE)
+===
+
+![clump](images/corgis/corgi_clump.jpg)
+
+SCDE: What is the Data?
+===
+
+- Data is from [Islam et al. 2011](http://genome.cshlp.org/content/21/7/1160.long)
+- Approximately 100 samples.
+  - Caution we use less...
+- Mouse cells
+  - Embryonic fibroblasts (MEF; control)
+  - Embryonic stem cells (ES)
+
 SCDE: Single Cell Differential Expression
 ===
 
@@ -1325,21 +1621,47 @@ SCDE: in Quick Theory
 
 For each group (ES or MEF).
 - Genes are modeled to have two groups of counts.
-  - Noisey area highly prone to dropout (Poisson distribution).
+  - Noisy area highly prone to dropout (Poisson distribution).
   - "Amplified" signal (Negative Binomial distribution).
-- This makes the error model or how much one can trust counts.
+- This makes the error model to understand how much one can trust counts.
 - Pairwise within groups.
 
 Differential Expression.
-- Expected value * the probability of dropout in that cell for that expression level .
+- Expected value * the probability of dropout in that cell for that expression level.
 
-SCDE: Create Lables
+SCDE: Load Data
 ===
 class:small-code
 
-```{r,eval=FALSE, echo=TRUE,tidy=FALSE}
-library(scde) # Differential Expressions
+- Pull in the data for the tutorial.
+- In the future you would read in the data.
+  - Read.table or load Seurat object.
+
+```{r, eval=TRUE, echo=TRUE,tidy=FALSE}
 data(es.mef.small)
+```
+
+SCDE: Filter
+===
+class:small-code
+
+- Filter the noise.
+  - Almost every package has a function for this.
+  - Filtering on gene prevalence.
+
+```{r, eval=TRUE, echo=TRUE,tidy=FALSE}
+dim(es.mef.small)
+cd <- clean.counts(es.mef.small, min.lib.size=1000, min.reads = 1, min.detected = 1)
+dim(cd)
+```
+
+SCDE: Create Labels
+===
+class:small-code
+
+- Let's labels for the two groups.
+
+```{r,eval=TRUE, echo=TRUE,tidy=FALSE}
 ## Setting up cells groups
 data.groups <- rep(NA, ncol(es.mef.small))
 data.groups[ grep("MEF", names(es.mef.small)) ] <- "MEF"
@@ -1349,21 +1671,14 @@ names(data.groups) <- colnames(es.mef.small)
 table(data.groups)
 ```
 
-SCDE: filter if not already
+SCDE: Calculate Error Models
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=TRUE,tidy=FALSE}
-dim(es.mef.small)
-cd <- clean.counts(es.mef.small, min.lib.size=1000, min.reads = 1, min.detected = 1)
-dim(cd)
-```
+- Some steps in SCDE can be time intensive.   
+  - For the tutorial we will read in the result of this step.
 
-SCDE: filter if not already
-===
-class:small-code
-
-```{r, eval=FALSE, echo=TRUE,tidy=FALSE}
+```{r, eval=TRUE, echo=TRUE,tidy=FALSE}
 ## Calculate error models
 ## Time Intensive step
 # o.ifm <- scde.error.models(counts=cd, groups= data.groups, n.cores=4,
@@ -1373,12 +1688,28 @@ class:small-code
 data(o.ifm)
 ```
 
+SCDE: Calculate Error Models
+===
+class:small-code
+
+- How do we speed this up?
+
+```{r, eval=TRUE, echo=TRUE,tidy=FALSE}
+## Calculate error models
+## Time Intensive step
+# o.ifm <- scde.error.models(counts=cd, groups= data.groups, n.cores=4,
+#                           threshold.segmentation=TRUE, save.crossfit.plots=FALSE,
+#                           save.model.plots=FALSE, verbose=1)
+# Check number of cores
+detectCores()
+```
+
 SCDE: Model Details
 ===
 class:small-code
 
 ```{r, eval=FALSE, echo=TRUE,tidy=FALSE}
-# Erorormodel coefficients (cells = rows)
+# Error model coefficients (cells = rows)
 # corr.a = slope of the correlated component fit
 # Negative corr.a could be bad cells
 # corr.b intercept of the correlated component fit
@@ -1391,7 +1722,7 @@ SCDE: Model Details
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=FALSE,tidy=FALSE}
+```{r, eval=TRUE, echo=FALSE,tidy=FALSE}
 head(o.ifm)
 ```
 
@@ -1399,7 +1730,7 @@ SCDE: Filter Out Poor Fits
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=TRUE,tidy=FALSE}
+```{r, eval=TRUE, echo=TRUE,tidy=FALSE}
 dim(o.ifm)
 valid.cells <- o.ifm$corr.a > 0
 table(valid.cells)
@@ -1411,7 +1742,10 @@ SCDE: Estimate a Prior to Start
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=TRUE,tidy=FALSE}
+- Bayesian technique
+- Need a starting point or first good guess to start.   
+
+```{r, eval=TRUE, echo=TRUE,tidy=FALSE}
 ## Calculate the Prior (starting value)
 o.prior <- scde.expression.prior(models=o.ifm, counts=cd, length.out=400, show.plot=FALSE)
 ```
@@ -1419,7 +1753,9 @@ o.prior <- scde.expression.prior(models=o.ifm, counts=cd, length.out=400, show.p
 SCDE: Perform Differential Tests
 ===
 
-```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
+- Why are we doing this filtering again?
+
+```{r, eval=TRUE, echo=TRUE, tidy=FALSE}
 ## Setting up cells groups
 data.groups <- rep(NA, nrow(o.ifm))
 data.groups[ grep("MEF", rownames(o.ifm)) ] <- "MEF"
@@ -1428,17 +1764,19 @@ data.groups <- factor(data.groups, levels = c("ESC","MEF"))
 names(data.groups) <- row.names(o.ifm)
 
 ## Perform T-test like analysis
-ediff <- scde.expression.difference(o.ifm, cd, o.prior, groups=data.groups, n.randomizations=100, n.cores=2, verbose=1)
+# 2 minutes on standard computer, 1 core
+#ediff <- scde.expression.difference(o.ifm, cd, o.prior, groups=data.groups, n.randomizations=100, n.cores=2, verbose=1)
+load("data/ediff.Robj")
 ```
 
 Visualize Differentially Expressed Genes
 ===
 
-- mle = log2 fold change (estimate) .
-- ub and lb = upper and lower bound on mle .
-- ce = log2 fold change (conservative estimate) .
+- mle = log2 fold change (estimate).
+- ub and lb = upper and lower bound on mle.
+- ce = log2 fold change (conservative estimate).
 - Z = Z-score .
-- cZ = Z-score corrected for multiple hypothesis testing .
+- cZ = Z-score corrected for multiple hypothesis testing.
 
 ---
 
@@ -1447,20 +1785,26 @@ Visualize Differentially Expressed Genes
 SCDE: Top Upregulated Genes
 ===
 
-```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
+- What are the top upregulated genes?
+
+```{r, eval=TRUE, echo=TRUE, tidy=FALSE}
 head(ediff[order(ediff$Z, decreasing  =  TRUE), ])
 ```
 
 SCDE: Write Data to Text File
 ===
 
+- Save your data.   
+
 ```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
 write.table(ediff[order(abs(ediff$Z), decreasing = TRUE), ],
-            file = "./data/results.txt", row.names = TRUE, col.names = TRUE, sep = "\t", quote = FALSE)
+            file = "data/scde_results.txt", row.names = TRUE, col.names = TRUE, sep = "\t", quote = FALSE)
 ```
 
 SCDE: Plot a Gene
 ===
+
+- Let's look at our data.   
 
 ```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
 scde.test.gene.expression.difference("Tdh", models = o.ifm, counts = cd, prior = o.prior)
@@ -1469,12 +1813,14 @@ scde.test.gene.expression.difference("Tdh", models = o.ifm, counts = cd, prior =
 SCDE: Plot a Gene
 ===
 
-```{r, eval=FALSE, echo=FALSE, tidy=FALSE}
+```{r, eval=TRUE, echo=FALSE, tidy=FALSE}
 scde.test.gene.expression.difference("Tdh", models = o.ifm, counts = cd, prior = o.prior)
 ```
 
 SCDE: Interactive Exploration
 ===
+
+- Interactive exploration.
 
 ```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
 scde.browse.diffexp(ediff, o.ifm, cd, o.prior, groups = groups, name = "diffexp1", port = 1299)
@@ -1493,15 +1839,29 @@ Pagoda
 Pagoda: Overview Methodology
 ===
 
-![pagoda_methodology](images/pagoda_methodology.png)
+<div align="center">
+<img src="images/pagoda_methodology.png" width=900>
+</div>
+Fan et al.
+
+Pagoda: What is the Data?
+===
+
+- Data being used is [Pollen et al. 2014](//www.ncbi.nlm.nih.gov/pubmed/25086649)
+- Approximately 300 samples.
+  - We focus on 64 samples (human, cortex)
+  - NPC - Neuronal Progenitor Cells
+  - GW16 - Gestational week 16
+  - GW21 - Gestational week 21
+  - GW21+3 - Gestational week 21 + 3 weeks.
 
 Pagoda: Load Data
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
+```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
 data(pollen)
-# Original genes and samples (count matrix)
+# Original genes and cells (count matrix)
 dim(pollen)
 # Filter poor cells
 pollen.clean <- clean.counts(pollen)
@@ -1513,7 +1873,7 @@ Pagoda: Create a Color Legend
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
+```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
 name.keys <- gsub("^Hi_(.*)_.*", "\\1", colnames(pollen.clean))
 name.keys
 ```
@@ -1522,7 +1882,7 @@ Pagoda: Create a Color Legend
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
+```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
 l2cols <- c("coral4", "olivedrab3", "skyblue2", "slateblue3")[as.integer(factor(name.keys, levels = c("NPC", "GW16", "GW21", "GW21+3")))]
 l2cols
 ```
@@ -1531,12 +1891,13 @@ Pagoda: Create Error Models
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
+- This is a time intensive step.
+- For now we are going to read in the data.
+
+```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
 #knn <- knn.error.models(pollen.clean, k=ncol(pollen.clean)/4,
 #                         n.cores=2, min.count.threshold=2,
 #                         min.nonfailed=5, max.model.plots=10)
-# Check number of cores
-detectCores()
 # Precomputed data
 data(knn)
 ```
@@ -1546,9 +1907,11 @@ Pagoda: Normalize the Variance
 class:small-code
 
 ```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
-varinfo <- pagoda.varnorm(knn, counts=pollen.clean,
-                          trim=3/ncol(pollen.clean), max.adj.var=5,
-                          n.cores=2, plot=TRUE)
+#varinfo <- pagoda.varnorm(knn, counts=pollen.clean,
+#                          trim=3/ncol(pollen.clean), max.adj.var=5,
+#                          n.cores=1, plot=TRUE)
+load("data/varinfo.Robj")
+
 # list top overdispersed genes
 sort(varinfo$arv, decreasing = TRUE)[1:10]
 # Control for complexity
@@ -1559,18 +1922,18 @@ Pagoda: Normalize the Variance
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=FALSE, tidy=TRUE}
-varinfo <- pagoda.varnorm(knn, counts=pollen.clean,
-                          trim=3/ncol(pollen.clean), max.adj.var=5,
-                          n.cores=2, plot=TRUE)
+```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
+#varinfo <- pagoda.varnorm(knn, counts=pollen.clean,
+#                          trim=3/ncol(pollen.clean), max.adj.var=5,
+#                          n.cores=2, plot=TRUE)
+load("data/varinfo.Robj")
 ```
-
 
 Pagoda: Normalize the Variance
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=FALSE, tidy=TRUE}
+```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
 # list top overdispersed genes
 sort(varinfo$arv, decreasing = TRUE)[1:10]
 # Control for complexity
@@ -1581,19 +1944,19 @@ Pagoda: Load Precomputed Gene Groups
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
-library(org.Hs.eg.db)
+- This analysis path relies on known gene groups.   
+
+```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
 # translate gene names to ids
 ids <- unlist(lapply(mget(rownames(pollen.clean), org.Hs.egALIAS2EG, ifnotfound = NA), function(x) x[1]))
 rids <- names(ids); names(rids) <- ids 
 ```
 
-
 Pagoda: Load Precomputed Gene Groups
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
+```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
 # convert GO lists from ids to gene names
 gos.interest <- unique(c(ls(org.Hs.egGO2ALLEGS)[1:100],"GO:0022008","GO:0048699", "GO:0000280", "GO:0007067")) 
 go.env <- lapply(mget(gos.interest, org.Hs.egGO2ALLEGS), function(x) as.character(na.omit(rids[x]))) 
@@ -1601,26 +1964,27 @@ go.env <- clean.gos(go.env) # remove GOs with too few or too many genes
 go.env <- list2env(go.env) # convert to an environment
 ```
 
-Pagoda: Know Gene Groups Overdispersion
+Pagoda: Known Gene Groups Overdispersion
 ===
 class:small-code
 
 ```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
-pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components = 1, n.cores = 2)
+# pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components = 1, n.cores = 1)
+load("data/pwpca.Robj")
 df <- pagoda.top.aspects(pwpca, return.table = TRUE, plot = TRUE, z.score = 1.96)
 ```
 
-
-Pagoda: Know Gene Groups Overdispersion
+Pagoda: Known Gene Groups Overdispersion
 ===
 class:small-code
 
 ```{r, eval=FALSE, echo=FALSE, tidy=TRUE}
-pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components = 1, n.cores = 2)
+# pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components = 1, n.cores = 1)
+load("data/pwpca.Robj")
 df <- pagoda.top.aspects(pwpca, return.table = TRUE, plot = TRUE, z.score = 1.96)
 ```
 
-Pagoda: Know Gene Groups Overdispersion
+Pagoda: Known Gene Groups Overdispersion
 ===
 class:small-code
 
@@ -1632,8 +1996,10 @@ Pagoda: Novel Gene Group Overdispersion
 ===
 class:small-code
 
+- Unsupervised path.   
+
 ```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
-clpca <- pagoda.gene.clusters(varinfo, trim = 7.1/ncol(varinfo$mat), n.clusters = 50, n.cores = 2, plot = TRUE)
+clpca <- pagoda.gene.clusters(varinfo, trim = 7.1/ncol(varinfo$mat), n.clusters = 50, n.cores = 1, plot = TRUE)
 ```
 
 Pagoda: Novel Gene Group Overdispersion
@@ -1715,17 +2081,6 @@ app <- make.pagoda.app(tamr2, tam, varinfo, go.env, pwpca, clpca, col.cols = col
 show.app(app, "pollen", browse = TRUE, port = 1468) 
 ```
 
-What Did We Miss?
-===
-
-- Seurat
-  - Data imputation and Spatial Inference.
-- SCDE
-  - Batch Effect Correction.
-- Pseudotemporal Analysis (time-series)
-- So many more tools are emerging
--- https://github.com/seandavi/awesome-single-cell
-
 Section Summary
 ===
 
@@ -1736,13 +2091,34 @@ Section Summary
   - Can be time intensive.
 - Pathway enrichment analysis can be performed using de novo and established gene groupings.
 
+What Did We Miss? (So Much)
+===
+
+- Seurat
+  - Data imputation, spatial inference, batch effect correction, ...
+- SCDE
+  - Batch Effect Correction, ...
+- Pseudotemporal Analysis (time-series)
+  - Monocle2, ...
+- So many more tools are emerging, ...
+-- https://github.com/seandavi/awesome-single-cell
+
+What did we accomplish?
+===
+
+- Looked at the data and performed filtering and QC
+- Plot genes and cells.
+- Discovered subgroups of cells.
+- Groups of cells were used as labels in DE.
+- Groups of genes were analyzed for enrichment.
+
 Thank You
 ===
 
 - Aviv Regev
+- Brian Haas
 - Anindita Basu
 - Asma Bankapur
-- Brian Haas
 - Chloe Villani
 - Karthik Shekhar
 - Matan Hofree
@@ -1751,12 +2127,6 @@ Thank You
 - Nir Yosef
 - Regev Single Cell Working Group
 - Today's Attendees
-
-References
-===
-
-Please note this is a collection of many peoples ideas.
-Included in the download is a references.txt to document sources, tutorials, software, and links to cute corgi pictures :-)
 
 Questions?
 ===

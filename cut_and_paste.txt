@@ -1,299 +1,529 @@
 # Logistics
 # ===
-# Load library
-library(vioplot) # violin plots
-library(Seurat)
+# Load libraries
+library(dplyr) # Dataframe manipulation
+library(Matrix) # Sparse matrices
+library(useful) # Corner function
+library(vioplot) # Violin pots
+library(scater) # Single Cell QC
+library(scde) # Differential Expression
+library(org.Hs.eg.db) # Gene name manipulation
+library(Seurat) # Single cell General Analysis
 
 
-# Load Code
+# Representing Sparse Matrices
 # ===
-# Source code
-# Helper functions
-source(file.path("src","Modules.R"))
+# Load 10X data
+pbmc.10X <- Read10X("./data/filtered_gene_bc_matrices/hg19")
+
+# Memory use as a sparse matrix
+object.size(pbmc.10X)
+
+# Memory use as a dense matrix
+# 18 X more
+object.size(as.matrix(pbmc.10X))
 
 
-# Data: Ready, Get Set, Load!
+# Create a Seurat Object
 # ===
-# Load tab delimited file
-data.set = read.delim( file.path("data","GSE29087_L139_updated.txt") )
+# Expected raw counts (non-normalized data)
+# Can give log transformed data but do not transform in setup method
+pbmc.seurat <- new("seurat", raw.data=pbmc.10X)
+
+
+# What is in a Seurat Object?
+# ===
+# Display the internal pieces of the Seurat Object
+slotNames(pbmc.seurat)
+
+
+# What is in a Seurat Object?
+# ===
+# Display the internal pieces of the Seurat Object
+slotNames(pbmc.seurat)
+
+
+# What is in a Seurat Object?
+# ===
+head(pbmc.seurat@raw.data)
+
+
+# What is in a Seurat Object?
+# ===
+?seurat
 
 
 # What are Our Genes?
 # ===
 # Gene names (row names)
-rownames( data.set )
+head(row.names(pbmc.seurat@raw.data))
+length(row.names(pbmc.seurat@raw.data))
 
 
 # What are Our Cells?
 # ===
 # Column names
-# Sample / Cell names
-colnames( data.set )
+# Sample / Cell names / Barcodes
+head(colnames(pbmc.seurat@raw.data))
+length(colnames(pbmc.seurat@raw.data))
 
 
-# How to Show Expression?
+# How to Show Counts?
 # ===
 # Only the corner
 # The full data will be too large to see
-corner( data.set )
+corner(as.matrix(pbmc.seurat@raw.data))
 
 
 # How Many Expressed Genes (Complexity)?
 # ===
 # Plot genes per cell
-# How many genes express
-genes.per.cell <- apply( data.set, 2, function(x) sum( x>0 ))
+# How many genes expressed per cells
+complexity.per.cell <- apply(pbmc.seurat@raw.data, 2, function(x) sum(x>0))
+# Mean count per cell.
+mean.count.per.cell <- apply(pbmc.seurat@raw.data, 2, function(x) mean(x))
+# Gene prevalence
+gene.prevalence <- apply(pbmc.seurat@raw.data, 1, function(x) sum(x>0))
+
+
+# How Many Expressed Genes (Complexity)?
+# ===
+# Plot genes per cell
+# How many genes expressed per cell
+vioplot(complexity.per.cell)
+stripchart(complexity.per.cell, add=TRUE, vertical=TRUE, method="jitter", jitter=0.3, pch=19)
+abline(h=200, col="red")
+abline(h=2500, col="blue")
+title("Study Complexity")
+axis(side=1,at=1,labels=c("Study"))
 
 
 # Identifying Outliers?
 # ===
-# Each cell is a dot
-cell.outlier = plot.cell.complexity( genes.per.cell )
+plot(complexity.per.cell,log2(mean.count.per.cell+1))
+abline(v=200, col="red")
+abline(h=log2(4))
 
 
 # Identifying Outliers?
 # ===
-# Each cell is a dot
-cell.outlier = plot.cell.complexity( demo.complexity.outliers() )
+plot(complexity.per.cell,mean.count.per.cell+1)
+abline(v=200, col="red")
+abline(h=log2(4))
+
+
+# Identifying Noise?
+# ===
+hist(log2(gene.prevalence))
+abline(v=3, col="red")
 
 
 # Filter Cells: Removing the Outlier Cells
 # ===
-# Which outliers?
-cell.outlier
-
-# Remove outlier cells
-cells.to.drop = 1:ncol(data.set) %in% cell.outlier
-data.set = data.set[ ,! cells.to.drop ]
-ncol( data.set)
+pbmc.seurat <- Setup(pbmc.seurat,
+                    min.cells=3, min.genes=200,
+                    do.logNormalize=TRUE,
+                    total.expr=1e4,
+                    project="Tutorial")
 
 
-# Filter Genes: Using Prevalence
+# Seurat: Filtering on Metadata
 # ===
-# Remove low expressing genes
-# Remove genes that do not have atleast 5 counts in 10 samples.
-data.cleaned <- filter.by.occurence( data.set, 5, 10 )
+# Get gene names
+mito.gene.names <- grep("^MT-", rownames(pbmc.seurat@data), value=TRUE)
+
+# Get TSS normalized mitochodrial counts
+col.total.counts <- Matrix::colSums(expm1(pbmc.seurat@data))
+mito.percent.counts <- Matrix::colSums(expm1(pbmc.seurat@data[mito.gene.names, ]))/col.total.counts
+
+# Add to seurat object as a metadata
+pbmc.seurat <- AddMetaData(pbmc.seurat, mito.percent.counts, "percent.mitochodrial")
 
 
-# Normalizing for Cell Sequencing Depth
+# Seurat: Filtering on Metadata
 # ===
-# Counts to CPX
-data.cleaned.norm <- normalize.cpx( data.cleaned )
+VlnPlot(pbmc.seurat, c("nGene", "nUMI", "percent.mitochodrial"), nCol=3)
 
 
-# Plotting Sequencing Saturation of a Cell
+# Seurat: Filtering on Metadata
 # ===
-plot.saturation.curve( data.cleaned[,1], 1000 )
+GenePlot(pbmc.seurat, "nUMI", "percent.mitochodrial")
 
 
-# Getting Your Data Out of R
+# Seurat: Filtering on Metadata
 # ===
-# Write your data frame to your computer.
-write.table( data.cleaned, file="basic_table.txt")
+GenePlot(pbmc.seurat, "nUMI", "nGene")
 
 
-# Loading Data into Seurat
+# Seurat: Filtering on Metadata
 # ===
-# Read data in to Seurat
-nbt=read.into.seurat(file.path("data","HiSeq301_RSEM_linear_values.txt"),sep="\t",header=TRUE,row.names=1)
+dim(pbmc.seurat@data)
+pbmc.seurat <- SubsetData(pbmc.seurat, subset.name = "nGene", accept.high = 2500)
+pbmc.seurat <- SubsetData(pbmc.seurat, subset.name = "percent.mitochodrial", accept.high = 0.05)
+dim(pbmc.seurat@data)
 
-# Sets up object, filters
-nbt=setup(nbt,project="NBT",min.cells = 3,names.field = 2,names.delim = "_",min.genes = 1000,is.expr=1)
 
-
-# Quality Control in scData
+# Saving as an R Object
 # ===
-# Plot gene expression throughout cell groups
-vlnPlot( nbt, c("DPPA4") )
+# How to save the intact object.
+# save(pbmc.seurat, file = "seurat_tutorial.Robj")
+
+# How to retrieve the intact object.
+# load("seurat_tutorial.Robj")
 
 
-# Viewing Genes vs Genes
-# ===
-# Plot a gene vs a gene
-genePlot(nbt,"SOX11","BCL11A",cex.use = 1)
-
-
-# Viewing Cells vs Cells
-# ===
-# Plot a cell vs a cell
-cellPlot(nbt, "Hi_2338_3", "Hi_2338_4",do.ident = FALSE)
-
-
-# Getting Your Data Out of R
+# Saving as Text Files
 # ===
 # Log-scale expression matrix
-write.table(nbt@data, file="seurat_expression.txt")
+write.table(as.matrix(pbmc.seurat@data), file="seurat_data.txt")
 
 # Study metadata
-write.table(nbt@data.info, file="seurat_metadata.txt")
+write.table(pbmc.seurat@data.info, file="seurat_metadata.txt")
 
 # What is the metadata so far
-head( nbt@data.info )
+head(pbmc.seurat@data.info)
 
 
-# PCA using Seurat
+# Scater: Skipping Ahead
 # ===
-nbt=prep.pca.seurat( nbt, y.cutoff = 2,x.low.cutoff = 2 )
-pca.plot(nbt,1,2,pt.size = 3)
+# Load Data
+data("sc_example_counts")
+data("sc_example_cell_info")
+pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
+rownames(pd) <- pd$Cell
+example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
+keep_feature <- rowSums(exprs(example_sceset)) > 0
+example_sceset <- example_sceset[keep_feature,]
+example_sceset <- calculateQCMetrics(example_sceset, feature_controls = 1:40)
 
 
-# Genes Contributing to Components
+# Scater: What is the Data?
 # ===
-# List driving PC1
-print.pca(nbt,1)
+corner(sc_example_counts)
 
 
-# Genes Contributing to Components
+# Scater: What is the info?
 # ===
-# View genes driving PC1
-viz.pca(nbt,1:2)
+corner(sc_example_cell_info)
 
 
-# t-SNE using Seurat
+# Scater: Stratifying for Metadata
 # ===
-# Run the t-SNE alogirthm
-nbt=run_tsne(nbt,dims.use = 1:11,max_iter=2000)
+plot(example_sceset, block1 = "Mutation_Status", block2 = "Treatment",
+     colour_by = "Cell_Cycle", nfeatures = 300, exprs_values = "counts")
 
-# Plot results
-tsne.plot(nbt,pt.size = 3)
+
+# Scater: Stratifying for Metadata
+# ===
+plotExpression(example_sceset, rownames(example_sceset)[1:6],
+               x = "Mutation_Status", exprs_values = "exprs", colour = "Treatment")
+
+
+# Scater: Interactive Exploration
+# ===
+# scater_gui(example_sceset)
+
+
+# Seurat: Viewing Specific Genes
+# ===
+VlnPlot(pbmc.seurat, c("GAPDH"))
+
+
+# Seurat: Plotting Genes vs Genes
+# ===
+# Plot a gene vs a gene
+GenePlot(pbmc.seurat,"CD79A","CD79B",cex.use=1)
+
+
+# Seurat: Performing PCA
+# ===
+# Select highly variable genese
+pbmc.seurat <- MeanVarPlot(pbmc.seurat,fxn.x=expMean,fxn.y=logVarDivMean,
+                           x.low.cutoff=0.0125,x.high.cutoff=3,
+                           y.cutoff=0.5,do.contour=FALSE)
+pbmc.seurat <- PCA(pbmc.seurat,pc.genes=pbmc.seurat@var.genes,do.print=FALSE)
+
+
+# Seurat: Performing PCA
+# ===
+# Calculate PCA projection
+pbmc.seurat <- ProjectPCA(pbmc.seurat)
+
+
+# Seurat: Performing PCA
+# ===
+# Can plot top genes for top components
+PrintPCA(pbmc.seurat,pcs.print=1:2,genes.print=5,use.full=TRUE)
+
+
+# Seurat: PCA Visualizations
+# ===
+VizPCA(pbmc.seurat, pcs.use=1:2)
+
+
+# Seurat: PCA Visualizations
+# ===
+PCAPlot(pbmc.seurat, 1, 2)
+
+
+# Seurat: PCA Visualizations
+# ===
+PCHeatmap(pbmc.seurat, pc.use=1, cells.use=100, do.balanced=TRUE)
+
+
+# Seurat: Choosing Components
+# ===
+# Scree (elbow) plot
+PCElbowPlot(pbmc.seurat)
+
+
+# Seurat: Store Clusters
+# ===
+# 1 minute
+pbmc.seurat <- FindClusters(pbmc.seurat, pc.use = 1:10, resolution = 0.6, print.output = 0, save.SNN = TRUE)
+
+
+# Seurat: Run t-SNE
+# ===
+# Calculate t-SNE Ordination
+pbmc.seurat <- RunTSNE(pbmc.seurat, dims.use = 1:10, do.fast = TRUE)
+# Plot
+TSNEPlot(pbmc.seurat)
+
+
+# Seurat: Plotting Genes Through Clusters
+# ===
+VlnPlot(pbmc.seurat, c("MS4A1","CD79A"))
+
+
+# Seurat: Plotting Genes on Clusters
+# ===
+FeaturePlot(pbmc.seurat, c("MS4A1","CD3E", "GNLY", "FCER1A"), cols.use = c("grey","blue"))
 
 
 # QC the Clusters!
 # ===
-# Paint PCA by complexity
-pca.plot(nbt,1,2,pt.size = 3,group.by="nGene")
-
-# Paint the t-SNE by complexity
-tsne.plot(nbt,pt.size = 3,group.by="nGene")
+FeaturePlot(pbmc.seurat, c("nGene"), cols.use = c("grey","blue"))
 
 
-# Defining Clusters from PCA or t-SNE
+# QC the Clusters!
 # ===
-# Perform clustering
-nbt=DBclust_dimension(nbt,1,2,reduction.use="tsne", G.use=8,set.ident=TRUE)
+# Making Fake Data
+fake.sites <- as.integer(pbmc.seurat@ident %in% c(5,2,8,7))
+names(fake.sites) <- colnames(pbmc.seurat@data)
+# Add metadata
+pbmc.seurat <- AddMetaData(pbmc.seurat, fake.sites, "site")
+# Plot feature
+FeaturePlot(pbmc.seurat, c("site"), cols.use = c("green","orange"))
 
-# Identify groups
-nbt=buildClusterTree(nbt,do.reorder=TRUE,reorder.numeric=TRUE,pcs.use=1:11,do.plot=TRUE)
 
-
-# Defining Clusters from PCA or t-SNE
+# Seurat: Getting your labels
 # ===
-tsne.plot(nbt,do.label=TRUE,label.pt.size=0.5)
+cell.labels <- pbmc.seurat@ident
+corner(cell.labels)
 
 
-# Getting Your Data Out of R
+# SCDE: Load Data
 # ===
-# Log-scale expression matrix
-write.table(nbt@data, file="seurat_expression_tsne.txt")
-
-# Study metadata
-write.table(nbt@data.info, file="seurat_metadata_tsne.txt")
-
-# What is the metadata so far
-head( nbt@data.info )
+data(es.mef.small)
 
 
-# SCDE: in Code
+# SCDE: Filter
 # ===
-# library(scde) # Differential Expressions
+dim(es.mef.small)
+cd <- clean.counts(es.mef.small, min.lib.size=1000, min.reads = 1, min.detected = 1)
+dim(cd)
+
+
+# SCDE: Create Labels
+# ===
 ## Setting up cells groups
-# data.groups <- rep(NA, ncol(data.cleaned))
-# data.groups[ grep("MEF", names(data.cleaned)) ] <- "MEF"
-# data.groups[ grep("ES", names(data.cleaned)) ] <- "ES"
-# data.groups <- factor(data.groups, levels = c("ES","MEF"))
+data.groups <- rep(NA, ncol(es.mef.small))
+data.groups[ grep("MEF", names(es.mef.small)) ] <- "MEF"
+data.groups[ grep("ESC", names(es.mef.small)) ] <- "ESC"
+data.groups <- factor(data.groups, levels = c("ESC","MEF"))
+names(data.groups) <- colnames(es.mef.small)
+table(data.groups)
 
 
-# SCDE: in Code
+# SCDE: Calculate Error Models
 # ===
-# library(scde)
-
-## Calculate error models (Takes time)
-# o.ifm <- scde.error.models( as.matrix( data.cleaned ), groups = data.groups, n.cores=3, threshold.segmentation=TRUE, save.crossfit.plot=FALSE, save.model.plots=FALSE, verbose=1 )
-
-## Filter out cell (QC)
-# o.ifm <- o.ifm[ o.ifm$corr.a > 0, ]
+data(o.ifm)
 
 
-# SCDE: in Code
+# SCDE: Calculate Error Models
 # ===
-## Set up the Prior (starting value)
-# o.prior <- scde.expression.prior(models=o.ifm, counts=as.matrix(data.cleaned),length.out=400, show.plot=FALSE)
+# Check number of cores
+detectCores()
+
+
+# SCDE: Model Details
+# ===
+head(o.ifm)
+
+
+# SCDE: Filter Out Poor Fits
+# ===
+dim(o.ifm)
+valid.cells <- o.ifm$corr.a > 0
+table(valid.cells)
+o.ifm <- o.ifm[valid.cells, ]
+dim(o.ifm)
+
+
+# SCDE: Estimate a Prior to Start
+# ===
+## Calculate the Prior (starting value)
+o.prior <- scde.expression.prior(models=o.ifm, counts=cd, length.out=400, show.plot=FALSE)
+
+
+# SCDE: Perform Differential Tests
+# ===
+## Setting up cells groups
+data.groups <- rep(NA, nrow(o.ifm))
+data.groups[ grep("MEF", rownames(o.ifm)) ] <- "MEF"
+data.groups[ grep("ESC", rownames(o.ifm)) ] <- "ESC"
+data.groups <- factor(data.groups, levels = c("ESC","MEF"))
+names(data.groups) <- row.names(o.ifm)
 
 ## Perform T-test like analysis
-# ediff <- scde.expression.difference(o.ifm, as.matrix(data.cleaned), o.prior, groups=data.groups, n.randomizations=100, n.cores=1,verbose=1)
-
-# write.table(ediff[order(abs(ediff$Z), decreasing=T),], file="scde_results.txt", row.names=T, col.names=T, sep="\t", quote=F)
+load("data/ediff.Robj")
 
 
-# RaceID: Detecting Rare Cell Populations
+# SCDE: Top Upregulated Genes
 # ===
-# Load code
-source(file.path("src","RaceID_class.R"))
-
-# Load tutorial data
-race.in <-read.csv(file.path("data","transcript_counts_intestine.xls"), sep="\t", header=TRUE)
-
-# Set up data
-rownames( race.in ) <-race.in$GENEID
-race.in <- race.in[grep("ERCC",rownames(race.in),invert=TRUE),-1]
-race.data <- SCseq(race.in)
+head(ediff[order(ediff$Z, decreasing  =  TRUE), ])
 
 
-# RaceID: Detecting Rare Cell Populations
+# SCDE: Write Data to Text File
 # ===
-# Filter data
-race.data <- filterdata( race.data, mintotal=3000, minexpr=5, minnumber=1, maxexpr=500, downsample=FALSE, dsn=1, rseed=17000 )
-
-# K-Means cluster data
-race.data <- clustexp( race.data, metric="pearson", cln=0, do.gap=TRUE, clustnr=20, B.gap=50, SE.method="Tibs2001SEmax", SE.factor=.25, bootnr=50, rseed=17000 )
+write.table(ediff[order(abs(ediff$Z), decreasing = TRUE), ],
+            file = "data/scde_results.txt", row.names = TRUE, col.names = TRUE, sep = "\t", quote = FALSE)
 
 
-# RaceID: Detecting Rare Cell Populations
+# SCDE: Plot a Gene
 # ===
-# Check clusters
-plotgap(race.data)
+scde.test.gene.expression.difference("Tdh", models = o.ifm, counts = cd, prior = o.prior)
 
 
-# RaceID: Detecting Rare Cell Populations
+# SCDE: Interactive Exploration
 # ===
-# Find outliers
-race.data <- findoutliers( race.data, outminc=5, outlg=2,probthr=1e-3,thr=2**-(1:40),outdistquant=.75)
-
-# Project with t-SNE
-race.data <- comptsne( race.data,rseed=15555 )
+scde.browse.diffexp(ediff, o.ifm, cd, o.prior, groups = groups, name = "diffexp1", port = 1299)
 
 
-# RaceID: Detecting Rare Cell Populations
+# Pagoda: Load Data
 # ===
-plottsne( race.data, final=FALSE )
+data(pollen)
+# Original genes and cells (count matrix)
+dim(pollen)
+# Filter poor cells
+pollen.clean <- clean.counts(pollen)
+# Cleaned matrix dimensions
+dim(pollen.clean)
 
 
-# RaceID: Detecting Rare Cell Populations
+# Pagoda: Create a Color Legend
 # ===
-plottsne( race.data, final=TRUE )
+name.keys <- gsub("^Hi_(.*)_.*", "\\1", colnames(pollen.clean))
+name.keys
 
 
-# RaceID: Detecting Rare Cell Populations
+# Pagoda: Create a Color Legend
 # ===
-# Interesting genes
-target.genes <- c("Apoa1__chr9", "Apoa1bp__chr3", "Apoa2__chr1", "Apoa4__chr9", "Apoa5__chr9")
+l2cols <- c("coral4", "olivedrab3", "skyblue2", "slateblue3")[as.integer(factor(name.keys, levels = c("NPC", "GW16", "GW21", "GW21+3")))]
+l2cols
 
-# Plot expresssion of interesting genes
-plotexptsne( race.data, target.genes )
 
-# RaceID: Detecting Rare Cell Populations
+# Pagoda: Create Error Models
 # ===
-# Plot t-SNE labeling groups with symbols
-plotsymbolstsne( race.data, type=sub("\\_\\d+$","",names(race.data@ndata)))
+# Precomputed data
+data(knn)
 
 
-# Getting Your Data Out of R
+# Pagoda: Normalize the Variance
 # ===
-# Write expression data
-write.table( race.data@expdata, file="race_id_expression.txt" )
+load("data/varinfo.Robj")
 
-# Write kmeans clusters
-write.table( race.data@kmeans$kpart)
 
-# Write clusters with outlier refinement
-write.table( race.data@cpart )
+# Pagoda: Normalize the Variance
+# ===
+# list top overdispersed genes
+sort(varinfo$arv, decreasing = TRUE)[1:10]
+# Control for complexity
+varinfo <- pagoda.subtract.aspect(varinfo, colSums(pollen.clean[, rownames(knn)]>0))
+
+
+# Pagoda: Load Precomputed Gene Groups
+# ===
+# Translate gene names to ids
+ids <- unlist(lapply(mget(rownames(pollen.clean), org.Hs.egALIAS2EG, ifnotfound = NA), function(x) x[1]))
+rids <- names(ids); names(rids) <- ids 
+
+
+# Pagoda: Load Precomputed Gene Groups
+# ===
+# convert GO lists from ids to gene names
+gos.interest <- unique(c(ls(org.Hs.egGO2ALLEGS)[1:100],"GO:0022008","GO:0048699", "GO:0000280", "GO:0007067")) 
+go.env <- lapply(mget(gos.interest, org.Hs.egGO2ALLEGS), function(x) as.character(na.omit(rids[x]))) 
+go.env <- clean.gos(go.env) # remove GOs with too few or too many genes
+go.env <- list2env(go.env) # convert to an environment
+
+
+# Pagoda: Known Gene Groups Overdispersion
+# ===
+# pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components = 1, n.cores = 1)
+load("data/pwpca.Robj")
+df <- pagoda.top.aspects(pwpca, return.table = TRUE, plot = TRUE, z.score = 1.96)
+
+
+# Pagoda: Known Gene Groups Overdispersion
+# ===
+head(df)
+
+
+# Pagoda: Novel Gene Group Overdispersion
+# ===
+load("data/clpca.Robj")
+
+
+# Pagoda: Novel Gene Group Overdispersion
+# ===
+df <- pagoda.top.aspects(pwpca, clpca, return.table = TRUE, plot = TRUE, z.score = 1.96)
+
+
+# Pagoda: Novel Gene Group Overdispersion
+# ===
+head(df)
+
+
+# Pagoda: Cell Clustering
+# ===
+# Get full info on the top aspects
+tam <- pagoda.top.aspects(pwpca, clpca, n.cells = NULL, z.score = qnorm(0.01/2, lower.tail = FALSE))
+# Determine overall cell clustering
+hc <- pagoda.cluster.cells(tam, varinfo)
+tamr <- pagoda.reduce.loading.redundancy(tam, pwpca, clpca)
+tamr2 <- pagoda.reduce.redundancy(tamr, distance.threshold = 0.9, plot = TRUE, cell.clustering = hc, labRow = NA, labCol = NA, box = TRUE, margins = c(0.5, 0.5), trim = 0)
+col.cols <- rbind(groups = cutree(hc, 3))
+
+
+# Pagoda: Visualize Clustering
+# ===
+pagoda.view.aspects(tamr2, cell.clustering = hc, box = TRUE, labCol = NA, margins = c(0.5, 20), col.cols = rbind(l2cols))
+
+
+# Pagoda: Interactive Clustering
+# ===
+# compile a browsable app, showing top three clusters with the top color bar
+app <- make.pagoda.app(tamr2, tam, varinfo, go.env, pwpca, clpca, col.cols = col.cols, cell.clustering = hc, title = "NPCs")
+# show app in the browser (port 1468)
+show.app(app, "pollen", browse = TRUE, port = 1468) 
+
+
+# Notes: to Make a PDF
+# ===
+# pdf( "data/my_file.pdf", useDingbats = FALSE ) # Start pdf
+# plot( 1:10, log(1:10 ) ) # plot in to the pdf file
+# plot( seq(0,.9,.1), sin(0:9) ) # another plot for the pdf file
+# dev.off() # Close pdf file ( very important )
+
