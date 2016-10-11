@@ -39,12 +39,6 @@ slotNames(pbmc.seurat)
 
 # What is in a Seurat Object?
 # ===
-# Display the internal pieces of the Seurat Object
-slotNames(pbmc.seurat)
-
-
-# What is in a Seurat Object?
-# ===
 head(pbmc.seurat@raw.data)
 
 
@@ -96,13 +90,6 @@ abline(h=200, col="red")
 abline(h=2500, col="blue")
 title("Study Complexity")
 axis(side=1,at=1,labels=c("Study"))
-
-
-# Identifying Outliers?
-# ===
-plot(complexity.per.cell,log2(mean.count.per.cell+1))
-abline(v=200, col="red")
-abline(h=log2(4))
 
 
 # Identifying Outliers?
@@ -221,7 +208,7 @@ plotExpression(example_sceset, rownames(example_sceset)[1:6],
 
 # Scater: Interactive Exploration
 # ===
-# scater_gui(example_sceset)
+scater_gui(example_sceset)
 
 
 # Seurat: Viewing Specific Genes
@@ -408,7 +395,7 @@ scde.test.gene.expression.difference("Tdh", models = o.ifm, counts = cd, prior =
 
 # SCDE: Interactive Exploration
 # ===
-scde.browse.diffexp(ediff, o.ifm, cd, o.prior, groups = groups, name = "diffexp1", port = 1299)
+# scde.browse.diffexp(ediff, o.ifm, cd, o.prior, groups = groups, name = "diffexp1", port = 1299)
 
 
 # Pagoda: Load Data
@@ -455,6 +442,7 @@ varinfo <- pagoda.subtract.aspect(varinfo, colSums(pollen.clean[, rownames(knn)]
 
 # Pagoda: Load Precomputed Gene Groups
 # ===
+library(org.Hs.eg.db)
 # Translate gene names to ids
 ids <- unlist(lapply(mget(rownames(pollen.clean), org.Hs.egALIAS2EG, ifnotfound = NA), function(x) x[1]))
 rids <- names(ids); names(rids) <- ids 

@@ -742,7 +742,7 @@ class:small-code
 - Cells that are unusually complex (doublets?)
 
 ```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
-plot(complexity.per.cell,log2(mean.count.per.cell+1))
+plot(complexity.per.cell,mean.count.per.cell+1)
 abline(v=200, col="red")
 abline(h=log2(4))
 ```
@@ -1357,16 +1357,6 @@ Seurat: Choosing Components
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=TRUE}
-# Time Efficient but more ad hoc
-# Scree (elbow) plot
-PCElbowPlot(pbmc.seurat)
-```
-
-Seurat: Choosing Components
-===
-class:small-code
-
 ```{r, eval=TRUE, echo=FALSE}
 # Time Efficient but more ad hoc
 # Scree (elbow) plot
@@ -1823,7 +1813,7 @@ SCDE: Interactive Exploration
 - Interactive exploration.
 
 ```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
-scde.browse.diffexp(ediff, o.ifm, cd, o.prior, groups = groups, name = "diffexp1", port = 1299)
+# scde.browse.diffexp(ediff, o.ifm, cd, o.prior, groups = groups, name = "diffexp1", port = 1299)
 ```
 
 Pathway analysis
@@ -2044,11 +2034,19 @@ class:small-code
 head(df)
 ```
 
+Pagoda: Novel Gene Group Overdispersion
+===
+class:small-code
+
+```{r, eval=TRUE, echo=FALSE, tidy=TRUE}
+head(df)
+```
+
 Pagoda: Cell Clustering
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
+```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
 # Get full info on the top aspects
 # tam <- pagoda.top.aspects(pwpca, clpca, n.cells = NULL, z.score = qnorm(0.01/2, lower.tail = FALSE))
 load("data/tam.Robj")
@@ -2066,6 +2064,14 @@ Pagoda: Visualize Clustering
 class:small-code
 
 ```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
+pagoda.view.aspects(tamr2, cell.clustering = hc, box = TRUE, labCol = NA, margins = c(0.5, 20), col.cols = rbind(l2cols))
+```
+
+Pagoda: Visualize Clustering
+===
+class:small-code
+
+```{r, eval=TRUE, echo=FALSE, tidy=TRUE}
 pagoda.view.aspects(tamr2, cell.clustering = hc, box = TRUE, labCol = NA, margins = c(0.5, 20), col.cols = rbind(l2cols))
 ```
 
@@ -2120,6 +2126,9 @@ Thank You
 - Asma Bankapur
 - Chloe Villani
 - Karthik Shekhar
+
+---
+
 - Matan Hofree
 - Michel Cole
 - Monika Kowalczyk
