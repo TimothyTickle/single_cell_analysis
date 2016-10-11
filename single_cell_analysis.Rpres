@@ -114,18 +114,6 @@ Overview of assays
 <img src="images/corgis/scientist.jpg" height=500>
 </div>
 
-Starting Sequences
-===
-
-<div align="center">
-<img src="images/fastq.png" height=500>
-</div>
-
-Assays have Different Formats
-===
-
-![fastq_seq](images/sc_sequences.png)
-
 SmartSeq2
 ===
   
@@ -333,6 +321,18 @@ Sequence Pipeline Overviews
 ===
 
 ![corgi_can](images/corgis/corgi_can.jpg)
+
+Starting Sequences
+===
+
+<div align="center">
+<img src="images/fastq.png" height=500>
+</div>
+
+Assays have Different Formats
+===
+
+![fastq_seq](images/sc_sequences.png)
 
 Smartseq2: Pipeline Overview
 ===
@@ -1242,7 +1242,7 @@ class:small-code
 # Select highly variable genese
 pbmc.seurat <- MeanVarPlot(pbmc.seurat,fxn.x=expMean,fxn.y=logVarDivMean,
                            x.low.cutoff=0.0125,x.high.cutoff=3,
-                           y.cutoff=0.5,do.contour=FALSE)
+                           y.cutoff=0.5,do.contour=FALSE,do.plot=FALSE)
 pbmc.seurat <- PCA(pbmc.seurat,pc.genes=pbmc.seurat@var.genes,do.print=FALSE)
 ```
 
@@ -1955,6 +1955,7 @@ class:small-code
 - This analysis path relies on known gene groups.   
 
 ```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
+library(org.Hs.eg.db)
 # translate gene names to ids
 ids <- unlist(lapply(mget(rownames(pollen.clean), org.Hs.egALIAS2EG, ifnotfound = NA), function(x) x[1]))
 rids <- names(ids); names(rids) <- ids 
@@ -2049,11 +2050,14 @@ class:small-code
 
 ```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
 # Get full info on the top aspects
-tam <- pagoda.top.aspects(pwpca, clpca, n.cells = NULL, z.score = qnorm(0.01/2, lower.tail = FALSE))
+# tam <- pagoda.top.aspects(pwpca, clpca, n.cells = NULL, z.score = qnorm(0.01/2, lower.tail = FALSE))
+load("data/tam.Robj")
 # Determine overall cell clustering
 hc <- pagoda.cluster.cells(tam, varinfo)
-tamr <- pagoda.reduce.loading.redundancy(tam, pwpca, clpca)
-tamr2 <- pagoda.reduce.redundancy(tamr, distance.threshold = 0.9, plot = TRUE, cell.clustering = hc, labRow = NA, labCol = NA, box = TRUE, margins = c(0.5, 0.5), trim = 0)
+# tamr <- pagoda.reduce.loading.redundancy(tam, pwpca, clpca)
+load("data/tamr.Robj")
+# tamr2 <- pagoda.reduce.redundancy(tamr, distance.threshold = 0.9, plot = TRUE, cell.clustering = hc, labRow = NA, labCol = NA, box = TRUE, margins = c(0.5, 0.5), trim = 0)
+load("data/tamr2.Robj")
 col.cols <- rbind(groups = cutree(hc, 3))
 ```
 
