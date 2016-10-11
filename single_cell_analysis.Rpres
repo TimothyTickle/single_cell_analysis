@@ -368,7 +368,7 @@ Dropseq: Further Help
 
 ![10_help](images/10x_web.png)
 
-Sequence level quality control
+Sequence Level Quality Control
 ===
 
 ![seq_qc](images/population_rnaseq_qc.png)
@@ -659,7 +659,7 @@ Complexity of Libraries
 - How many genes had a count of more than 1 in a cell.
   - Simplest, most common definition.
 
-How Many Expressed Genes (Complexity)?
+How Many Expressed Genes?
 ===
 class:small-code
 
@@ -673,7 +673,7 @@ mean.count.per.cell <- apply(pbmc.seurat@raw.data, 2, function(x) mean(x))
 gene.prevalence <- apply(pbmc.seurat@raw.data, 1, function(x) sum(x>0))
 ```
 
-How Many Expressed Genes (Complexity)?
+How Many Expressed Genes?
 ===
 class:small-code
 
@@ -688,7 +688,7 @@ title("Study Complexity")
 axis(side=1,at=1,labels=c("Study"))
 ```
 
-How Many Expressed Genes (Complexity)?
+How Many Expressed Genes?
 ===
 class:small-code
 
@@ -1161,7 +1161,7 @@ class:small-code
 GenePlot(pbmc.seurat,"CD79A","CD79B",cex.use=1)
 ```
 
-Dimensionality reduction and plotting (PCA, t-SNE)
+Dimensionality reduction and plotting
 ===
 
 ![outlier_corgi](images/corgis/outlier_corgi.jpg)
@@ -1553,7 +1553,7 @@ Section Summary
   - Heat maps of genes associated with PC components.
   - Plotting metadata on projects of data is an important QC tool.
 
-Where are we at now?
+Where are We at Now?
 ===
 
 - Can plot genes vs genes, and throughout cells.
@@ -1585,7 +1585,7 @@ Confounding by Design
 
 ![batch_effects](images/batch_effects_4.png)
 
-Between Sample Normalization and Batch Affect Correction
+Normalization and Batch Affect Correction
 ===
 
 - The nature of scRNA-Seq assays can make them prone to confounding with batch affects.
@@ -1753,7 +1753,7 @@ o.prior <- scde.expression.prior(models=o.ifm, counts=cd, length.out=400, show.p
 SCDE: Perform Differential Tests
 ===
 
-- Why are we doing this filtering again?
+- Why are we doing this again?
 
 ```{r, eval=TRUE, echo=TRUE, tidy=FALSE}
 ## Setting up cells groups
@@ -1933,6 +1933,14 @@ Pagoda: Normalize the Variance
 ===
 class:small-code
 
+<div align="center">
+<img src="images/varinfo.png" width=800>
+</div>
+
+Pagoda: Normalize the Variance
+===
+class:small-code
+
 ```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
 # list top overdispersed genes
 sort(varinfo$arv, decreasing = TRUE)[1:10]
@@ -1978,7 +1986,7 @@ Pagoda: Known Gene Groups Overdispersion
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=FALSE, tidy=TRUE}
+```{r, eval=TRUE, echo=FALSE, tidy=TRUE}
 # pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components = 1, n.cores = 1)
 load("data/pwpca.Robj")
 df <- pagoda.top.aspects(pwpca, return.table = TRUE, plot = TRUE, z.score = 1.96)
@@ -1998,17 +2006,18 @@ class:small-code
 
 - Unsupervised path.   
 
-```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
-clpca <- pagoda.gene.clusters(varinfo, trim = 7.1/ncol(varinfo$mat), n.clusters = 50, n.cores = 1, plot = TRUE)
+```{r, eval=TRUE, echo=TRUE, tidy=TRUE}
+# clpca <- pagoda.gene.clusters(varinfo, trim = 7.1/ncol(varinfo$mat), n.clusters = 50, n.cores = 1, plot = TRUE)
+load("data/clpca.Robj")
 ```
 
 Pagoda: Novel Gene Group Overdispersion
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=FALSE, tidy=TRUE}
-clpca <- pagoda.gene.clusters(varinfo, trim = 7.1/ncol(varinfo$mat), n.clusters = 50, n.cores = 2, plot = TRUE)
-```
+<div align="center">
+<img src="images/clpca.png" width=500>
+</div>
 
 Pagoda: Novel Gene Group Overdispersion
 ===
@@ -2022,7 +2031,7 @@ Pagoda: Novel Gene Group Overdispersion
 ===
 class:small-code
 
-```{r, eval=FALSE, echo=FALSE, tidy=TRUE}
+```{r, eval=TRUE, echo=FALSE, tidy=TRUE}
 df <- pagoda.top.aspects(pwpca, clpca, return.table = TRUE, plot = TRUE, z.score = 1.96)
 ```
 
@@ -2039,20 +2048,6 @@ Pagoda: Cell Clustering
 class:small-code
 
 ```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
-# Get full info on the top aspects
-tam <- pagoda.top.aspects(pwpca, clpca, n.cells = NULL, z.score = qnorm(0.01/2, lower.tail = FALSE))
-# Determine overall cell clustering
-hc <- pagoda.cluster.cells(tam, varinfo)
-tamr <- pagoda.reduce.loading.redundancy(tam, pwpca, clpca)
-tamr2 <- pagoda.reduce.redundancy(tamr, distance.threshold = 0.9, plot = TRUE, cell.clustering = hc, labRow = NA, labCol = NA, box = TRUE, margins = c(0.5, 0.5), trim = 0)
-col.cols <- rbind(groups = cutree(hc, 3))
-```
-
-Pagoda: Cell Clustering
-===
-class:small-code
-
-```{r, eval=FALSE, echo=FALSE, tidy=TRUE}
 # Get full info on the top aspects
 tam <- pagoda.top.aspects(pwpca, clpca, n.cells = NULL, z.score = qnorm(0.01/2, lower.tail = FALSE))
 # Determine overall cell clustering
@@ -2075,10 +2070,10 @@ Pagoda: Interactive Clustering
 class:small-code
 
 ```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
-# compile a browsable app, showing top three clusters with the top color bar
-app <- make.pagoda.app(tamr2, tam, varinfo, go.env, pwpca, clpca, col.cols = col.cols, cell.clustering = hc, title = "NPCs")
-# show app in the browser (port 1468)
-show.app(app, "pollen", browse = TRUE, port = 1468) 
+## compile a browsable app, showing top three clusters with the top color bar
+# app <- make.pagoda.app(tamr2, tam, varinfo, go.env, pwpca, clpca, col.cols = col.cols, cell.clustering = hc, title = "NPCs")
+## show app in the browser (port 1468)
+# show.app(app, "pollen", browse = TRUE, port = 1468) 
 ```
 
 Section Summary
