@@ -221,13 +221,245 @@ VlnPlot(pbmc.seurat, c("GAPDH"))
 # Plot a gene vs a gene
 GenePlot(pbmc.seurat,"CD79A","CD79B",cex.use=1)
 
+Seurat and Batch Affect Correction
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE}
+pbmc.seurat <- RegressOut(pbmc.seurat, latent.vars = c("nUMI", "percent.mitochodrial"))
+```
+
+# Scone: Batch Correction
+# ===
+set.seed(6473)
+library(scone)
+library(RColorBrewer)
+library(scRNAseq)
+data(fluidigm)
+assay(fluidigm) = assays(fluidigm)$rsem_counts
+
+
+# Scone: Which Metadata?
+#===
+metadata(fluidigm)$which_qc
+
+
+# Scone: Which Metadata?
+# ===
+metadata(fluidigm)$which_qc
+
+
+# Scone: Accessing Metadata
+# ===
+head(colData(fluidigm))
+head(colData(fluidigm)$Coverage_Type)
+
+
+# Scone: Logistics
+# ===
+# Preliminary Sample Filtering: High-Coverage Only
+is_select = colData(fluidigm)$Coverage_Type == "High" 
+fluidigm = fluidigm[,is_select]
+# Retain only detected transcripts
+fluidigm = fluidigm[which(apply(assay(fluidigm) > 0,1,any)),]
+```
+
+# Scone: Filtering
+#===
+# Initial Gene Filtering: Select "common" transcripts based on proportional criteria.
+num_reads = quantile(assay(fluidigm)[assay(fluidigm) > 0])[4]
+num_cells = 0.25*ncol(fluidigm)
+is_common = rowSums(assay(fluidigm) >= num_reads ) >= num_cells
+
+
+# Scone: Filtering
+# ===
+data(housekeeping)
+hk = intersect(housekeeping$V1,rownames(assay(fluidigm)))
+head(housekeeping$V1)
+
+
+# Scone: Filtering
+# ===
+# Metric-based Filtering
+mfilt = metric_sample_filter(assay(fluidigm), 
+          nreads=colData(fluidigm)$NREADS,
+          ralign=colData(fluidigm)$RALIGN,
+          gene_filter=is_common,
+          pos_controls=rownames(fluidigm) %in% hk,
+          zcut=3, mixture=FALSE, 
+          plot=FALSE)
+
+
+# Scone: Filtering
+# ===
+mfilt = !apply(simplify2array(mfilt[!is.na(mfilt)]),1,any)
+
+
+# Scone: Filtering
+# ===
+# Cell filter
+goodDat = fluidigm[,mfilt]
+# Final Gene Filtering: Highly expressed in at least 5 cells
+num_reads = quantile(assay(fluidigm)[assay(fluidigm) > 0])[4]
+num_cells = 5
+is_quality = rowSums(assay(fluidigm) >= num_reads ) >= num_cells
+
+
+# Scone: Workflows Inputs
+# ===
+expr = assay(goodDat)[is_quality,]
+bio = factor(colData(goodDat)$Biological_Condition)
+
+
+# Scone: Workflows Inputs
+# ===
+qc = colData(goodDat)[,metadata(goodDat)$which_qc]
+ppq = scale(qc[,apply(qc,2,sd) > 0],center = TRUE,scale = TRUE)
+poscon = intersect(rownames(expr),strsplit("ALS2, CDK5R1, CYFIP1, DPYSL5, FEZ1, FEZ2, MAPT, MDGA1, NRCAM, NRP1, NRXN1, OPHN1, OTX2, PARD6B, PPT1, ROBO1, ROBO2, RTN1, RTN4, SEMA4F, SIAH1, SLIT2, SMARCA1, THY1, TRAPPC4, UBB, YWHAG, YWHAH",split = ", ")[[1]])
+
+
+# Scone: Workflows Inputs
+# ===
+negcon = intersect(rownames(expr),hk)
+
+
+# Scone: User Functions
+# ===
+SUM_FN = function (ei) 
+{ # TSS
+  sums = colSums(ei)
+  eo = t(t(ei)*mean(sums)/sums)
+  return(eo)
+}
+
+
+# Scone: User Functions
+# ===
+EFF_FN = function (ei) 
+{ # Divided by complexity
+  sums = colSums(ei > 0)
+  eo = t(t(ei)*sums/mean(sums))
+  return(eo)
+}
+
+
+# Scone: User Functions
+# ===
+scaling=list(none=identity, #do nothing
+             sum = SUM_FN,  # User functions
+             eff = EFF_FN,
+             tmm = TMM_FN, # SCONE
+             uq = UQ_FN,
+             uqp = UQ_FN_POS,
+             fq = FQT_FN,
+             fqp = FQ_FN_POS,
+             deseq=DESEQ_FN,
+             deseqp=DESEQ_FN_POS)
+
+
+# Scone: Imputation Settings
+# ===
+# Simple FNR model estimation with SCONE::estimate_ziber
+# fnr_out = estimate_ziber(x = expr, bulk_model = TRUE,
+#                         pos_controls = rownames(expr) %in% hk,
+#                         maxiter = 10000)
+load("data/fnr_out.Robj")
+
+
+# Scone: Imputation Settings
+# ===
+imputation=list(none=impute_null, # No imputation
+                expect=impute_expectation)
+                # Replace zeroes with expected expression level
+
+
+# Scone: Imputation Settings
+# ===
+impute_args = list(p_nodrop = fnr_out$p_nodrop, mu = exp(fnr_out$Alpha[1,]))
+
+
+# Scone: Setting Up Params
+# ===
+params <- scone(expr, 
+                imputation = imputation, impute_args = impute_args,
+                scaling=scaling, 
+                qc=ppq, bio = bio,
+                # Negative controls for RUVg
+                # normalization and evaluation
+                ruv_negcon = negcon,
+                # Parameter Arguments
+                k_qc=3, k_ruv = 3,
+                adjust_bio="no", 
+                run=FALSE)
+
+
+# Scone: Workflow Params
+# ===
+head(params)
+
+
+# Scone: Workflow Params
+# ===
+apply(params,2,unique)
+
+
+# Scone: Updating for Imputation
+# ===
+is_screened = ((params$imputation_method == "expect") & (params$scaling_method %in% c("none","deseqp","uqp","fqp","eff")))
+params = params[!is_screened,]
+
+
+# Scone: Filtered Params
+# ===
+head(params)
+
+
+# Scone: Run!
+# ===
+BiocParallel::register(BiocParallel::SerialParam())
+res <- scone(expr, 
+             imputation = imputation, impute_args = impute_args,
+             scaling=scaling,
+             qc=ppq, bio = bio,
+             ruv_negcon = negcon,
+             k_qc=3, k_ruv = 3, 
+             adjust_bio="no", 
+             eval_poscon = poscon, # Positive controls for evaluation
+             run=TRUE, params = params, # Additional params
+             eval_kclust = 2:6,stratified_pam = TRUE,
+             return_norm = "in_memory",
+             rezero = TRUE)
+
+
+# Scone: Output
+# ===
+names(res)
+
+
+# Scone: Interactive!
+# ===
+sconeReport(scone_res = res,
+            qc = ppq,
+            bio = bio,
+            negcon = negcon, poscon = poscon)
+
+
+# Select Variable Genes
+# ===
+pbmc.seurat <- MeanVarPlot(pbmc.seurat,fxn.x=expMean,fxn.y=logVarDivMean,
+                           x.low.cutoff=0.0125,x.high.cutoff=3,
+                           y.cutoff=0.5,do.contour=FALSE,do.plot=FALSE)
+
+
+# Select Variable Genes
+# ===
+length(pbmc.seurat@var.genes)
+
 
 # Seurat: Performing PCA
 # ===
 # Select highly variable genese
-pbmc.seurat <- MeanVarPlot(pbmc.seurat,fxn.x=expMean,fxn.y=logVarDivMean,
-                           x.low.cutoff=0.0125,x.high.cutoff=3,
-                           y.cutoff=0.5,do.contour=FALSE)
 pbmc.seurat <- PCA(pbmc.seurat,pc.genes=pbmc.seurat@var.genes,do.print=FALSE)
 
 
@@ -308,6 +540,25 @@ FeaturePlot(pbmc.seurat, c("site"), cols.use = c("green","orange"))
 # ===
 cell.labels <- pbmc.seurat@ident
 corner(cell.labels)
+
+
+# Seurat: Differential Expression
+# ===
+cluster1.markers <- FindMarkers(pbmc.seurat, ident.1 = 1, min.pct = 0.25)
+head(cluster1.markers, 5)
+
+
+# Seurat: Differential Expression
+# ===
+pbmc.markers <- FindAllMarkers(pbmc.seurat, only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25)
+pbmc.markers %>% group_by(cluster) %>% top_n(2, avg_diff)
+
+# Seurat: Plotting DE Genes
+# ===
+pbmc.markers %>% group_by(cluster) %>% top_n(10, avg_diff) -> top10
+DoHeatmap(pbmc.seurat, genes.use = top10$gene, order.by.ident = TRUE, slim.col.label = TRUE, remove.key = TRUE)
+
+
 
 
 # SCDE: Load Data
@@ -397,6 +648,15 @@ scde.test.gene.expression.difference("Tdh", models = o.ifm, counts = cd, prior =
 # ===
 # scde.browse.diffexp(ediff, o.ifm, cd, o.prior, groups = groups, name = "diffexp1", port = 1299)
 
+
+# SCDE and Batch Affects
+# ===
+batch <- as.factor(ifelse(rbinom(nrow(o.ifm), 1, 0.5) == 1, "batch1", "batch2"))
+table(groups, batch)
+
+# SCDE and Batch Affects
+# ===
+scde.test.gene.expression.difference("Tdh", models = o.ifm, counts = cd, prior = o.prior, batch = batch)
 
 # Pagoda: Load Data
 # ===

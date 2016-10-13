@@ -6,7 +6,7 @@ Single-cell RNA-Seq Analysis
 ========================================================
 author: Timothy Tickle and Brian Haas
 css: single_cell_analysis.css
-date: October 10, 2016
+date: October 12, 2016
 
 We Know Tissues are Complex
 ===
@@ -1109,9 +1109,9 @@ Welcome to section 2!
 ===
 
 - Using Seurat to plot genes
+- Batch effects and study confounding
 - Dimensionality reduction and plotting (PCA, t-SNE).
 - Plotting cells.
-- Batch effects and study confounding.
 - Moving from clusters to populations of cells.
 - Differential Expression (SCDE).
 - Pathway analysis.
@@ -1140,7 +1140,7 @@ class:small-code
 - Check the identity of the cells!!!
 - Notice many zeros.
 
-```{r,eval=FALSE, echo=TRUE,tidy=TRUE,fig.align="center"}
+```{r,eval=TRUE, echo=FALSE,tidy=TRUE,fig.align="center"}
 VlnPlot(pbmc.seurat, c("GAPDH"))
 ```
 
@@ -1160,6 +1160,501 @@ class:small-code
 ```{r,eval=TRUE, echo=TRUE,tidy=TRUE,fig.align="center"}
 GenePlot(pbmc.seurat,"CD79A","CD79B",cex.use=1)
 ```
+
+Single Cell RNA-Seq and Batch Affects
+===
+
+![fall](images/corgis/fall.jpg)
+
+Single Cell RNA-Seq and Batch Affects
+===
+
+![confounding_paper](images/confounding_paper.png)
+
+What is Confounding?
+===
+
+<div align="center">
+<img src="images/confounding.png" height=500>
+</div>
+
+Confounding by Design
+===
+
+![batch_effects](images/batch_effects_4.png)
+
+Normalization and Batch Affect Correction
+===
+
+- The nature of scRNA-Seq assays can make them prone to confounding with batch affects.
+  - Normalization and batch affect correction can help.
+- Some are moving away from relying on a specific method.
+  - Exploring the idea of combining or selecting from a collection of normalization or correction methods best for a specific study.
+- Some believe UMI based analysis need not be normalized between samples given the absolute count of the molecules are being reported.
+  - Be careful not to remove biological signal with good experimental design (avoiding confounding by design).
+
+Seurat and Batch Affect Correction
+===
+
+- Using linear models one can regress covariates.
+  - scale.data hold the residuals after regressing (z-scored)
+- Dimensionality reduction and clustering.
+- We use metadata we have.
+  - One could imagine creating a metadata for cell cycle.
+
+Seurat and Batch Affect Correction
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE}
+pbmc.seurat <- RegressOut(pbmc.seurat, latent.vars = c("nUMI", "percent.mitochodrial"))
+```
+
+Scone: Data
+===
+
+- 65 human cells
+  - Cultured neural progenitor cells ("NPC") from pluripotent stem cells.
+  - Primary cortical samples at 16 and 21 gestation weeks.
+    - 21 gestation weeks then cultered for 3 weeks.
+- Pollen et al 2014
+
+Scone: Batch Correction
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE}
+set.seed(6473)
+library(scone)
+library(RColorBrewer)
+library(scRNAseq)
+data(fluidigm)
+# Set assay to RSEM estimated counts
+assay(fluidigm) = assays(fluidigm)$rsem_counts
+```
+
+Scone: Which Metadata?
+===
+class:small-code
+
+- Which metadata are we using?
+
+```{r, eval=FALSE, echo=TRUE}
+metadata(fluidigm)$which_qc
+```
+
+Scone: Which Metadata?
+===
+class:small-code
+
+```{r, eval=TRUE, echo=FALSE}
+metadata(fluidigm)$which_qc
+```
+
+Scone: Accessing Metadata
+===
+class:small-code
+
+```{r, eval=FALSE, echo=TRUE}
+head(colData(fluidigm))
+head(colData(fluidigm)$Coverage_Type)
+```
+
+Scone: Logistics
+===
+class:small-code
+
+- Cells were sequenced twice.
+- Removing low coverage replicates.
+- Removing undetected genes.
+
+```{r, eval=TRUE, echo=TRUE}
+# Preliminary Sample Filtering: High-Coverage Only
+is_select = colData(fluidigm)$Coverage_Type == "High" 
+fluidigm = fluidigm[,is_select]
+# Retain only detected transcripts
+fluidigm = fluidigm[which(apply(assay(fluidigm) > 0,1,any)),]
+```
+
+Scone: Batches
+===
+class:small-code
+
+```{r, eval=TRUE, echo=FALSE}
+# Viz only
+# Define a color scheme
+cc <- c(brewer.pal(9, "Set1"))
+
+# One batch per Biological Condition
+batch = factor(colData(fluidigm)$Biological_Condition)
+
+# Alignment Quality Metrics
+qc = colData(fluidigm)[,metadata(fluidigm)$which_qc]
+
+# Barplot of read proportion mapping to human transcriptome
+ralign = qc$RALIGN
+o = order(ralign)[order(batch[order(ralign)])] # Order by batch, then value
+
+barplot(ralign[o], col=cc[batch][o], border=cc[batch][o], main="Percentage of reads mapped")
+legend("bottomleft", legend=levels(batch), fill=cc,cex=0.4)
+```
+
+Scone: Batches
+===
+class:small-code
+
+```{r, eval=TRUE, echo=FALSE}
+# Viz only
+# Barplot of total read number
+nreads = qc$NREADS
+o = order(nreads)[order(batch[order(nreads)])] # Order by batch, then value
+barplot(nreads[o], col=cc[batch][o], border=cc[batch][o], main="Total number of reads")
+legend("topright", legend=levels(batch), fill=cc, cex=0.4)
+```
+
+Scone: Related Metrics
+===
+class:small-code
+
+```{r, eval=TRUE, echo=FALSE}
+qpc = prcomp(qc,center = TRUE,scale. = TRUE)
+barplot((qpc$sdev^2)/sum(qpc$sdev^2), border="gray", xlab="PC", ylab="Proportion of Variance", main="Quality PCA")
+```
+
+Scone: Strongest Signal
+===
+class:small-code
+
+```{r, eval=TRUE, echo=FALSE}
+# Barplot of PC1 of the QC matrix
+qc1 = as.vector(qpc$x[,1])
+o = order(qc1)[order(batch[order(qc1)])]
+barplot(qc1[o], col=cc[batch][o], border=cc[batch][o], main="Quality PC1")
+legend("bottomright", legend=levels(batch), fill=cc, cex=0.8)
+```
+
+Scone: Filtering
+===
+class:small-code
+
+- Filtering on prevalance at a certain level of expression.
+
+```{r, eval=TRUE, echo=TRUE}
+# Initial Gene Filtering: Select "common" transcripts based on proportional criteria.
+num_reads = quantile(assay(fluidigm)[assay(fluidigm) > 0])[4]
+num_cells = 0.25*ncol(fluidigm)
+is_common = rowSums(assay(fluidigm) >= num_reads ) >= num_cells
+```
+
+Scone: Filtering
+===
+class:small-code
+
+- We will be pulling in house keeping genes for the filtering.
+
+```{r, eval=TRUE, echo=TRUE}
+data(housekeeping)
+hk = intersect(housekeeping$V1,rownames(assay(fluidigm)))
+head(housekeeping$V1)
+```
+
+Scone: Filtering
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE}
+# Metric-based Filtering
+mfilt = metric_sample_filter(assay(fluidigm), 
+          nreads=colData(fluidigm)$NREADS,
+          ralign=colData(fluidigm)$RALIGN,
+          gene_filter=is_common,
+          pos_controls=rownames(fluidigm) %in% hk,
+          zcut=3, mixture=FALSE, 
+          plot=FALSE)
+```
+
+Scone: Filtering
+===
+class:small-code
+
+```{r, eval=TRUE, echo=FALSE}
+# VIZ only
+hist(qc$RALIGN, breaks = 0:100)
+# Hard threshold
+abline(v = 15, col = "yellow", lwd = 2) 
+# 3 (zcut) standard deviations below the mean ralign value
+abline(v = mean(qc$RALIGN) - 3*sd(qc$RALIGN), col = "green", lwd = 2) 
+# 3 (zcut) MADs below the median ralign value
+abline(v = median(qc$RALIGN) - 3*mad(qc$RALIGN), col = "red", lwd = 2)
+# Sufficient threshold
+abline(v = NULL, col = "grey", lwd = 2)
+# Final threshold is the minimum of 1) the sufficient threshold and 2) the max of all others
+thresh = min(NULL,max(c(15,mean(qc$RALIGN) - 3*sd(qc$RALIGN),median(qc$RALIGN) - 3*mad(qc$RALIGN))))
+abline(v = thresh, col = "blue", lwd = 2, lty = 2)
+legend("topleft",legend = c("Hard","SD","MAD","Sufficient","Final"),lwd = 2, col = c("yellow","green","red","grey","blue"),lty = c(1,1,1,1,2), cex = .5)
+```
+
+Scone: Filtering
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE}
+ # Simplify to a single logical
+mfilt = !apply(simplify2array(mfilt[!is.na(mfilt)]),1,any)
+```
+
+Scone: Filtering
+===
+class:small-code
+
+- Apply cell filtering and filter on highly expressed gene.
+
+```{r, eval=TRUE, echo=TRUE}
+# Cell filter
+goodDat = fluidigm[,mfilt]
+
+# Final Gene Filtering: Highly expressed in at least 5 cells
+num_reads = quantile(assay(fluidigm)[assay(fluidigm) > 0])[4]
+num_cells = 5
+is_quality = rowSums(assay(fluidigm) >= num_reads ) >= num_cells
+```
+
+Scone: Workflows Inputs
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE}
+# Expression Data (Required)
+expr = assay(goodDat)[is_quality,]
+
+# Biological Origin - Variation to be preserved (Optional)
+bio = factor(colData(goodDat)$Biological_Condition)
+```
+
+Scone: Workflows Inputs
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE}
+# Processed Alignment Metrics - Variation to be removed (Optional)
+qc = colData(goodDat)[,metadata(goodDat)$which_qc]
+ppq = scale(qc[,apply(qc,2,sd) > 0],center = TRUE,scale = TRUE)
+
+# Positive Control Genes - Prior knowledge of DE (Optional)
+poscon = intersect(rownames(expr),strsplit("ALS2, CDK5R1, CYFIP1, DPYSL5, FEZ1, FEZ2, MAPT, MDGA1, NRCAM, NRP1, NRXN1, OPHN1, OTX2, PARD6B, PPT1, ROBO1, ROBO2, RTN1, RTN4, SEMA4F, SIAH1, SLIT2, SMARCA1, THY1, TRAPPC4, UBB, YWHAG, YWHAH",split = ", ")[[1]])
+```
+
+Scone: Workflows Inputs
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE}
+# Negative Control Genes - Uniformly expressed transcripts (Optional)
+negcon = intersect(rownames(expr),hk)
+```
+
+Scone: User Functions
+===
+class:small-code
+
+- Total sum scaling
+
+```{r, eval=TRUE, echo=TRUE}
+SUM_FN = function (ei) 
+{ # TSS
+  sums = colSums(ei)
+  eo = t(t(ei)*mean(sums)/sums)
+  return(eo)
+}
+```
+
+Scone: User Functions
+===
+class:small-code
+
+- Similar to TSS but with complexity.
+
+```{r, eval=TRUE, echo=TRUE}
+EFF_FN = function (ei) 
+{ # Divided by complexity
+  sums = colSums(ei > 0)
+  eo = t(t(ei)*sums/mean(sums))
+  return(eo)
+}
+```
+
+Scone: User Functions
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE}
+scaling=list(none=identity, #do nothing
+             sum = SUM_FN,  # User functions
+             eff = EFF_FN,
+             tmm = TMM_FN, # SCONE
+             uq = UQ_FN,
+             uqp = UQ_FN_POS,
+             fq = FQT_FN,
+             fqp = FQ_FN_POS,
+             deseq=DESEQ_FN,
+             deseqp=DESEQ_FN_POS)
+```
+
+Scone: Imputation Settings
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE}
+# Simple FNR model estimation with SCONE::estimate_ziber
+# fnr_out = estimate_ziber(x = expr, bulk_model = TRUE,
+#                         pos_controls = rownames(expr) %in% hk,
+#                         maxiter = 10000)
+load("data/fnr_out.Robj")
+```
+
+Scone: Imputation Settings
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE}
+## ----- Imputation List Argument ----- 
+imputation=list(none=impute_null, # No imputation
+                expect=impute_expectation)
+                # Replace zeroes with expected expression level
+```
+
+Scone: Imputation Settings
+===
+class:small-code
+
+- Passed into functions in the imputation list.
+
+```{r, eval=TRUE, echo=TRUE}
+impute_args = list(p_nodrop = fnr_out$p_nodrop, mu = exp(fnr_out$Alpha[1,]))
+```
+
+Scone: Setting Up Params
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE}
+params <- scone(expr, 
+                imputation = imputation, impute_args = impute_args,
+                scaling=scaling, 
+                qc=ppq, bio = bio,
+                # Negative controls for RUVg
+                # normalization and evaluation
+                ruv_negcon = negcon,
+                # Parameter Arguments
+                k_qc=3, k_ruv = 3,
+                adjust_bio="no", 
+                run=FALSE)
+```
+
+Scone: Workflow Params
+===
+class:small-code
+
+```{r, eval=FALSE, echo=TRUE}
+# Visualize output params object
+head(params)
+```
+
+Scone: Workflow Params
+===
+class:small-code
+
+```{r, eval=FALSE, echo=TRUE}
+apply(params,2,unique)
+```
+
+Scone: Updating for Imputation
+===
+class:small-code
+
+- Removing some filtering for the imputed data.
+
+```{r, eval=TRUE, echo=TRUE}
+is_screened = ((params$imputation_method == "expect") & (params$scaling_method %in% c("none","deseqp","uqp","fqp","eff")))
+params = params[!is_screened,]
+```
+
+Scone: Filtered Params
+===
+class:small-code
+
+```{r, eval=FALSE, echo=TRUE}
+head(params)
+```
+
+Scone: Run!
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE}
+BiocParallel::register(BiocParallel::SerialParam())
+res <- scone(expr, 
+             imputation = imputation, impute_args = impute_args,
+             scaling=scaling,
+             qc=ppq, bio = bio,
+             ruv_negcon = negcon,
+             k_qc=3, k_ruv = 3, 
+             adjust_bio="no", 
+             eval_poscon = poscon, # Positive controls for evaluation
+             run=TRUE, params = params, # Additional params
+             eval_kclust = 2:6,stratified_pam = TRUE,
+             return_norm = "in_memory",
+             rezero = TRUE)
+```
+
+Scone: Output
+===
+class:small-code
+
+- normalized_data: list of normalized expression data (log-scale).
+- metrics: raw metrics for normalizations.
+- scores: sorted priority of best workslows.
+
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE}
+names(res)
+```
+
+Scone: Biplot
+===
+class:small-code
+
+```{r, eval=TRUE, echo=FALSE}
+#VIZ only
+pc_obj = prcomp(apply(na.omit(t(res$scores[,-ncol(res$scores)])),1,rank),center = TRUE,scale = FALSE)
+bp_obj = biplot_colored(pc_obj,y = -res$scores[,ncol(res$scores)],expand = .6)
+points(t(bp_obj[1,]), pch = 1, col = "red", cex = 1)
+points(t(bp_obj[1,]), pch = 1, col = "red", cex = 1.5)
+points(t(bp_obj[rownames(bp_obj) == rownames(params)[1],]), pch = 1, col = "blue", cex = 1)
+points(t(bp_obj[rownames(bp_obj) == rownames(params)[1],]), pch = 1, col = "blue", cex = 1.5)
+arrows(bp_obj[rownames(bp_obj) == rownames(params)[1],][1],
+       bp_obj[rownames(bp_obj) == rownames(params)[1],][2],
+       bp_obj[1,][1],
+       bp_obj[1,][2],
+       lty = 2, lwd = 2)
+```
+
+Scone: Interactive!
+===
+class:small-code
+
+```{r, eval=FALSE, echo=TRUE}
+sconeReport(scone_res = res,
+            qc = ppq,
+            bio = bio,
+            negcon = negcon, poscon = poscon)
+```
+
+Scone: Tutorial
+===
+
+If you are interested in reading more about Scone feel free to visit [this tutorial](//github.com/YosefLab/scone/blob/develop/vignettes/sconeTutorial.Rmd).
 
 Dimensionality reduction and plotting
 ===
@@ -1232,6 +1727,40 @@ Plotting Cells
 
 ![fancy](images/corgis/fancy.jpg)
 
+Select Variable Genes
+===
+class:small-code
+
+- We are going to focus on highly variable genes.
+  - Average expression (X) and dispersion (SD)(Y).
+  - Bins genes (20).
+  - Z-score for dispersion.
+- fxn.x and fxn.y allow one to change the measurements.
+  - Cut.offs are high and low, X and Y.
+
+```{r, eval=FALSE, echo=TRUE}
+pbmc.seurat <- MeanVarPlot(pbmc.seurat,fxn.x=expMean,fxn.y=logVarDivMean,
+                           x.low.cutoff=0.0125,x.high.cutoff=3,
+                           y.cutoff=0.5,do.contour=FALSE,do.plot=FALSE)
+```
+
+Select Variable Genes
+===
+class:small-code
+
+```{r, eval=TRUE, echo=FALSE}
+pbmc.seurat <- MeanVarPlot(pbmc.seurat,fxn.x=expMean,fxn.y=logVarDivMean,
+                           x.low.cutoff=0.0125,x.high.cutoff=3,
+                           y.cutoff=0.5,do.contour=FALSE,do.plot=FALSE)
+```
+
+Select Variable Genes
+===
+
+```{r, eval=TRUE, echo=TRUE}
+length(pbmc.seurat@var.genes)
+```
+
 Seurat: Performing PCA
 ===
 class:small-code
@@ -1239,10 +1768,6 @@ class:small-code
 - Calculating PCA with the highly variable genes.   
 
 ```{r, eval=TRUE, echo=TRUE,fig.align="center"}
-# Select highly variable genese
-pbmc.seurat <- MeanVarPlot(pbmc.seurat,fxn.x=expMean,fxn.y=logVarDivMean,
-                           x.low.cutoff=0.0125,x.high.cutoff=3,
-                           y.cutoff=0.5,do.contour=FALSE,do.plot=FALSE)
 pbmc.seurat <- PCA(pbmc.seurat,pc.genes=pbmc.seurat@var.genes,do.print=FALSE)
 ```
 
@@ -1295,6 +1820,13 @@ class:small-code
 ```{r, eval=TRUE, echo=FALSE}
 VizPCA(pbmc.seurat, pcs.use=1:2)
 ```
+
+Seurat: Check your Batch Correction
+===
+
+How can we apply this?
+- Can check components to see if gene show up that are enriched in components.
+- Using the scores you can perform GE analysis to decribe the component.
 
 Seurat: PCA Visualizations
 ===
@@ -1490,7 +2022,8 @@ QC the Clusters!
 ===
 class:small-code
 
-We are going to make a fake batch affect (site) and plot this as an example of how one can visualize unwanted signal.
+Check for your batch affect.
+- We are going to make a fake batch affect (site) and plot this as an example of how one can visualize unwanted signal.
 
 ```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
 # Making Fake Data
@@ -1551,45 +2084,66 @@ Where are We at Now?
 - Can break plotted cells into subgroups.
   - These can become labels for later DE.
 - Can plot across subgroups (maker genes).
-- Can use plots of cells for batch affect visualization?
+- We can use plots of cells for batch affect visualization.
 
-Single Cell RNA-Seq and Batch Affects
-===
-
-![fall](images/corgis/fall.jpg)
-
-Single Cell RNA-Seq and Batch Affects
-===
-
-![confounding_paper](images/confounding_paper.png)
-
-What is Confounding?
-===
-
-<div align="center">
-<img src="images/confounding.png" height=500>
-</div>
-
-Confounding by Design
-===
-
-![batch_effects](images/batch_effects_4.png)
-
-Normalization and Batch Affect Correction
-===
-
-- The nature of scRNA-Seq assays can make them prone to confounding with batch affects.
-  - Normalization and batch affect correction can help.
-- Some are moving away from relying on a specific method.
-  - Exploring the idea of combining or selecting from a collection of normalization or correction methods best for a specific study.
-- Some believe UMI based analysis need not be normalized between samples given the absolute count of the molecules are being reported.
-- For advanced analysis try [SCONE](//niryosef.wordpress.com/tools/scone) or another tool from the [awesome list](https://github.com/seandavi/awesome-single-cell).
-  - Be careful not to remove biological signal with good experimental design (avoiding confounding by design).
-
-Differential Expression (SCDE)
+Differential Expression
 ===
 
 ![clump](images/corgis/corgi_clump.jpg)
+
+Seurat: Differential Expression
+===
+class:small-code
+
+- Default if one cluster again many tests.
+  - Can specify an ident.2 test between clusters.
+- Adding speed by exluding tests.
+  - Min.pct - controls for sparsity
+    - Min percentage in a group
+  - Thresh.test - must have this difference in averages.
+
+```{r,eval=FALSE, echo=TRUE,tidy=FALSE}
+cluster1.markers <- FindMarkers(pbmc.seurat, ident.1 = 1, min.pct = 0.25)
+head(cluster1.markers, 5)
+```
+
+Seurat: Differential Expression
+===
+class:small-code
+
+- Find all cluster against all others.
+
+```{r,eval=TRUE, echo=TRUE,tidy=FALSE}
+pbmc.markers <- FindAllMarkers(pbmc.seurat, only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25)
+pbmc.markers %>% group_by(cluster) %>% top_n(2, avg_diff)
+```
+
+Seurat: DE Tests
+===
+class:small-code
+
+**bimod:** Tests differences in mean and proportions.  
+**roc:** Uses AUC like definition of separation.  
+**t:** Student's T-test.  
+**tobit:** Tobit regression on a smoothed data.  
+
+Seurat: Plotting DE Genes
+===
+class:small-code
+
+```{r,eval=FALSE, echo=TRUE,tidy=FALSE}
+pbmc.markers %>% group_by(cluster) %>% top_n(10, avg_diff) -> top10
+DoHeatmap(pbmc.seurat, genes.use = top10$gene, order.by.ident = TRUE, slim.col.label = TRUE, remove.key = TRUE)
+```
+
+Seurat: Plotting DE Genes
+===
+class:small-code
+
+```{r,eval=TRUE, echo=TRUE,tidy=FALSE}
+pbmc.markers %>% group_by(cluster) %>% top_n(10, avg_diff) -> top10
+DoHeatmap(pbmc.seurat, genes.use = top10$gene, order.by.ident = TRUE, slim.col.label = TRUE, remove.key = TRUE)
+```
 
 SCDE: What is the Data?
 ===
@@ -1814,6 +2368,32 @@ SCDE: Interactive Exploration
 
 ```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
 # scde.browse.diffexp(ediff, o.ifm, cd, o.prior, groups = groups, name = "diffexp1", port = 1299)
+```
+
+SCDE and Batch Affects
+===
+
+- Create fake metadata.
+
+```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
+batch <- as.factor(ifelse(rbinom(nrow(o.ifm), 1, 0.5) == 1, "batch1", "batch2"))
+table(groups, batch)
+```
+
+SCDE and Batch Affects
+===
+
+```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
+scde.test.gene.expression.difference("Tdh", models = o.ifm, counts = cd, prior = o.prior, batch = batch)
+```
+
+SCDE and Batch Affects
+===
+
+- Here we correct initially instead of per gene.
+
+```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
+ediff.batch <- scde.expression.difference(o.ifm, cd, o.prior, groups = groups, batch = batch, n.randomizations = 100, n.cores = 1, return.posteriors = TRUE, verbose = 1)
 ```
 
 Pathway analysis
