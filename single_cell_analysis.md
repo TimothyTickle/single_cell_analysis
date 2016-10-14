@@ -4,7 +4,7 @@ Single-cell RNA-Seq Analysis
 ========================================================
 author: Timothy Tickle and Brian Haas
 css: single_cell_analysis.css
-date: October 10, 2016
+date: October 12, 2016
 
 We Know Tissues are Complex
 ===
@@ -198,11 +198,13 @@ Dropseq: Sequencing Overview
 <div>
 <img src="images/dropseq_assay_1.png" height=500>
 </div>
+Macosko et al. 2015
 
 Dropseq: Microfluidics
 ===
 
-![drop_beads](images/dropseq_drops.gif)
+![drop_beads](images/dropseq_drops.gif)   
+Source: http://mccarrolllab.com/dropseq
 
 Dropseq: Equipment
 ===
@@ -248,7 +250,8 @@ Zheng et al.
 10X: Sequences
 ===
 
-![10x_sequence](images/10X_wet_mol.png)
+![10x_sequence](images/10X_wet_mol.png)   
+Zheng et al.
 
 - 14nt barcode, 10nt UMI, 30nt polyT + sequencing adaptor and primers.
 
@@ -1428,7 +1431,7 @@ class:small-code
 
 
 ```r
-plot(complexity.per.cell, mean.count.per.cell + 1)
+plot(complexity.per.cell, mean.count.per.cell)
 abline(v = 200, col = "red")
 abline(h = log2(4))
 ```
@@ -1448,9 +1451,7 @@ class:small-code
 
 
 ```r
-# hist(gene.prevalence)
 hist(log2(gene.prevalence))
-abline(v = 3, col = "red")
 ```
 
 Identifying Noise?
@@ -1458,7 +1459,7 @@ Identifying Noise?
 class:small-code
 
 - People tend to filter very conservatively.
-- 3 is where we will filter (red line).
+- Remember this is in log space.
 
 ![plot of chunk unnamed-chunk-20](single_cell_analysis-figure/unnamed-chunk-20-1.png)
 
@@ -1683,7 +1684,7 @@ Scater: Motivation
 - Most differential expression methodology is T-test.
   - Much like using covariates in linear regression to control here we stratify by metadata to describe the impact of the metadatum.
 - More than what we are covering here.
-- Online tutorial [Click Here](//bioconductor.org/packages/devel/bioc/vignettes/scater/inst/doc/vignette.html)
+- Online tutorial [Click Here](//bioconductor.org/packages/release/bioc/vignettes/scater/inst/doc/vignette.html)
 
 Scater: Skipping Ahead
 ===
@@ -1820,9 +1821,9 @@ Welcome to section 2!
 ===
 
 - Using Seurat to plot genes
+- Batch effects and study confounding
 - Dimensionality reduction and plotting (PCA, t-SNE).
 - Plotting cells.
-- Batch effects and study confounding.
 - Moving from clusters to populations of cells.
 - Differential Expression (SCDE).
 - Pathway analysis.
@@ -1852,10 +1853,7 @@ class:small-code
 - Check the identity of the cells!!!
 - Notice many zeros.
 
-
-```r
-VlnPlot(pbmc.seurat, c("GAPDH"))
-```
+<img src="single_cell_analysis-figure/unnamed-chunk-41-1.png" title="plot of chunk unnamed-chunk-41" alt="plot of chunk unnamed-chunk-41" style="display: block; margin: auto;" />
 
 Seurat: Plotting Genes vs Genes
 ===
@@ -1877,6 +1875,493 @@ GenePlot(pbmc.seurat, "CD79A", "CD79B", cex.use = 1)
 ```
 
 <img src="single_cell_analysis-figure/unnamed-chunk-43-1.png" title="plot of chunk unnamed-chunk-43" alt="plot of chunk unnamed-chunk-43" style="display: block; margin: auto;" />
+
+Single Cell RNA-Seq and Batch Affects
+===
+
+![fall](images/corgis/fall.jpg)
+
+Single Cell RNA-Seq and Batch Affects
+===
+
+![confounding_paper](images/confounding_paper.png)
+
+What is Confounding?
+===
+
+<div align="center">
+<img src="images/confounding.png" height=500>
+</div>
+
+Confounding by Design
+===
+
+![batch_effects](images/batch_effects_4.png)
+
+Normalization and Batch Affect Correction
+===
+
+- The nature of scRNA-Seq assays can make them prone to confounding with batch affects.
+  - Normalization and batch affect correction can help.
+- Some are moving away from relying on a specific method.
+  - Exploring the idea of combining or selecting from a collection of normalization or correction methods best for a specific study.
+- Some believe UMI based analysis need not be normalized between samples given the absolute count of the molecules are being reported.
+  - Be careful not to remove biological signal with good experimental design (avoiding confounding by design).
+
+Seurat and Batch Affect Correction
+===
+
+- Using linear models one can regress covariates.
+  - scale.data hold the residuals after regressing (z-scored)
+- Dimensionality reduction and clustering.
+- We use metadata we have.
+  - One could imagine creating a metadata for cell cycle.
+
+Seurat and Batch Affect Correction
+===
+class:small-code
+
+
+```r
+pbmc.seurat <- RegressOut(pbmc.seurat, latent.vars = c("nUMI", "percent.mitochodrial"))
+```
+
+```
+[1] "Regressing out nUMI"                
+[2] "Regressing out percent.mitochodrial"
+  |                                                                         |                                                                 |   0%  |                                                                         |                                                                 |   1%  |                                                                         |=                                                                |   1%  |                                                                         |=                                                                |   2%  |                                                                         |==                                                               |   3%  |                                                                         |==                                                               |   4%  |                                                                         |===                                                              |   4%  |                                                                         |===                                                              |   5%  |                                                                         |====                                                             |   6%  |                                                                         |====                                                             |   7%  |                                                                         |=====                                                            |   7%  |                                                                         |=====                                                            |   8%  |                                                                         |======                                                           |   9%  |                                                                         |=======                                                          |  10%  |                                                                         |=======                                                          |  11%  |                                                                         |========                                                         |  12%  |                                                                         |========                                                         |  13%  |                                                                         |=========                                                        |  14%  |                                                                         |==========                                                       |  15%  |                                                                         |==========                                                       |  16%  |                                                                         |===========                                                      |  17%  |                                                                         |============                                                     |  18%  |                                                                         |============                                                     |  19%  |                                                                         |=============                                                    |  20%  |                                                                         |==============                                                   |  21%  |                                                                         |==============                                                   |  22%  |                                                                         |===============                                                  |  22%  |                                                                         |===============                                                  |  23%  |                                                                         |================                                                 |  24%  |                                                                         |================                                                 |  25%  |                                                                         |=================                                                |  26%  |                                                                         |=================                                                |  27%  |                                                                         |==================                                               |  28%  |                                                                         |===================                                              |  29%  |                                                                         |===================                                              |  30%  |                                                                         |====================                                             |  30%  |                                                                         |====================                                             |  31%  |                                                                         |=====================                                            |  32%  |                                                                         |=====================                                            |  33%  |                                                                         |======================                                           |  33%  |                                                                         |======================                                           |  34%  |                                                                         |=======================                                          |  35%  |                                                                         |=======================                                          |  36%  |                                                                         |========================                                         |  36%  |                                                                         |========================                                         |  37%  |                                                                         |========================                                         |  38%  |                                                                         |=========================                                        |  38%  |                                                                         |=========================                                        |  39%  |                                                                         |==========================                                       |  40%  |                                                                         |==========================                                       |  41%  |                                                                         |===========================                                      |  41%  |                                                                         |===========================                                      |  42%  |                                                                         |============================                                     |  43%  |                                                                         |=============================                                    |  44%  |                                                                         |=============================                                    |  45%  |                                                                         |==============================                                   |  46%  |                                                                         |===============================                                  |  47%  |                                                                         |===============================                                  |  48%  |                                                                         |================================                                 |  49%  |                                                                         |================================                                 |  50%  |                                                                         |=================================                                |  51%  |                                                                         |==================================                               |  52%  |                                                                         |==================================                               |  53%  |                                                                         |===================================                              |  54%  |                                                                         |====================================                             |  55%  |                                                                         |====================================                             |  56%  |                                                                         |=====================================                            |  57%  |                                                                         |======================================                           |  58%  |                                                                         |======================================                           |  59%  |                                                                         |=======================================                          |  59%  |                                                                         |=======================================                          |  60%  |                                                                         |========================================                         |  61%  |                                                                         |========================================                         |  62%  |                                                                         |=========================================                        |  62%  |                                                                         |=========================================                        |  63%  |                                                                         |=========================================                        |  64%  |                                                                         |==========================================                       |  64%  |                                                                         |==========================================                       |  65%  |                                                                         |===========================================                      |  66%  |                                                                         |===========================================                      |  67%  |                                                                         |============================================                     |  67%  |                                                                         |============================================                     |  68%  |                                                                         |=============================================                    |  69%  |                                                                         |=============================================                    |  70%  |                                                                         |==============================================                   |  70%  |                                                                         |==============================================                   |  71%  |                                                                         |===============================================                  |  72%  |                                                                         |================================================                 |  73%  |                                                                         |================================================                 |  74%  |                                                                         |=================================================                |  75%  |                                                                         |=================================================                |  76%  |                                                                         |==================================================               |  77%  |                                                                         |==================================================               |  78%  |                                                                         |===================================================              |  78%  |                                                                         |===================================================              |  79%  |                                                                         |====================================================             |  80%  |                                                                         |=====================================================            |  81%  |                                                                         |=====================================================            |  82%  |                                                                         |======================================================           |  83%  |                                                                         |=======================================================          |  84%  |                                                                         |=======================================================          |  85%  |                                                                         |========================================================         |  86%  |                                                                         |=========================================================        |  87%  |                                                                         |=========================================================        |  88%  |                                                                         |==========================================================       |  89%  |                                                                         |==========================================================       |  90%  |                                                                         |===========================================================      |  91%  |                                                                         |============================================================     |  92%  |                                                                         |============================================================     |  93%  |                                                                         |=============================================================    |  93%  |                                                                         |=============================================================    |  94%  |                                                                         |==============================================================   |  95%  |                                                                         |==============================================================   |  96%  |                                                                         |===============================================================  |  96%  |                                                                         |===============================================================  |  97%  |                                                                         |================================================================ |  98%  |                                                                         |================================================================ |  99%  |                                                                         |=================================================================|  99%  |                                                                         |=================================================================| 100%
+[1] "Scaling data matrix"
+  |                                                                         |                                                                 |   0%  |                                                                         |=====                                                            |   7%  |                                                                         |=========                                                        |  14%  |                                                                         |==============                                                   |  21%  |                                                                         |===================                                              |  29%  |                                                                         |=======================                                          |  36%  |                                                                         |============================                                     |  43%  |                                                                         |================================                                 |  50%  |                                                                         |=====================================                            |  57%  |                                                                         |==========================================                       |  64%  |                                                                         |==============================================                   |  71%  |                                                                         |===================================================              |  79%  |                                                                         |========================================================         |  86%  |                                                                         |============================================================     |  93%  |                                                                         |=================================================================| 100%
+```
+
+Scone: Data
+===
+
+- 65 human cells
+  - Cultured neural progenitor cells ("NPC") from pluripotent stem cells.
+  - Primary cortical samples at 16 and 21 gestation weeks.
+    - 21 gestation weeks then cultered for 3 weeks.
+- Pollen et al 2014
+
+Scone: Batch Correction
+===
+class:small-code
+
+
+```r
+set.seed(6473)
+library(scone)
+library(RColorBrewer)
+library(scRNAseq)
+data(fluidigm)
+# Set assay to RSEM estimated counts
+assay(fluidigm) = assays(fluidigm)$rsem_counts
+```
+
+Scone: Which Metadata?
+===
+class:small-code
+
+- Which metadata are we using?
+
+
+```r
+metadata(fluidigm)$which_qc
+```
+
+Scone: Which Metadata?
+===
+class:small-code
+
+
+```
+ [1] "NREADS"                       "NALIGNED"                    
+ [3] "RALIGN"                       "TOTAL_DUP"                   
+ [5] "PRIMER"                       "INSERT_SZ"                   
+ [7] "INSERT_SZ_STD"                "COMPLEXITY"                  
+ [9] "NDUPR"                        "PCT_RIBOSOMAL_BASES"         
+[11] "PCT_CODING_BASES"             "PCT_UTR_BASES"               
+[13] "PCT_INTRONIC_BASES"           "PCT_INTERGENIC_BASES"        
+[15] "PCT_MRNA_BASES"               "MEDIAN_CV_COVERAGE"          
+[17] "MEDIAN_5PRIME_BIAS"           "MEDIAN_3PRIME_BIAS"          
+[19] "MEDIAN_5PRIME_TO_3PRIME_BIAS"
+```
+
+Scone: Accessing Metadata
+===
+class:small-code
+
+
+```r
+head(colData(fluidigm))
+head(colData(fluidigm)$Coverage_Type)
+```
+
+Scone: Logistics
+===
+class:small-code
+
+- Cells were sequenced twice.
+- Removing low coverage replicates.
+- Removing undetected genes.
+
+
+```r
+# Preliminary Sample Filtering: High-Coverage Only
+is_select = colData(fluidigm)$Coverage_Type == "High" 
+fluidigm = fluidigm[,is_select]
+# Retain only detected transcripts
+fluidigm = fluidigm[which(apply(assay(fluidigm) > 0,1,any)),]
+```
+
+Scone: Batches
+===
+class:small-code
+
+![plot of chunk unnamed-chunk-50](single_cell_analysis-figure/unnamed-chunk-50-1.png)
+
+Scone: Batches
+===
+class:small-code
+
+![plot of chunk unnamed-chunk-51](single_cell_analysis-figure/unnamed-chunk-51-1.png)
+
+Scone: Related Metrics
+===
+class:small-code
+
+![plot of chunk unnamed-chunk-52](single_cell_analysis-figure/unnamed-chunk-52-1.png)
+
+Scone: Strongest Signal
+===
+class:small-code
+
+![plot of chunk unnamed-chunk-53](single_cell_analysis-figure/unnamed-chunk-53-1.png)
+
+Scone: Filtering
+===
+class:small-code
+
+- Filtering on prevalance at a certain level of expression.
+
+
+```r
+# Initial Gene Filtering: Select "common" transcripts based on proportional criteria.
+num_reads = quantile(assay(fluidigm)[assay(fluidigm) > 0])[4]
+num_cells = 0.25*ncol(fluidigm)
+is_common = rowSums(assay(fluidigm) >= num_reads ) >= num_cells
+```
+
+Scone: Filtering
+===
+class:small-code
+
+- We will be pulling in house keeping genes for the filtering.
+
+
+```r
+data(housekeeping)
+hk = intersect(housekeeping$V1,rownames(assay(fluidigm)))
+head(housekeeping$V1)
+```
+
+```
+[1] "AATF"  "ABL1"  "ACAT2" "ACTB"  "ACTG1" "ACTN4"
+```
+
+Scone: Filtering
+===
+class:small-code
+
+
+```r
+# Metric-based Filtering
+mfilt = metric_sample_filter(assay(fluidigm), 
+          nreads=colData(fluidigm)$NREADS,
+          ralign=colData(fluidigm)$RALIGN,
+          gene_filter=is_common,
+          pos_controls=rownames(fluidigm) %in% hk,
+          zcut=3, mixture=FALSE, 
+          plot=FALSE)
+```
+
+Scone: Filtering
+===
+class:small-code
+
+![plot of chunk unnamed-chunk-57](single_cell_analysis-figure/unnamed-chunk-57-1.png)
+
+Scone: Filtering
+===
+class:small-code
+
+
+```r
+ # Simplify to a single logical
+mfilt = !apply(simplify2array(mfilt[!is.na(mfilt)]),1,any)
+```
+
+Scone: Filtering
+===
+class:small-code
+
+- Apply cell filtering and filter on highly expressed gene.
+
+
+```r
+# Cell filter
+goodDat = fluidigm[,mfilt]
+
+# Final Gene Filtering: Highly expressed in at least 5 cells
+num_reads = quantile(assay(fluidigm)[assay(fluidigm) > 0])[4]
+num_cells = 5
+is_quality = rowSums(assay(fluidigm) >= num_reads ) >= num_cells
+```
+
+Scone: Workflows Inputs
+===
+class:small-code
+
+
+```r
+# Expression Data (Required)
+expr = assay(goodDat)[is_quality,]
+
+# Biological Origin - Variation to be preserved (Optional)
+bio = factor(colData(goodDat)$Biological_Condition)
+```
+
+Scone: Workflows Inputs
+===
+class:small-code
+
+
+```r
+# Processed Alignment Metrics - Variation to be removed (Optional)
+qc = colData(goodDat)[,metadata(goodDat)$which_qc]
+ppq = scale(qc[,apply(qc,2,sd) > 0],center = TRUE,scale = TRUE)
+
+# Positive Control Genes - Prior knowledge of DE (Optional)
+poscon = intersect(rownames(expr),strsplit("ALS2, CDK5R1, CYFIP1, DPYSL5, FEZ1, FEZ2, MAPT, MDGA1, NRCAM, NRP1, NRXN1, OPHN1, OTX2, PARD6B, PPT1, ROBO1, ROBO2, RTN1, RTN4, SEMA4F, SIAH1, SLIT2, SMARCA1, THY1, TRAPPC4, UBB, YWHAG, YWHAH",split = ", ")[[1]])
+```
+
+Scone: Workflows Inputs
+===
+class:small-code
+
+
+```r
+# Negative Control Genes - Uniformly expressed transcripts (Optional)
+negcon = intersect(rownames(expr),hk)
+```
+
+Scone: User Functions
+===
+class:small-code
+
+- Total sum scaling
+
+
+```r
+SUM_FN = function (ei) 
+{ # TSS
+  sums = colSums(ei)
+  eo = t(t(ei)*mean(sums)/sums)
+  return(eo)
+}
+```
+
+Scone: User Functions
+===
+class:small-code
+
+- Similar to TSS but with complexity.
+
+
+```r
+EFF_FN = function (ei) 
+{ # Divided by complexity
+  sums = colSums(ei > 0)
+  eo = t(t(ei)*sums/mean(sums))
+  return(eo)
+}
+```
+
+Scone: User Functions
+===
+class:small-code
+
+
+```r
+scaling=list(none=identity, #do nothing
+             sum = SUM_FN,  # User functions
+             eff = EFF_FN,
+             tmm = TMM_FN, # SCONE
+             uq = UQ_FN,
+             uqp = UQ_FN_POS,
+             fq = FQT_FN,
+             fqp = FQ_FN_POS,
+             deseq=DESEQ_FN,
+             deseqp=DESEQ_FN_POS)
+```
+
+Scone: Imputation Settings
+===
+class:small-code
+
+
+```r
+# Simple FNR model estimation with SCONE::estimate_ziber
+# fnr_out = estimate_ziber(x = expr, bulk_model = TRUE,
+#                         pos_controls = rownames(expr) %in% hk,
+#                         maxiter = 10000)
+load("data/fnr_out.Robj")
+```
+
+Scone: Imputation Settings
+===
+class:small-code
+
+
+```r
+## ----- Imputation List Argument ----- 
+imputation=list(none=impute_null, # No imputation
+                expect=impute_expectation)
+                # Replace zeroes with expected expression level
+```
+
+Scone: Imputation Settings
+===
+class:small-code
+
+- Passed into functions in the imputation list.
+
+
+```r
+impute_args = list(p_nodrop = fnr_out$p_nodrop, mu = exp(fnr_out$Alpha[1,]))
+```
+
+Scone: Setting Up Params
+===
+class:small-code
+
+
+```r
+params <- scone(expr, 
+                imputation = imputation, impute_args = impute_args,
+                scaling=scaling, 
+                qc=ppq, bio = bio,
+                # Negative controls for RUVg
+                # normalization and evaluation
+                ruv_negcon = negcon,
+                # Parameter Arguments
+                k_qc=3, k_ruv = 3,
+                adjust_bio="no", 
+                run=FALSE)
+```
+
+Scone: Workflow Params
+===
+class:small-code
+
+
+```r
+# Visualize output params object
+head(params)
+```
+
+Scone: Workflow Params
+===
+class:small-code
+
+
+```r
+apply(params,2,unique)
+```
+
+Scone: Updating for Imputation
+===
+class:small-code
+
+- Removing some filtering for the imputed data.
+
+
+```r
+is_screened = ((params$imputation_method == "expect") & (params$scaling_method %in% c("none","deseqp","uqp","fqp","eff")))
+params = params[!is_screened,]
+```
+
+Scone: Filtered Params
+===
+class:small-code
+
+
+```r
+head(params)
+```
+
+Scone: Run!
+===
+class:small-code
+
+
+```r
+BiocParallel::register(BiocParallel::SerialParam())
+res <- scone(expr, 
+             imputation = imputation, impute_args = impute_args,
+             scaling=scaling,
+             qc=ppq, bio = bio,
+             ruv_negcon = negcon,
+             k_qc=3, k_ruv = 3, 
+             adjust_bio="no", 
+             eval_poscon = poscon, # Positive controls for evaluation
+             run=TRUE, params = params, # Additional params
+             eval_kclust = 2:6,stratified_pam = TRUE,
+             return_norm = "in_memory",
+             rezero = TRUE)
+```
+
+Scone: Output
+===
+class:small-code
+
+- normalized_data: list of normalized expression data (log-scale).
+- metrics: raw metrics for normalizations.
+- scores: sorted priority of best workslows.
+
+class:small-code
+
+
+```r
+names(res)
+```
+
+```
+[1] "normalized_data" "metrics"         "scores"          "params"         
+```
+
+Scone: Biplot
+===
+class:small-code
+
+![plot of chunk unnamed-chunk-76](single_cell_analysis-figure/unnamed-chunk-76-1.png)
+
+Scone: Interactive!
+===
+class:small-code
+
+
+```r
+sconeReport(scone_res = res,
+            qc = ppq,
+            bio = bio,
+            negcon = negcon, poscon = poscon)
+```
+
+Scone: Tutorial
+===
+
+If you are interested in reading more about Scone feel free to visit [this tutorial](//github.com/YosefLab/scone/blob/develop/vignettes/sconeTutorial.Rmd).
 
 Dimensionality reduction and plotting
 ===
@@ -1949,24 +2434,52 @@ Plotting Cells
 
 ![fancy](images/corgis/fancy.jpg)
 
+Select Variable Genes
+===
+class:small-code
+
+- We are going to focus on highly variable genes.
+  - Average expression (X) and dispersion (SD)(Y).
+  - Bins genes (20).
+  - Z-score for dispersion.
+- fxn.x and fxn.y allow one to change the measurements.
+  - Cut.offs are high and low, X and Y.
+
+
+```r
+pbmc.seurat <- MeanVarPlot(pbmc.seurat,fxn.x=expMean,fxn.y=logVarDivMean,
+                           x.low.cutoff=0.0125,x.high.cutoff=3,
+                           y.cutoff=0.5,do.contour=FALSE,do.plot=FALSE)
+```
+
+Select Variable Genes
+===
+class:small-code
+
+
+```
+[1] "Calculating gene dispersion"
+  |                                                                         |                                                                 |   0%  |                                                                         |=====                                                            |   7%  |                                                                         |=========                                                        |  14%  |                                                                         |==============                                                   |  21%  |                                                                         |===================                                              |  29%  |                                                                         |=======================                                          |  36%  |                                                                         |============================                                     |  43%  |                                                                         |================================                                 |  50%  |                                                                         |=====================================                            |  57%  |                                                                         |==========================================                       |  64%  |                                                                         |==============================================                   |  71%  |                                                                         |===================================================              |  79%  |                                                                         |========================================================         |  86%  |                                                                         |============================================================     |  93%  |                                                                         |=================================================================| 100%
+```
+
+Select Variable Genes
+===
+
+
+```r
+length(pbmc.seurat@var.genes)
+```
+
+```
+[1] 1839
+```
+
 Seurat: Performing PCA
 ===
 class:small-code
 
 - Calculating PCA with the highly variable genes.   
 
-
-```r
-# Select highly variable genese
-pbmc.seurat <- MeanVarPlot(pbmc.seurat,fxn.x=expMean,fxn.y=logVarDivMean,
-                           x.low.cutoff=0.0125,x.high.cutoff=3,
-                           y.cutoff=0.5,do.contour=FALSE,do.plot=FALSE)
-```
-
-```
-[1] "Calculating gene dispersion"
-  |                                                                         |                                                                 |   0%  |                                                                         |=====                                                            |   7%  |                                                                         |=========                                                        |  14%  |                                                                         |==============                                                   |  21%  |                                                                         |===================                                              |  29%  |                                                                         |=======================                                          |  36%  |                                                                         |============================                                     |  43%  |                                                                         |================================                                 |  50%  |                                                                         |=====================================                            |  57%  |                                                                         |==========================================                       |  64%  |                                                                         |==============================================                   |  71%  |                                                                         |===================================================              |  79%  |                                                                         |========================================================         |  86%  |                                                                         |============================================================     |  93%  |                                                                         |=================================================================| 100%
-```
 
 ```r
 pbmc.seurat <- PCA(pbmc.seurat,pc.genes=pbmc.seurat@var.genes,do.print=FALSE)
@@ -1985,76 +2498,81 @@ pbmc.seurat <- ProjectPCA(pbmc.seurat)
 ```
   |                                                                         |                                                                 |   0%  |                                                                         |=====                                                            |   7%  |                                                                         |=========                                                        |  14%  |                                                                         |==============                                                   |  21%  |                                                                         |===================                                              |  29%  |                                                                         |=======================                                          |  36%  |                                                                         |============================                                     |  43%  |                                                                         |================================                                 |  50%  |                                                                         |=====================================                            |  57%  |                                                                         |==========================================                       |  64%  |                                                                         |==============================================                   |  71%  |                                                                         |===================================================              |  79%  |                                                                         |========================================================         |  86%  |                                                                         |============================================================     |  93%  |                                                                         |=================================================================| 100%
 [1] "PC1"
- [1] "MALAT1"  "RPS27A"  "PTPRCAP" "RPS27"   "RPL23A"  "RPS3A"   "RPL3"   
- [8] "IL32"    "LTB"     "CD3D"    "RPL21"   "RPSA"    "RPL9"    "RPL13A" 
-[15] "RPS3"    "RPS6"    "RPL31"   "CD3E"    "RPL30"   "RPS15A"  "RPS25"  
-[22] "RPS12"   "RPS18"   "LDHB"    "RPS23"   "RPS29"   "RPL27A"  "RPL13"  
-[29] "RPLP2"   "CXCR4"  
+ [1] "CST3"     "S100A9"   "FTL"      "TYROBP"   "FCN1"     "LYZ"     
+ [7] "LST1"     "AIF1"     "S100A8"   "FTH1"     "TYMP"     "LGALS2"  
+[13] "CFD"      "FCER1G"   "LGALS1"   "CD68"     "CTSS"     "SERPINA1"
+[19] "SAT1"     "NPC2"     "GRN"      "CFP"      "IFITM3"   "COTL1"   
+[25] "IFI30"    "PSAP"     "SPI1"     "CD14"     "GPX1"     "S100A11" 
 [1] ""
- [1] "CST3"     "TYROBP"   "LST1"     "AIF1"     "FCN1"     "LYZ"     
- [7] "S100A9"   "FTL"      "FTH1"     "TYMP"     "FCER1G"   "CFD"     
-[13] "LGALS1"   "LGALS2"   "S100A8"   "CD68"     "CTSS"     "SERPINA1"
-[19] "IFITM3"   "SPI1"     "SAT1"     "IFI30"    "COTL1"    "PSAP"    
-[25] "CFP"      "NPC2"     "GRN"      "S100A11"  "LGALS3"   "AP1S2"   
+ [1] "MALAT1"  "RPS27A"  "PTPRCAP" "RPSA"    "RPS3A"   "RPL23A"  "IL32"   
+ [8] "RPL3"    "RPL9"    "RPS27"   "CD3D"    "LTB"     "RPL21"   "RPS3"   
+[15] "RPS6"    "RPS15A"  "RPL31"   "CD3E"    "RPL13A"  "LDHB"    "RPS25"  
+[22] "RPL30"   "RPS12"   "RPS18"   "RPS23"   "RPS29"   "RPL27A"  "RPL5"   
+[29] "EEF1A1"  "AES"    
 [1] ""
 [1] ""
 [1] "PC2"
- [1] "CD79A"     "MS4A1"     "TCL1A"     "HLA-DQA1"  "HLA-DQB1" 
- [6] "LINC00926" "RPL18A"    "CD79B"     "HLA-DRA"   "VPREB3"   
-[11] "RPL32"     "LTB"       "RPL13A"    "RPL13"     "FCER2"    
-[16] "HLA-DQA2"  "RPL11"     "CD74"      "HLA-DRB1"  "BANK1"    
-[21] "CD37"      "RPS23"     "RPS27"     "RPL8"      "HLA-DPB1" 
-[26] "HLA-DMA"   "RPL12"     "RPS18"     "TSPAN13"   "FCRLA"    
-[1] ""
  [1] "NKG7"   "GZMB"   "PRF1"   "CST7"   "GZMA"   "FGFBP2" "GNLY"  
- [8] "CTSW"   "SPON2"  "GZMH"   "CCL4"   "B2M"    "FCGR3A" "CCL5"  
-[15] "XCL2"   "KLRD1"  "CD247"  "CLIC3"  "GZMM"   "AKR1C3" "SRGN"  
-[22] "TTC38"  "HLA-C"  "HCST"   "PRSS23" "HOPX"   "IGFBP7" "S1PR5" 
-[29] "ITGB2"  "GPR56" 
+ [8] "CTSW"   "SPON2"  "CCL4"   "GZMH"   "CCL5"   "FCGR3A" "KLRD1" 
+[15] "XCL2"   "CLIC3"  "SRGN"   "GZMM"   "B2M"    "CD247"  "AKR1C3"
+[22] "S100A4" "PRSS23" "TTC38"  "S1PR5"  "HCST"   "IGFBP7" "ITGB2" 
+[29] "HOPX"   "GPR56" 
+[1] ""
+ [1] "CD79A"     "MS4A1"     "RPL18A"    "HLA-DQA1"  "TCL1A"    
+ [6] "HLA-DQB1"  "CD79B"     "LINC00926" "LTB"       "RPL32"    
+[11] "VPREB3"    "RPL13A"    "HLA-DRA"   "RPL13"     "RPS23"    
+[16] "RPS27"     "RPL11"     "RPS18"     "RPL8"      "RPS5"     
+[21] "HLA-DQA2"  "RPLP2"     "RPL12"     "RPS2"      "CD37"     
+[26] "FCER2"     "CD74"      "BANK1"     "RPS12"     "HLA-DRB1" 
 [1] ""
 [1] ""
 [1] "PC3"
- [1] "PPBP"       "PF4"        "SDPR"       "GNG11"      "SPARC"     
- [6] "HIST1H2AC"  "NRGN"       "GP9"        "RGS18"      "TUBB1"     
-[11] "CLU"        "AP001189.4" "CD9"        "ITGA2B"     "PTCRA"     
-[16] "TMEM40"     "CA2"        "ACRBP"      "MMD"        "TREML1"    
-[21] "F13A1"      "PGRMC1"     "SEPT5"      "MYL9"       "TSC22D1"   
-[26] "MPP1"       "CMTM5"      "PTGS1"      "SNCA"       "RUFY1"     
+ [1] "RPL10"  "RPS2"   "RPL11"  "RPL28"  "RPL32"  "RPL18A" "RPL12" 
+ [8] "RPL19"  "RPS6"   "TMSB10" "RPS14"  "RPL13"  "RPS19"  "RPS15" 
+[15] "RPL6"   "RPL29"  "RPLP1"  "RPS3"   "RPL15"  "RPL26"  "RPS4X" 
+[22] "EEF1A1" "RPS16"  "RPS7"   "GNB2L1" "RPL14"  "RPL13A" "RPL3"  
+[29] "RPS18"  "RPL8"  
 [1] ""
- [1] "RPL10"  "RPS2"   "RPL11"  "RPL18A" "RPL32"  "RPL28"  "RPS19" 
- [8] "RPL12"  "RPL19"  "RPL13"  "RPS6"   "RPS14"  "RPS15"  "TMSB10"
-[15] "RPLP1"  "RPL29"  "RPL6"   "RPL26"  "RPS4X"  "RPS16"  "RPS3"  
-[22] "EEF1A1" "RPL15"  "RPL13A" "RPS7"   "RPL8"   "RPS12"  "RPL23A"
-[29] "RPS18"  "RPLP2" 
+ [1] "PF4"          "PPBP"         "SDPR"         "SPARC"       
+ [5] "GNG11"        "HIST1H2AC"    "GP9"          "NRGN"        
+ [9] "TUBB1"        "RGS18"        "CLU"          "AP001189.4"  
+[13] "ITGA2B"       "CD9"          "PTCRA"        "TMEM40"      
+[17] "CA2"          "ACRBP"        "MMD"          "TREML1"      
+[21] "F13A1"        "SEPT5"        "PGRMC1"       "MYL9"        
+[25] "TSC22D1"      "MPP1"         "CMTM5"        "PTGS1"       
+[29] "SNCA"         "RP11-367G6.3"
 [1] ""
 [1] ""
 [1] "PC4"
- [1] "CD79A"     "HLA-DQA1"  "CD79B"     "MS4A1"     "HLA-DQB1" 
- [6] "CD74"      "HLA-DPB1"  "HLA-DPA1"  "HLA-DRB1"  "TCL1A"    
-[11] "HLA-DRA"   "LINC00926" "HLA-DQA2"  "HLA-DRB5"  "VPREB3"   
-[16] "HLA-DMA"   "HLA-DMB"   "FCER2"     "BANK1"     "HVCN1"    
-[21] "GZMB"      "HLA-DOB"   "PDLIM1"    "FCRLA"     "TSPAN13"  
-[26] "FGFBP2"    "CD72"      "EAF2"      "PKIG"      "SPIB"     
+ [1] "CD3D"    "LDHB"    "IL7R"    "RPS14"   "CD3E"    "VIM"     "IL32"   
+ [8] "RPL32"   "RPS12"   "NOSIP"   "RPL28"   "RPS25"   "GIMAP7"  "RPL11"  
+[15] "JUNB"    "RPL13"   "RPS3"    "AQP3"    "ZFP36L2" "FYB"     "RPL10"  
+[22] "RGCC"    "MAL"     "FOS"     "LEF1"    "RPLP1"   "CD2"     "RPL35A" 
+[29] "RPL36"   "RPS28"  
 [1] ""
- [1] "CD3D"    "LDHB"    "RPS14"   "IL7R"    "CD3E"    "RPL32"   "VIM"    
- [8] "IL32"    "RPS12"   "NOSIP"   "RPL28"   "GIMAP7"  "RPL11"   "RPL13"  
-[15] "FYB"     "ZFP36L2" "RPL10"   "AQP3"    "JUNB"    "RPS25"   "RPLP1"  
-[22] "MAL"     "LEF1"    "RGCC"    "S100A6"  "FOS"     "RPS3"    "CD2"    
-[29] "RPL35A"  "RPL36"  
+ [1] "CD79A"     "HLA-DQA1"  "CD79B"     "MS4A1"     "CD74"     
+ [6] "HLA-DQB1"  "HLA-DPB1"  "HLA-DPA1"  "HLA-DRB1"  "TCL1A"    
+[11] "HLA-DRA"   "LINC00926" "HLA-DRB5"  "HLA-DQA2"  "VPREB3"   
+[16] "HLA-DMA"   "GZMB"      "HLA-DMB"   "HVCN1"     "FCER2"    
+[21] "BANK1"     "FGFBP2"    "HLA-DOB"   "PDLIM1"    "FCRLA"    
+[26] "TSPAN13"   "PRF1"      "GNLY"      "CD72"      "EAF2"     
 [1] ""
 [1] ""
 [1] "PC5"
- [1] "LTB"      "TMEM66"   "LDHB"     "HSPA8"    "PABPC1"   "NPM1"    
- [7] "RNASET2"  "JUNB"     "SOD1"     "CD52"     "NAP1L1"   "CALM2"   
-[13] "EEF1A1"   "RPSA"     "HINT1"    "IL7R"     "VIM"      "FXYD5"   
-[19] "AQP3"     "ARHGDIB"  "LDHA"     "HNRNPA1"  "NACA"     "HSP90AA1"
-[25] "GSTK1"    "ITM2B"    "RPLP0"    "RPS19"    "ACTG1"    "RPS10"   
+ [1] "FCER1A"   "LGALS2"   "MS4A6A"   "S100A8"   "CLEC10A"  "FOLR3"   
+ [7] "GPX1"     "CD14"     "GSTP1"    "ALDH2"    "S100A12"  "SERPINF1"
+[13] "ID1"      "CD1C"     "GRN"      "RNASE6"   "GSN"      "IER3"    
+[19] "CSF3R"    "BLVRB"    "RPL13"    "ASGR1"    "S100A9"   "RNASE2"  
+[25] "VCAN"     "LYZ"      "SAT2"     "QPCT"     "CEBPD"    "FCGR1A"  
 [1] ""
- [1] "S100A8"  "FGFBP2"  "GZMB"    "S100A9"  "NKG7"    "CCL4"    "S100A12"
- [8] "LGALS2"  "RBP7"    "GNLY"    "CST7"    "SPON2"   "GZMA"    "PRF1"   
-[15] "CCL3"    "FOLR3"   "MS4A6A"  "GZMH"    "CD14"    "PRSS23"  "S1PR5"  
-[22] "KLRD1"   "TYROBP"  "XCL2"    "CTSW"    "CCL5"    "CLIC3"   "CEBPD"  
-[29] "TTC38"   "GSTP1"  
+ [1] "FCGR3A"        "CDKN1C"        "MS4A7"         "HES4"         
+ [5] "CKB"           "RP11-290F20.3" "RHOC"          "CTSL"         
+ [9] "MS4A4A"        "LILRA3"        "SIGLEC10"      "CTD-2006K23.1"
+[13] "IFITM3"        "HMOX1"         "ABI3"          "LRRC25"       
+[17] "IFITM2"        "LILRB1"        "BATF3"         "PTP4A3"       
+[21] "CEBPB"         "PILRA"         "CSF1R"         "HCK"          
+[25] "CXCL16"        "VMO1"          "C1QA"          "TPPP3"        
+[29] "TCF7L2"        "TNFSF10"      
 [1] ""
 [1] ""
 ```
@@ -2066,15 +2584,15 @@ PrintPCA(pbmc.seurat, pcs.print = 1:2, genes.print = 5, use.full = TRUE)
 
 ```
 [1] "PC1"
-[1] "MALAT1"  "RPS27A"  "PTPRCAP" "RPS27"   "RPL23A" 
+[1] "CST3"   "S100A9" "FTL"    "TYROBP" "FCN1"  
 [1] ""
-[1] "CST3"   "TYROBP" "LST1"   "AIF1"   "FCN1"  
+[1] "MALAT1"  "RPS27A"  "PTPRCAP" "RPSA"    "RPS3A"  
 [1] ""
 [1] ""
 [1] "PC2"
-[1] "CD79A"    "MS4A1"    "TCL1A"    "HLA-DQA1" "HLA-DQB1"
-[1] ""
 [1] "NKG7" "GZMB" "PRF1" "CST7" "GZMA"
+[1] ""
+[1] "CD79A"    "MS4A1"    "RPL18A"   "HLA-DQA1" "TCL1A"   
 [1] ""
 [1] ""
 ```
@@ -2092,76 +2610,81 @@ pbmc.seurat <- ProjectPCA(pbmc.seurat)
 ```
   |                                                                         |                                                                 |   0%  |                                                                         |=====                                                            |   7%  |                                                                         |=========                                                        |  14%  |                                                                         |==============                                                   |  21%  |                                                                         |===================                                              |  29%  |                                                                         |=======================                                          |  36%  |                                                                         |============================                                     |  43%  |                                                                         |================================                                 |  50%  |                                                                         |=====================================                            |  57%  |                                                                         |==========================================                       |  64%  |                                                                         |==============================================                   |  71%  |                                                                         |===================================================              |  79%  |                                                                         |========================================================         |  86%  |                                                                         |============================================================     |  93%  |                                                                         |=================================================================| 100%
 [1] "PC1"
- [1] "MALAT1"  "RPS27A"  "PTPRCAP" "RPS27"   "RPL23A"  "RPS3A"   "RPL3"   
- [8] "IL32"    "LTB"     "CD3D"    "RPL21"   "RPSA"    "RPL9"    "RPL13A" 
-[15] "RPS3"    "RPS6"    "RPL31"   "CD3E"    "RPL30"   "RPS15A"  "RPS25"  
-[22] "RPS12"   "RPS18"   "LDHB"    "RPS23"   "RPS29"   "RPL27A"  "RPL13"  
-[29] "RPLP2"   "CXCR4"  
+ [1] "CST3"     "S100A9"   "FTL"      "TYROBP"   "FCN1"     "LYZ"     
+ [7] "LST1"     "AIF1"     "S100A8"   "FTH1"     "TYMP"     "LGALS2"  
+[13] "CFD"      "FCER1G"   "LGALS1"   "CD68"     "CTSS"     "SERPINA1"
+[19] "SAT1"     "NPC2"     "GRN"      "CFP"      "IFITM3"   "COTL1"   
+[25] "IFI30"    "PSAP"     "SPI1"     "CD14"     "GPX1"     "S100A11" 
 [1] ""
- [1] "CST3"     "TYROBP"   "LST1"     "AIF1"     "FCN1"     "LYZ"     
- [7] "S100A9"   "FTL"      "FTH1"     "TYMP"     "FCER1G"   "CFD"     
-[13] "LGALS1"   "LGALS2"   "S100A8"   "CD68"     "CTSS"     "SERPINA1"
-[19] "IFITM3"   "SPI1"     "SAT1"     "IFI30"    "COTL1"    "PSAP"    
-[25] "CFP"      "NPC2"     "GRN"      "S100A11"  "LGALS3"   "AP1S2"   
+ [1] "MALAT1"  "RPS27A"  "PTPRCAP" "RPSA"    "RPS3A"   "RPL23A"  "IL32"   
+ [8] "RPL3"    "RPL9"    "RPS27"   "CD3D"    "LTB"     "RPL21"   "RPS3"   
+[15] "RPS6"    "RPS15A"  "RPL31"   "CD3E"    "RPL13A"  "LDHB"    "RPS25"  
+[22] "RPL30"   "RPS12"   "RPS18"   "RPS23"   "RPS29"   "RPL27A"  "RPL5"   
+[29] "EEF1A1"  "AES"    
 [1] ""
 [1] ""
 [1] "PC2"
- [1] "CD79A"     "MS4A1"     "TCL1A"     "HLA-DQA1"  "HLA-DQB1" 
- [6] "LINC00926" "RPL18A"    "CD79B"     "HLA-DRA"   "VPREB3"   
-[11] "RPL32"     "LTB"       "RPL13A"    "RPL13"     "FCER2"    
-[16] "HLA-DQA2"  "RPL11"     "CD74"      "HLA-DRB1"  "BANK1"    
-[21] "CD37"      "RPS23"     "RPS27"     "RPL8"      "HLA-DPB1" 
-[26] "HLA-DMA"   "RPL12"     "RPS18"     "TSPAN13"   "FCRLA"    
-[1] ""
  [1] "NKG7"   "GZMB"   "PRF1"   "CST7"   "GZMA"   "FGFBP2" "GNLY"  
- [8] "CTSW"   "SPON2"  "GZMH"   "CCL4"   "B2M"    "FCGR3A" "CCL5"  
-[15] "XCL2"   "KLRD1"  "CD247"  "CLIC3"  "GZMM"   "AKR1C3" "SRGN"  
-[22] "TTC38"  "HLA-C"  "HCST"   "PRSS23" "HOPX"   "IGFBP7" "S1PR5" 
-[29] "ITGB2"  "GPR56" 
+ [8] "CTSW"   "SPON2"  "CCL4"   "GZMH"   "CCL5"   "FCGR3A" "KLRD1" 
+[15] "XCL2"   "CLIC3"  "SRGN"   "GZMM"   "B2M"    "CD247"  "AKR1C3"
+[22] "S100A4" "PRSS23" "TTC38"  "S1PR5"  "HCST"   "IGFBP7" "ITGB2" 
+[29] "HOPX"   "GPR56" 
+[1] ""
+ [1] "CD79A"     "MS4A1"     "RPL18A"    "HLA-DQA1"  "TCL1A"    
+ [6] "HLA-DQB1"  "CD79B"     "LINC00926" "LTB"       "RPL32"    
+[11] "VPREB3"    "RPL13A"    "HLA-DRA"   "RPL13"     "RPS23"    
+[16] "RPS27"     "RPL11"     "RPS18"     "RPL8"      "RPS5"     
+[21] "HLA-DQA2"  "RPLP2"     "RPL12"     "RPS2"      "CD37"     
+[26] "FCER2"     "CD74"      "BANK1"     "RPS12"     "HLA-DRB1" 
 [1] ""
 [1] ""
 [1] "PC3"
- [1] "PPBP"       "PF4"        "SDPR"       "GNG11"      "SPARC"     
- [6] "HIST1H2AC"  "NRGN"       "GP9"        "RGS18"      "TUBB1"     
-[11] "CLU"        "AP001189.4" "CD9"        "ITGA2B"     "PTCRA"     
-[16] "TMEM40"     "CA2"        "ACRBP"      "MMD"        "TREML1"    
-[21] "F13A1"      "PGRMC1"     "SEPT5"      "MYL9"       "TSC22D1"   
-[26] "MPP1"       "CMTM5"      "PTGS1"      "SNCA"       "RUFY1"     
+ [1] "RPL10"  "RPS2"   "RPL11"  "RPL28"  "RPL32"  "RPL18A" "RPL12" 
+ [8] "RPL19"  "RPS6"   "TMSB10" "RPS14"  "RPL13"  "RPS19"  "RPS15" 
+[15] "RPL6"   "RPL29"  "RPLP1"  "RPS3"   "RPL15"  "RPL26"  "RPS4X" 
+[22] "EEF1A1" "RPS16"  "RPS7"   "GNB2L1" "RPL14"  "RPL13A" "RPL3"  
+[29] "RPS18"  "RPL8"  
 [1] ""
- [1] "RPL10"  "RPS2"   "RPL11"  "RPL18A" "RPL32"  "RPL28"  "RPS19" 
- [8] "RPL12"  "RPL19"  "RPL13"  "RPS6"   "RPS14"  "RPS15"  "TMSB10"
-[15] "RPLP1"  "RPL29"  "RPL6"   "RPL26"  "RPS4X"  "RPS16"  "RPS3"  
-[22] "EEF1A1" "RPL15"  "RPL13A" "RPS7"   "RPL8"   "RPS12"  "RPL23A"
-[29] "RPS18"  "RPLP2" 
+ [1] "PF4"          "PPBP"         "SDPR"         "SPARC"       
+ [5] "GNG11"        "HIST1H2AC"    "GP9"          "NRGN"        
+ [9] "TUBB1"        "RGS18"        "CLU"          "AP001189.4"  
+[13] "ITGA2B"       "CD9"          "PTCRA"        "TMEM40"      
+[17] "CA2"          "ACRBP"        "MMD"          "TREML1"      
+[21] "F13A1"        "SEPT5"        "PGRMC1"       "MYL9"        
+[25] "TSC22D1"      "MPP1"         "CMTM5"        "PTGS1"       
+[29] "SNCA"         "RP11-367G6.3"
 [1] ""
 [1] ""
 [1] "PC4"
- [1] "CD79A"     "HLA-DQA1"  "CD79B"     "MS4A1"     "HLA-DQB1" 
- [6] "CD74"      "HLA-DPB1"  "HLA-DPA1"  "HLA-DRB1"  "TCL1A"    
-[11] "HLA-DRA"   "LINC00926" "HLA-DQA2"  "HLA-DRB5"  "VPREB3"   
-[16] "HLA-DMA"   "HLA-DMB"   "FCER2"     "BANK1"     "HVCN1"    
-[21] "GZMB"      "HLA-DOB"   "PDLIM1"    "FCRLA"     "TSPAN13"  
-[26] "FGFBP2"    "CD72"      "EAF2"      "PKIG"      "SPIB"     
+ [1] "CD3D"    "LDHB"    "IL7R"    "RPS14"   "CD3E"    "VIM"     "IL32"   
+ [8] "RPL32"   "RPS12"   "NOSIP"   "RPL28"   "RPS25"   "GIMAP7"  "RPL11"  
+[15] "JUNB"    "RPL13"   "RPS3"    "AQP3"    "ZFP36L2" "FYB"     "RPL10"  
+[22] "RGCC"    "MAL"     "FOS"     "LEF1"    "RPLP1"   "CD2"     "RPL35A" 
+[29] "RPL36"   "RPS28"  
 [1] ""
- [1] "CD3D"    "LDHB"    "RPS14"   "IL7R"    "CD3E"    "RPL32"   "VIM"    
- [8] "IL32"    "RPS12"   "NOSIP"   "RPL28"   "GIMAP7"  "RPL11"   "RPL13"  
-[15] "FYB"     "ZFP36L2" "RPL10"   "AQP3"    "JUNB"    "RPS25"   "RPLP1"  
-[22] "MAL"     "LEF1"    "RGCC"    "S100A6"  "FOS"     "RPS3"    "CD2"    
-[29] "RPL35A"  "RPL36"  
+ [1] "CD79A"     "HLA-DQA1"  "CD79B"     "MS4A1"     "CD74"     
+ [6] "HLA-DQB1"  "HLA-DPB1"  "HLA-DPA1"  "HLA-DRB1"  "TCL1A"    
+[11] "HLA-DRA"   "LINC00926" "HLA-DRB5"  "HLA-DQA2"  "VPREB3"   
+[16] "HLA-DMA"   "GZMB"      "HLA-DMB"   "HVCN1"     "FCER2"    
+[21] "BANK1"     "FGFBP2"    "HLA-DOB"   "PDLIM1"    "FCRLA"    
+[26] "TSPAN13"   "PRF1"      "GNLY"      "CD72"      "EAF2"     
 [1] ""
 [1] ""
 [1] "PC5"
- [1] "LTB"      "TMEM66"   "LDHB"     "HSPA8"    "PABPC1"   "NPM1"    
- [7] "RNASET2"  "JUNB"     "SOD1"     "CD52"     "NAP1L1"   "CALM2"   
-[13] "EEF1A1"   "RPSA"     "HINT1"    "IL7R"     "VIM"      "FXYD5"   
-[19] "AQP3"     "ARHGDIB"  "LDHA"     "HNRNPA1"  "NACA"     "HSP90AA1"
-[25] "GSTK1"    "ITM2B"    "RPLP0"    "RPS19"    "ACTG1"    "RPS10"   
+ [1] "FCER1A"   "LGALS2"   "MS4A6A"   "S100A8"   "CLEC10A"  "FOLR3"   
+ [7] "GPX1"     "CD14"     "GSTP1"    "ALDH2"    "S100A12"  "SERPINF1"
+[13] "ID1"      "CD1C"     "GRN"      "RNASE6"   "GSN"      "IER3"    
+[19] "CSF3R"    "BLVRB"    "RPL13"    "ASGR1"    "S100A9"   "RNASE2"  
+[25] "VCAN"     "LYZ"      "SAT2"     "QPCT"     "CEBPD"    "FCGR1A"  
 [1] ""
- [1] "S100A8"  "FGFBP2"  "GZMB"    "S100A9"  "NKG7"    "CCL4"    "S100A12"
- [8] "LGALS2"  "RBP7"    "GNLY"    "CST7"    "SPON2"   "GZMA"    "PRF1"   
-[15] "CCL3"    "FOLR3"   "MS4A6A"  "GZMH"    "CD14"    "PRSS23"  "S1PR5"  
-[22] "KLRD1"   "TYROBP"  "XCL2"    "CTSW"    "CCL5"    "CLIC3"   "CEBPD"  
-[29] "TTC38"   "GSTP1"  
+ [1] "FCGR3A"        "CDKN1C"        "MS4A7"         "HES4"         
+ [5] "CKB"           "RP11-290F20.3" "RHOC"          "CTSL"         
+ [9] "MS4A4A"        "LILRA3"        "SIGLEC10"      "CTD-2006K23.1"
+[13] "IFITM3"        "HMOX1"         "ABI3"          "LRRC25"       
+[17] "IFITM2"        "LILRB1"        "BATF3"         "PTP4A3"       
+[21] "CEBPB"         "PILRA"         "CSF1R"         "HCK"          
+[25] "CXCL16"        "VMO1"          "C1QA"          "TPPP3"        
+[29] "TCF7L2"        "TNFSF10"      
 [1] ""
 [1] ""
 ```
@@ -2180,15 +2703,15 @@ PrintPCA(pbmc.seurat, pcs.print = 1:2, genes.print = 5, use.full = TRUE)
 
 ```
 [1] "PC1"
-[1] "MALAT1"  "RPS27A"  "PTPRCAP" "RPS27"   "RPL23A" 
+[1] "CST3"   "S100A9" "FTL"    "TYROBP" "FCN1"  
 [1] ""
-[1] "CST3"   "TYROBP" "LST1"   "AIF1"   "FCN1"  
+[1] "MALAT1"  "RPS27A"  "PTPRCAP" "RPSA"    "RPS3A"  
 [1] ""
 [1] ""
 [1] "PC2"
-[1] "CD79A"    "MS4A1"    "TCL1A"    "HLA-DQA1" "HLA-DQB1"
-[1] ""
 [1] "NKG7" "GZMB" "PRF1" "CST7" "GZMA"
+[1] ""
+[1] "CD79A"    "MS4A1"    "RPL18A"   "HLA-DQA1" "TCL1A"   
 [1] ""
 [1] ""
 ```
@@ -2208,7 +2731,14 @@ Seurat: PCA Visualizations
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-49](single_cell_analysis-figure/unnamed-chunk-49-1.png)
+![plot of chunk unnamed-chunk-86](single_cell_analysis-figure/unnamed-chunk-86-1.png)
+
+Seurat: Check your Batch Correction
+===
+
+How can we apply this?
+- Can check components to see if gene show up that are enriched in components.
+- Using the scores you can perform GE analysis to decribe the component.
 
 Seurat: PCA Visualizations
 ===
@@ -2223,7 +2753,7 @@ Seurat: PCA Visualizations
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-51](single_cell_analysis-figure/unnamed-chunk-51-1.png)
+![plot of chunk unnamed-chunk-88](single_cell_analysis-figure/unnamed-chunk-88-1.png)
 
 Seurat: PCA Visualizations
 ===
@@ -2240,7 +2770,7 @@ Seurat: PCA Visualizations
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-53](single_cell_analysis-figure/unnamed-chunk-53-1.png)
+![plot of chunk unnamed-chunk-90](single_cell_analysis-figure/unnamed-chunk-90-1.png)
 
 Seurat: Choosing Components
 ===
@@ -2271,7 +2801,7 @@ Seurat: Choosing Components
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-56](single_cell_analysis-figure/unnamed-chunk-56-1.png)
+![plot of chunk unnamed-chunk-93](single_cell_analysis-figure/unnamed-chunk-93-1.png)
 
 Seurat: Store Clusters
 ===
@@ -2307,7 +2837,7 @@ Seurat: Run t-SNE
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-59](single_cell_analysis-figure/unnamed-chunk-59-1.png)
+![plot of chunk unnamed-chunk-96](single_cell_analysis-figure/unnamed-chunk-96-1.png)
 
 ---
 
@@ -2320,12 +2850,12 @@ Seurat: Side by side
 class:small-code
 
 **PCA**  
-![plot of chunk unnamed-chunk-60](single_cell_analysis-figure/unnamed-chunk-60-1.png)
+![plot of chunk unnamed-chunk-97](single_cell_analysis-figure/unnamed-chunk-97-1.png)
 
 ---
 
 **t-SNE**  
-![plot of chunk unnamed-chunk-61](single_cell_analysis-figure/unnamed-chunk-61-1.png)
+![plot of chunk unnamed-chunk-98](single_cell_analysis-figure/unnamed-chunk-98-1.png)
 
 Seurat: Plotting Genes Through Clusters
 ===
@@ -2343,7 +2873,7 @@ Seurat: Plotting Genes Through Clusters
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-63](single_cell_analysis-figure/unnamed-chunk-63-1.png)
+![plot of chunk unnamed-chunk-100](single_cell_analysis-figure/unnamed-chunk-100-1.png)
 
 Seurat: Plotting Genes on Clusters
 ===
@@ -2362,7 +2892,7 @@ Seurat: Plotting Genes on Clusters
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-65](single_cell_analysis-figure/unnamed-chunk-65-1.png)
+![plot of chunk unnamed-chunk-102](single_cell_analysis-figure/unnamed-chunk-102-1.png)
 
 Confirm Cell Identity
 ===
@@ -2386,13 +2916,14 @@ QC the Clusters!
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-67](single_cell_analysis-figure/unnamed-chunk-67-1.png)
+![plot of chunk unnamed-chunk-104](single_cell_analysis-figure/unnamed-chunk-104-1.png)
 
 QC the Clusters!
 ===
 class:small-code
 
-We are going to make a fake batch affect (site) and plot this as an example of how one can visualize unwanted signal.
+Check for your batch affect.
+- We are going to make a fake batch affect (site) and plot this as an example of how one can visualize unwanted signal.
 
 
 ```r
@@ -2409,7 +2940,7 @@ QC the Clusters!
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-69](single_cell_analysis-figure/unnamed-chunk-69-1.png)
+![plot of chunk unnamed-chunk-106](single_cell_analysis-figure/unnamed-chunk-106-1.png)
 
 Seurat: Getting your labels
 ===
@@ -2426,8 +2957,8 @@ Seurat: Getting your labels
 
 ```
 AAACATACAACCAC AAACATTGAGCTAC AAACATTGATCAGC AAACCGTGCTTCCG AAACCGTGTATGCG 
-             1              3              0              5              6 
-Levels: 0 1 2 3 4 5 6 7 8
+             0              2              0              1              5 
+Levels: 0 1 2 3 4 5 6 7
 ```
 
 Section Summary
@@ -2449,45 +2980,96 @@ Where are We at Now?
 - Can break plotted cells into subgroups.
   - These can become labels for later DE.
 - Can plot across subgroups (maker genes).
-- Can use plots of cells for batch affect visualization?
+- We can use plots of cells for batch affect visualization.
 
-Single Cell RNA-Seq and Batch Affects
-===
-
-![fall](images/corgis/fall.jpg)
-
-Single Cell RNA-Seq and Batch Affects
-===
-
-![confounding_paper](images/confounding_paper.png)
-
-What is Confounding?
-===
-
-<div align="center">
-<img src="images/confounding.png" height=500>
-</div>
-
-Confounding by Design
-===
-
-![batch_effects](images/batch_effects_4.png)
-
-Normalization and Batch Affect Correction
-===
-
-- The nature of scRNA-Seq assays can make them prone to confounding with batch affects.
-  - Normalization and batch affect correction can help.
-- Some are moving away from relying on a specific method.
-  - Exploring the idea of combining or selecting from a collection of normalization or correction methods best for a specific study.
-- Some believe UMI based analysis need not be normalized between samples given the absolute count of the molecules are being reported.
-- For advanced analysis try [SCONE](//niryosef.wordpress.com/tools/scone) or another tool from the [awesome list](https://github.com/seandavi/awesome-single-cell).
-  - Be careful not to remove biological signal with good experimental design (avoiding confounding by design).
-
-Differential Expression (SCDE)
+Differential Expression
 ===
 
 ![clump](images/corgis/corgi_clump.jpg)
+
+Seurat: Differential Expression
+===
+class:small-code
+
+- Default if one cluster again many tests.
+  - Can specify an ident.2 test between clusters.
+- Adding speed by exluding tests.
+  - Min.pct - controls for sparsity
+    - Min percentage in a group
+  - Thresh.test - must have this difference in averages.
+
+
+```r
+cluster1.markers <- FindMarkers(pbmc.seurat, ident.1 = 1, min.pct = 0.25)
+head(cluster1.markers, 5)
+```
+
+Seurat: Differential Expression
+===
+class:small-code
+
+- Find all cluster against all others.
+
+
+```r
+pbmc.markers <- FindAllMarkers(pbmc.seurat, only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25)
+pbmc.markers %>% group_by(cluster) %>% top_n(2, avg_diff)
+```
+
+```
+Source: local data frame [16 x 6]
+Groups: cluster [8]
+
+   p_val avg_diff pct.1 pct.2 cluster     gene
+   <dbl>    <dbl> <dbl> <dbl>  <fctr>    <chr>
+1      0 1.148598 0.925 0.482       0     LDHB
+2      0 1.064824 0.662 0.202       0     IL7R
+3      0 3.822197 0.996 0.217       1   S100A9
+4      0 3.784692 0.975 0.123       1   S100A8
+5      0 2.977214 0.936 0.042       2    CD79A
+6      0 2.485397 0.623 0.022       2    TCL1A
+7      0 2.171555 0.974 0.230       3     CCL5
+8      0 2.113108 0.588 0.050       3     GZMK
+9      0 2.268441 0.962 0.137       4   FCGR3A
+10     0 2.150098 1.000 0.316       4     LST1
+11     0 3.763449 0.961 0.131       5     GNLY
+12     0 3.333932 0.955 0.068       5     GZMB
+13     0 2.735429 0.861 0.009       6   FCER1A
+14     0 2.013750 0.944 0.208       6 HLA-DQA1
+15     0 5.872560 1.000 0.023       7     PPBP
+16     0 4.949401 1.000 0.010       7      PF4
+```
+
+Seurat: DE Tests
+===
+class:small-code
+
+**bimod:** Tests differences in mean and proportions.  
+**roc:** Uses AUC like definition of separation.  
+**t:** Student's T-test.  
+**tobit:** Tobit regression on a smoothed data.  
+
+Seurat: Plotting DE Genes
+===
+class:small-code
+
+
+```r
+pbmc.markers %>% group_by(cluster) %>% top_n(10, avg_diff) -> top10
+DoHeatmap(pbmc.seurat, genes.use = top10$gene, order.by.ident = TRUE, slim.col.label = TRUE, remove.key = TRUE)
+```
+
+Seurat: Plotting DE Genes
+===
+class:small-code
+
+
+```r
+pbmc.markers %>% group_by(cluster) %>% top_n(10, avg_diff) -> top10
+DoHeatmap(pbmc.seurat, genes.use = top10$gene, order.by.ident = TRUE, slim.col.label = TRUE, remove.key = TRUE)
+```
+
+![plot of chunk unnamed-chunk-112](single_cell_analysis-figure/unnamed-chunk-112-1.png)
 
 SCDE: What is the Data?
 ===
@@ -2771,7 +3353,7 @@ scde.test.gene.expression.difference("Tdh", models = o.ifm, counts = cd, prior =
 SCDE: Plot a Gene
 ===
 
-![plot of chunk unnamed-chunk-85](single_cell_analysis-figure/unnamed-chunk-85-1.png)
+![plot of chunk unnamed-chunk-126](single_cell_analysis-figure/unnamed-chunk-126-1.png)
 
 ```
           lb     mle       ub       ce        Z       cZ
@@ -2786,6 +3368,35 @@ SCDE: Interactive Exploration
 
 ```r
 # scde.browse.diffexp(ediff, o.ifm, cd, o.prior, groups = groups, name = "diffexp1", port = 1299)
+```
+
+SCDE and Batch Affects
+===
+
+- Create fake metadata.
+
+
+```r
+batch <- as.factor(ifelse(rbinom(nrow(o.ifm), 1, 0.5) == 1, "batch1", "batch2"))
+table(groups, batch)
+```
+
+SCDE and Batch Affects
+===
+
+
+```r
+scde.test.gene.expression.difference("Tdh", models = o.ifm, counts = cd, prior = o.prior, batch = batch)
+```
+
+SCDE and Batch Affects
+===
+
+- Here we correct initially instead of per gene.
+
+
+```r
+ediff.batch <- scde.expression.difference(o.ifm, cd, o.prior, groups = groups, batch = batch, n.randomizations = 100, n.cores = 1, return.posteriors = TRUE, verbose = 1)
 ```
 
 Pathway analysis
@@ -3013,7 +3624,7 @@ Pagoda: Known Gene Groups Overdispersion
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-97](single_cell_analysis-figure/unnamed-chunk-97-1.png)
+![plot of chunk unnamed-chunk-141](single_cell_analysis-figure/unnamed-chunk-141-1.png)
 
 Pagoda: Known Gene Groups Overdispersion
 ===
@@ -3058,7 +3669,7 @@ Pagoda: Novel Gene Group Overdispersion
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-101](single_cell_analysis-figure/unnamed-chunk-101-1.png)
+![plot of chunk unnamed-chunk-145](single_cell_analysis-figure/unnamed-chunk-145-1.png)
 
 Pagoda: Novel Gene Group Overdispersion
 ===
@@ -3118,7 +3729,7 @@ Pagoda: Visualize Clustering
 ===
 class:small-code
 
-![plot of chunk unnamed-chunk-106](single_cell_analysis-figure/unnamed-chunk-106-1.png)
+![plot of chunk unnamed-chunk-150](single_cell_analysis-figure/unnamed-chunk-150-1.png)
 
 Pagoda: Interactive Clustering
 ===

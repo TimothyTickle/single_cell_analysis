@@ -200,11 +200,13 @@ Dropseq: Sequencing Overview
 <div>
 <img src="images/dropseq_assay_1.png" height=500>
 </div>
+Macosko et al. 2015
 
 Dropseq: Microfluidics
 ===
 
-![drop_beads](images/dropseq_drops.gif)
+![drop_beads](images/dropseq_drops.gif)   
+Source: http://mccarrolllab.com/dropseq
 
 Dropseq: Equipment
 ===
@@ -250,7 +252,8 @@ Zheng et al.
 10X: Sequences
 ===
 
-![10x_sequence](images/10X_wet_mol.png)
+![10x_sequence](images/10X_wet_mol.png)   
+Zheng et al.
 
 - 14nt barcode, 10nt UMI, 30nt polyT + sequencing adaptor and primers.
 
@@ -742,7 +745,7 @@ class:small-code
 - Cells that are unusually complex (doublets?)
 
 ```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
-plot(complexity.per.cell,mean.count.per.cell+1)
+plot(complexity.per.cell,mean.count.per.cell)
 abline(v=200, col="red")
 abline(h=log2(4))
 ```
@@ -755,7 +758,7 @@ class:small-code
 - Red line shows a point of prefiltering.
 
 ```{r, eval=TRUE, echo=FALSE, tidy=TRUE}
-plot(complexity.per.cell,mean.count.per.cell+1)
+plot(complexity.per.cell,mean.count.per.cell)
 abline(v=200, col="red")
 abline(h=log2(4))
 ```
@@ -765,9 +768,7 @@ Identifying Noise?
 class:small-code
 
 ```{r, eval=FALSE, echo=TRUE, tidy=TRUE}
-#hist(gene.prevalence)
 hist(log2(gene.prevalence))
-abline(v=3, col="red")
 ```
 
 Identifying Noise?
@@ -775,12 +776,10 @@ Identifying Noise?
 class:small-code
 
 - People tend to filter very conservatively.
-- 3 is where we will filter (red line).
+- Remember this is in log space.
 
 ```{r, eval=TRUE, echo=FALSE, tidy=TRUE}
-#hist(gene.prevalence)
 hist(log2(gene.prevalence))
-abline(v=3, col="red")
 ```
 
 Filter Cells: Removing the Outlier Cells
@@ -990,7 +989,7 @@ Scater: Motivation
 - Most differential expression methodology is T-test.
   - Much like using covariates in linear regression to control here we stratify by metadata to describe the impact of the metadatum.
 - More than what we are covering here.
-- Online tutorial [Click Here](//bioconductor.org/packages/devel/bioc/vignettes/scater/inst/doc/vignette.html)
+- Online tutorial [Click Here](//bioconductor.org/packages/release/bioc/vignettes/scater/inst/doc/vignette.html)
 
 Scater: Skipping Ahead
 ===
