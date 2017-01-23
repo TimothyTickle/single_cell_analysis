@@ -27,6 +27,7 @@ library(vioplot) # Violin pots
 library(Seurat) # Single cell General Analysis
 # dotplot.R is adapted from Karthik's class.R see source for details
 source("./src/dotplot.R")
+source("./src/makeNiceMAST.R")
 # 1 minute
 load("/Users/ttickle/Documents/safe/projects/_tutorials/single_cell_analysis/data/bipolar_data_cell_2016.Rdata")
 ```
@@ -703,6 +704,7 @@ dot.plot(bipolar.seurat,
 Dot Plots: Replicating Bipolar Results
 ===
 class:small-code
+
 ```{r, eval=TRUE, echo=TRUE, tidy=False}
 plot.genes = c("Vsx2","Otx2","Scgn","Isl1","Grm6",
                "Apoe","Pax6","Rho","Arr3","Tacr3",
@@ -716,13 +718,22 @@ dot.plot(bipolar.seurat,
 
 MAST
 ===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE, tidy=False}
 # Make a covariate to inform the test
 test.5 <- as.character(bipolar.seurat@ident)
 test.5[test.5 != "5"] <- "wild"
 test.5[test.5 == "5"] <- "test"
 names(test.5) <- names(bipolar.seurat@ident)
 test.5 <- factor(test.5, levels=c("wild","test"))
+```
 
+MAST
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE, tidy=False}
 # Load into Mast Object
 # Mast object
 # Data frame of cell-level covariates
@@ -730,9 +741,28 @@ test.5 <- factor(test.5, levels=c("wild","test"))
 bipolar.mast <- FromMatrix(as.matrix(bipolar.seurat@data),
                   cbind(bipolar.seurat@data.info,test.5),
                   data.frame(primerid=rownames(bipolar.seurat@data)))
+```
 
+MAST
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE, tidy=False}
 # Run test
 # 1 hr
 zlm.test.5 <- zlm.SingleCellAssay(~ test.5, bipolar.mast)
 df.test.5 <- data.frame(summary(zlm.test.5, doLRT="test.5test"))
+summary.mast <- makeNice(df.test.5, val="test.5test")
+summary.mast[abs(summary.mast[,5])>=1 & !is.na(summary.mast[,5]),]
+```
 
+MAST
+===
+class:small-code
+
+```{r, eval=TRUE, echo=TRUE, tidy=False}
+plot.genes = c("Cck","Pcp2","Scg2","Scgn", "Gngt2",
+               "Guk1","Pcp4","Pcp4l1","Vsx1")
+dot.plot(bipolar.seurat,
+         features.use=plot.genes)
+```
