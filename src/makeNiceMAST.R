@@ -2,16 +2,16 @@
 
 makeNice<-function(mrk, val="ko_vs_wtwt", comp="H")
 {
-  mrk_h<-mrk[mrk$component==comp & mrk$contrast==val,]
+  mrk_h<-mrk[mrk$datatable.component==comp & mrk$datatable.contrast==val,]
   pval<-mrk_h[,4]
   padj<-p.adjust(pval,"fdr")
   padj_strict<-p.adjust(pval,"BY")
   pval<-cbind(pval,padj)
   pval<-cbind(pval,padj_strict)
   rownames(pval)<-mrk_h[,1]
-  mrk_logFC<-mrk[mrk$component=="logFC",]
-  z<-cast(mrk_logFC,formula=primerid~component+contrast,value="z",fun.aggregate=sum)
-  logfc<-cast(mrk_logFC,formula=primerid~component+contrast,value="coef",fun.aggregate=sum)
+  mrk_logFC<-mrk[mrk$datatable.component=="logFC",]
+  z<-cast(mrk_logFC,formula=datatable.primerid~datatable.component+datatable.contrast,value="datatable.z",fun.aggregate=sum)
+  logfc<-cast(mrk_logFC,formula=datatable.primerid~datatable.component+datatable.contrast,value="datatable.coef",fun.aggregate=sum)
   rownames(z)<-z[,1]
   rownames(logfc)<-logfc[,1]
 

@@ -1,777 +1,806 @@
 # Logistics
 # ===
+# class:small-code
+#
+# - R allows methodology written by others to be imported.
+#   - Leverage other code.
+#   - Make your code available to others.  
+
 # Load libraries
 library(dplyr) # Dataframe manipulation
+library(MAST) # For DE
 library(Matrix) # Sparse matrices
 library(useful) # Corner function
 library(vioplot) # Violin pots
-library(scater) # Single Cell QC
-library(scde) # Differential Expression
-library(org.Hs.eg.db) # Gene name manipulation
-library(Seurat) # Single cell General Analysis
+library(Seurat) # Single cell Analysis
+
+source("./src/dotplot.R")
+source("./src/makeNiceMAST.R")
+
+load("./data/bipolar_raw.Robj")
 
 
 # Representing Sparse Matrices
 # ===
-# Load 10X data
-pbmc.10X <- Read10X("./data/filtered_gene_bc_matrices/hg19")
+# class:small-code
+
+# 24904 x 44994 (1 minute)
+bipolar.data <- Matrix(as.matrix(bipolar_dge), sparse=TRUE)
+# Memory use as a normal matrix
+object.size(bipolar_dge)
 
 # Memory use as a sparse matrix
-object.size(pbmc.10X)
-
-# Memory use as a dense matrix
-# 18 X more
-object.size(as.matrix(pbmc.10X))
+# ~23 X less
+object.size(bipolar.data)
+bipolar_dge <- NULL
 
 
 # Create a Seurat Object
 # ===
+# class:small-code
+
 # Expected raw counts (non-normalized data)
 # Can give log transformed data but do not transform in setup method
-pbmc.seurat <- new("seurat", raw.data=pbmc.10X)
+bipolar.seurat.raw <- new("seurat", raw.data=bipolar.data)
 
 
 # What is in a Seurat Object?
 # ===
+# class:small-code
+
 # Display the internal pieces of the Seurat Object
-slotNames(pbmc.seurat)
+slotNames(bipolar.seurat.raw)
 
 
 # What is in a Seurat Object?
 # ===
-head(pbmc.seurat@raw.data)
+# class:small-code
+# 
+# So far, raw sparse matrix
+
+head(bipolar.seurat.raw@raw.data)
 
 
 # What is in a Seurat Object?
 # ===
+# class:small-code
+#
+# So far, raw sparse matrix
+
+head(bipolar.seurat.raw@data)
+head(bipolar.seurat.raw@ident)
+head(bipolar.seurat.raw@var.genes)
+
+
+# What is in a Seurat Object?
+# ===
+# class:small-code
+#
+# - __var.genes__ Variable genes across cells
+# - __data.info__ Misc info including complexity (nGene)
+# - __cell.names__ Column (cell) names
+# - __gene.names__ Row (gene) names
+
 ?seurat
 
 
 # What are Our Genes?
 # ===
+# class:small-code
+
 # Gene names (row names)
-head(row.names(pbmc.seurat@raw.data))
-length(row.names(pbmc.seurat@raw.data))
+head(row.names(bipolar.seurat.raw@raw.data))
+length(row.names(bipolar.seurat.raw@raw.data))
 
 
 # What are Our Cells?
 # ===
-# Column names
+# class:small-code
+
+# Column names # 24904 x 44994
 # Sample / Cell names / Barcodes
-head(colnames(pbmc.seurat@raw.data))
-length(colnames(pbmc.seurat@raw.data))
+head(colnames(bipolar.seurat.raw@raw.data),3)
+length(colnames(bipolar.seurat.raw@raw.data))
+dim(bipolar.seurat.raw@raw.data)
 
 
 # How to Show Counts?
 # ===
+# class:small-code
+
 # Only the corner
 # The full data will be too large to see
-corner(as.matrix(pbmc.seurat@raw.data))
+corner(as.matrix(bipolar.seurat.raw@raw.data))
 
 
-# How Many Expressed Genes (Complexity)?
+# How Many Expressed Genes?
 # ===
+# class:small-code
+
 # Plot genes per cell
 # How many genes expressed per cells
-complexity.per.cell <- apply(pbmc.seurat@raw.data, 2, function(x) sum(x>0))
+# 3 Minutes
+complexity.per.cell <- apply(bipolar.seurat.raw@raw.data, 2, function(x) sum(x>0))
 # Mean count per cell.
-mean.count.per.cell <- apply(pbmc.seurat@raw.data, 2, function(x) mean(x))
+# 3 minutes
+mean.count.per.cell <- apply(bipolar.seurat.raw@raw.data, 2, function(x) mean(x))
 # Gene prevalence
-gene.prevalence <- apply(pbmc.seurat@raw.data, 1, function(x) sum(x>0))
+# 5 minutes
+gene.prevalence <- apply(bipolar.seurat.raw@raw.data, 1, function(x) sum(x>0))
 
 
-# How Many Expressed Genes (Complexity)?
+# Store Technical Batches for Later
 # ===
+# class:small-code
+
+# Get batches based on cell names
+technical_batches <- sapply(colnames(bipolar.seurat.raw@raw.data),
+                      FUN=function(x){strsplit(x,"_",fixed=TRUE)[[1]][1]})
+
+# Turn to numbers and add cell names to them
+technical_batches <- as.numeric(as.factor(technical_batches))
+names(technical_batches) <- colnames(bipolar.seurat.raw@raw.data)
+
+
+# How Many Expressed Genes?
+# ===
+# class:small-code
+
 # Plot genes per cell
 # How many genes expressed per cell
+# Violin plot
 vioplot(complexity.per.cell)
-stripchart(complexity.per.cell, add=TRUE, vertical=TRUE, method="jitter", jitter=0.3, pch=19)
-abline(h=200, col="red")
-abline(h=2500, col="blue")
+
+# Add points
+stripchart(complexity.per.cell, add=TRUE, vertical=TRUE, method="jitter", jitter=0.3, pch=20, col="#00000033")
+
+# Add lines for reference
+abline(h=500, col="orange")
+abline(h=3000, col="green")
+
+# Add text
+title("Study Complexity")
+axis(side=1,at=1,labels=c("Study"))
+
+
+# How Many Expressed Genes?
+# ===
+# class:small-code
+
+# Plot cell complexity, sorted by complexity
+plot(1:length(complexity.per.cell), sort(complexity.per.cell))
+# Add lines
+abline(h=500, col="orange")
+abline(h=3000, col="green")
+
+
+# How Many Expressed Genes By Batch?
+# ===
+# class:small-code
+
+# Plot genes per cell
+# Complexity per technical batch
+plot(complexity.per.cell ~ jitter(technical_batches,2))
+
+# Add line
+abline(h=500, col="orange")
+abline(h=3000, col="green")
+
+# Add text
 title("Study Complexity")
 axis(side=1,at=1,labels=c("Study"))
 
 
 # Identifying Outliers?
 # ===
-plot(complexity.per.cell,mean.count.per.cell+1)
-abline(v=200, col="red")
-abline(h=log2(4))
+# class:small-code
+#
+# - Cells that are unusually simple (or no counts)
+# - Cells that are unusually complex (doublets?)
+# - We will filter in a standard way, we are just describing the data.
+
+# Complexity by mean expression
+plot(complexity.per.cell, mean.count.per.cell)
+
+# Add lines
+abline(v=500, col="orange")
+abline(v=3000, col="green")
 
 
 # Identifying Noise?
 # ===
-hist(log2(gene.prevalence))
-abline(v=3, col="red")
+# class:small-code
+#
+# - People tend to filter very conservatively.
+# - Remember this is in log space.
+
+# How often genes are seen in cells
+hist(log2(gene.prevalence), breaks=100)
+
+# add line
+abline(v=log(30), col="orange")
 
 
 # Filter Cells: Removing the Outlier Cells
 # ===
-pbmc.seurat <- Setup(pbmc.seurat,
-                    min.cells=3, min.genes=200,
+# class:small-code
+#
+# - Genes must be in 30 cells.
+# - Cells must have alteast 500 genes.
+# - Scaled by 1000 (Total Sum Scaling)
+
+# From 24904 x 44994 to 14575 x 30673
+# 5 minutes
+bipolar.seurat <- Setup(bipolar.seurat.raw,
+                    min.cells=30, min.genes=500,
                     do.logNormalize=TRUE,
                     total.expr=1e4,
                     project="Tutorial")
+bipolar.seurat.raw <- NULL
+
+
+# Seurat: Updated Slots
+# ===
+# class:small-code
+
+dim(bipolar.seurat@raw.data)
+
+
+# Seurat: Updated Slots
+# ===
+# class:small-code
+
+dim(bipolar.seurat@data)
+
+
+# Seurat: Updated Slots
+# ===
+# class:small-code
+
+head(bipolar.seurat@data.info)
 
 
 # Seurat: Filtering on Metadata
 # ===
+# class:small-code
+#
+# - Filtering on mitochondrial reads in Seurat.
+
 # Get gene names
-mito.gene.names <- grep("^MT-", rownames(pbmc.seurat@data), value=TRUE)
+mito.gene.names <- grep("^mt-", rownames(bipolar.seurat@data), value=TRUE)
+
+
+# Seurat: Filtering on Metadata
+# ===
+# class:small-code
+#
+# - Filtering on mitochondrial reads in Seurat.
 
 # Get TSS normalized mitochodrial counts
-col.total.counts <- Matrix::colSums(expm1(pbmc.seurat@data))
-mito.percent.counts <- Matrix::colSums(expm1(pbmc.seurat@data[mito.gene.names, ]))/col.total.counts
+# Cell total expression
+col.total.counts <- Matrix::colSums(expm1(bipolar.seurat@data))
+
+# Scale each count by the cell total
+mito.percent.counts <- Matrix::colSums(expm1(bipolar.seurat@data[mito.gene.names, ]))/col.total.counts
+
+
+# Seurat: Filtering on Metadata
+# ===
+# class:small-code
+#
+# - Filtering on mitochondrial reads in Seurat.
 
 # Add to seurat object as a metadata
-pbmc.seurat <- AddMetaData(pbmc.seurat, mito.percent.counts, "percent.mitochodrial")
+bipolar.seurat <- AddMetaData(bipolar.seurat, mito.percent.counts, "percent.mitochodrial")
+
+# Check
+head(bipolar.seurat@data.info)
 
 
 # Seurat: Filtering on Metadata
 # ===
-VlnPlot(pbmc.seurat, c("nGene", "nUMI", "percent.mitochodrial"), nCol=3)
+# class:small-code
+
+VlnPlot(bipolar.seurat, "nGene")
 
 
 # Seurat: Filtering on Metadata
 # ===
-GenePlot(pbmc.seurat, "nUMI", "percent.mitochodrial")
+# class:small-code
+
+VlnPlot(bipolar.seurat, "nUMI")
 
 
 # Seurat: Filtering on Metadata
 # ===
-GenePlot(pbmc.seurat, "nUMI", "nGene")
+# class:small-code
+
+VlnPlot(bipolar.seurat, "percent.mitochodrial")
 
 
 # Seurat: Filtering on Metadata
 # ===
-dim(pbmc.seurat@data)
-pbmc.seurat <- SubsetData(pbmc.seurat, subset.name = "nGene", accept.high = 2500)
-pbmc.seurat <- SubsetData(pbmc.seurat, subset.name = "percent.mitochodrial", accept.high = 0.05)
-dim(pbmc.seurat@data)
+# class:small-code
+
+VlnPlot(bipolar.seurat, c("nGene", "nUMI", "percent.mitochodrial"), nCol=3)
+
+# Seurat: Filtering on Metadata
+# ===
+# class:small-code
+#
+# - Outlier percent mitochondria are very low expression.
+# - Very high expression have low percent mitochondrial reads.
+
+GenePlot(bipolar.seurat, "nUMI", "percent.mitochodrial")
+
+
+# Seurat: Filtering on Metadata
+# ===
+# class:small-code
+
+# Filter libraries with more than 10% mitochondrially derived transcripts
+# From 14575 x 30673 to 14575 x 27489
+dim(bipolar.seurat@data)
+# 1 Minute
+# Filter max complexity
+bipolar.seurat <- SubsetData(bipolar.seurat, subset.name="nGene", accept.high=3000)
+
+# Filter percent percent mitochondrial reads
+bipolar.seurat <- SubsetData(bipolar.seurat, subset.name="percent.mitochodrial", accept.high=0.1)
+
+
+# Seurat: Filtering on Metadata
+# ===
+# class:small-code
+
+dim(bipolar.seurat@data)
+table(bipolar.seurat@data.info[["orig.ident"]])
+# Original standard matrix 8,971,430,520 bytes
+object.size(bipolar.seurat)
 
 
 # Saving as an R Object
 # ===
-# How to save the intact object.
-# save(pbmc.seurat, file = "seurat_tutorial.Robj")
+# class:small-code
+#
+# Saving the Seurat object
+# - Contains all manipulation so far.
+# - Can be loaded or shared.
+# - Does not contain environment.
 
-# How to retrieve the intact object.
-# load("seurat_tutorial.Robj")
+# 3.16 GB
+# save(bipolar.seurat, file="./data/bipolar_seurat.Robj")
+
+# load("./data/bipolar_seurat.Robj")
 
 
 # Saving as Text Files
 # ===
+# class:small-code
+# 
+# You may need to export data to import into other applications.
+
 # Log-scale expression matrix
-write.table(as.matrix(pbmc.seurat@data), file="seurat_data.txt")
+# 5 minutes (1.2 GB)
+# write.table(as.matrix(bipolar.seurat@data), file="bipolar_data.txt")
 
-# Study metadata
-write.table(pbmc.seurat@data.info, file="seurat_metadata.txt")
-
-# What is the metadata so far
-head(pbmc.seurat@data.info)
-
-
-# Scater: Skipping Ahead
-# ===
-# Load Data
-data("sc_example_counts")
-data("sc_example_cell_info")
-pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
-rownames(pd) <- pd$Cell
-example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
-keep_feature <- rowSums(exprs(example_sceset)) > 0
-example_sceset <- example_sceset[keep_feature,]
-example_sceset <- calculateQCMetrics(example_sceset, feature_controls = 1:40)
-
-
-# Scater: What is the Data?
-# ===
-corner(sc_example_counts)
-
-
-# Scater: What is the info?
-# ===
-corner(sc_example_cell_info)
-
-
-# Scater: Stratifying for Metadata
-# ===
-plot(example_sceset, block1 = "Mutation_Status", block2 = "Treatment",
-     colour_by = "Cell_Cycle", nfeatures = 300, exprs_values = "counts")
-
-
-# Scater: Stratifying for Metadata
-# ===
-plotExpression(example_sceset, rownames(example_sceset)[1:6],
-               x = "Mutation_Status", exprs_values = "exprs", colour = "Treatment")
-
-
-# Scater: Interactive Exploration
-# ===
-scater_gui(example_sceset)
+# Study metadata (1.2 MB)
+# write.table(bipolar.seurat@data.info, file="bipolar_metadata.txt")
 
 
 # Seurat: Viewing Specific Genes
 # ===
-VlnPlot(pbmc.seurat, c("GAPDH"))
+# class:small-code
+# 
+# - Notice many zeros.
+
+VlnPlot(bipolar.seurat, "Prkca")
+
+
+# Seurat: Viewing Specific Genes
+# ===
+# class:small-code
+
+VlnPlot(bipolar.seurat, "Prkca", group.by="orig.ident")
 
 
 # Seurat: Plotting Genes vs Genes
 # ===
+# class:small-code
+
 # Plot a gene vs a gene
-GenePlot(pbmc.seurat,"CD79A","CD79B",cex.use=1)
+GenePlot(bipolar.seurat,"Isl1","Grm6",cex.use=1)
 
-Seurat and Batch Affect Correction
-===
-class:small-code
 
-```{r, eval=TRUE, echo=TRUE}
-pbmc.seurat <- RegressOut(pbmc.seurat, latent.vars = c("nUMI", "percent.mitochodrial"))
-```
-
-# Scone: Batch Correction
+# Seurat: Batch Affect Correction
 # ===
-set.seed(6473)
-library(scone)
-library(RColorBrewer)
-library(scRNAseq)
-data(fluidigm)
-assay(fluidigm) = assays(fluidigm)$rsem_counts
+# class:small-code
+
+# Create batch affect (5 and 6 as a group)
+batch.effect <- technical_batches[row.names(bipolar.seurat@data.info)]
+batch.effect[batch.effect %in% c(1,2,3,4)] <- 1
+batch.effect[batch.effect %in% c(5,6)] <- 2
+
+# Add batch affect
+bipolar.seurat <- AddMetaData(bipolar.seurat, batch.effect, "batch.effect")
+
+# Regress on metadata
+bipolar.seurat <- RegressOut(bipolar.seurat, latent.vars="batch.effect")
 
 
-# Scone: Which Metadata?
-#===
-metadata(fluidigm)$which_qc
-
-
-# Scone: Which Metadata?
+# Seurat: Select Variable Genes
 # ===
-metadata(fluidigm)$which_qc
+# class:small-code
+#
+# - We are going to focus on highly variable genes.
+#   - Average expression (X) and dispersion (SD)(Y).
+#   - Bins genes (20).
+#   - Z-score for dispersion.
+# - fxn.x and fxn.y allow one to change the measurements.
+#   - Cut.offs are high and low, X and Y.
 
-
-# Scone: Accessing Metadata
-# ===
-head(colData(fluidigm))
-head(colData(fluidigm)$Coverage_Type)
-
-
-# Scone: Logistics
-# ===
-# Preliminary Sample Filtering: High-Coverage Only
-is_select = colData(fluidigm)$Coverage_Type == "High" 
-fluidigm = fluidigm[,is_select]
-# Retain only detected transcripts
-fluidigm = fluidigm[which(apply(assay(fluidigm) > 0,1,any)),]
-```
-
-# Scone: Filtering
-#===
-# Initial Gene Filtering: Select "common" transcripts based on proportional criteria.
-num_reads = quantile(assay(fluidigm)[assay(fluidigm) > 0])[4]
-num_cells = 0.25*ncol(fluidigm)
-is_common = rowSums(assay(fluidigm) >= num_reads ) >= num_cells
-
-
-# Scone: Filtering
-# ===
-data(housekeeping)
-hk = intersect(housekeeping$V1,rownames(assay(fluidigm)))
-head(housekeeping$V1)
-
-
-# Scone: Filtering
-# ===
-# Metric-based Filtering
-mfilt = metric_sample_filter(assay(fluidigm), 
-          nreads=colData(fluidigm)$NREADS,
-          ralign=colData(fluidigm)$RALIGN,
-          gene_filter=is_common,
-          pos_controls=rownames(fluidigm) %in% hk,
-          zcut=3, mixture=FALSE, 
-          plot=FALSE)
-
-
-# Scone: Filtering
-# ===
-mfilt = !apply(simplify2array(mfilt[!is.na(mfilt)]),1,any)
-
-
-# Scone: Filtering
-# ===
-# Cell filter
-goodDat = fluidigm[,mfilt]
-# Final Gene Filtering: Highly expressed in at least 5 cells
-num_reads = quantile(assay(fluidigm)[assay(fluidigm) > 0])[4]
-num_cells = 5
-is_quality = rowSums(assay(fluidigm) >= num_reads ) >= num_cells
-
-
-# Scone: Workflows Inputs
-# ===
-expr = assay(goodDat)[is_quality,]
-bio = factor(colData(goodDat)$Biological_Condition)
-
-
-# Scone: Workflows Inputs
-# ===
-qc = colData(goodDat)[,metadata(goodDat)$which_qc]
-ppq = scale(qc[,apply(qc,2,sd) > 0],center = TRUE,scale = TRUE)
-poscon = intersect(rownames(expr),strsplit("ALS2, CDK5R1, CYFIP1, DPYSL5, FEZ1, FEZ2, MAPT, MDGA1, NRCAM, NRP1, NRXN1, OPHN1, OTX2, PARD6B, PPT1, ROBO1, ROBO2, RTN1, RTN4, SEMA4F, SIAH1, SLIT2, SMARCA1, THY1, TRAPPC4, UBB, YWHAG, YWHAH",split = ", ")[[1]])
-
-
-# Scone: Workflows Inputs
-# ===
-negcon = intersect(rownames(expr),hk)
-
-
-# Scone: User Functions
-# ===
-SUM_FN = function (ei) 
-{ # TSS
-  sums = colSums(ei)
-  eo = t(t(ei)*mean(sums)/sums)
-  return(eo)
-}
-
-
-# Scone: User Functions
-# ===
-EFF_FN = function (ei) 
-{ # Divided by complexity
-  sums = colSums(ei > 0)
-  eo = t(t(ei)*sums/mean(sums))
-  return(eo)
-}
-
-
-# Scone: User Functions
-# ===
-scaling=list(none=identity, #do nothing
-             sum = SUM_FN,  # User functions
-             eff = EFF_FN,
-             tmm = TMM_FN, # SCONE
-             uq = UQ_FN,
-             uqp = UQ_FN_POS,
-             fq = FQT_FN,
-             fqp = FQ_FN_POS,
-             deseq=DESEQ_FN,
-             deseqp=DESEQ_FN_POS)
-
-
-# Scone: Imputation Settings
-# ===
-# Simple FNR model estimation with SCONE::estimate_ziber
-# fnr_out = estimate_ziber(x = expr, bulk_model = TRUE,
-#                         pos_controls = rownames(expr) %in% hk,
-#                         maxiter = 10000)
-load("data/fnr_out.Robj")
-
-
-# Scone: Imputation Settings
-# ===
-imputation=list(none=impute_null, # No imputation
-                expect=impute_expectation)
-                # Replace zeroes with expected expression level
-
-
-# Scone: Imputation Settings
-# ===
-impute_args = list(p_nodrop = fnr_out$p_nodrop, mu = exp(fnr_out$Alpha[1,]))
-
-
-# Scone: Setting Up Params
-# ===
-params <- scone(expr, 
-                imputation = imputation, impute_args = impute_args,
-                scaling=scaling, 
-                qc=ppq, bio = bio,
-                # Negative controls for RUVg
-                # normalization and evaluation
-                ruv_negcon = negcon,
-                # Parameter Arguments
-                k_qc=3, k_ruv = 3,
-                adjust_bio="no", 
-                run=FALSE)
-
-
-# Scone: Workflow Params
-# ===
-head(params)
-
-
-# Scone: Workflow Params
-# ===
-apply(params,2,unique)
-
-
-# Scone: Updating for Imputation
-# ===
-is_screened = ((params$imputation_method == "expect") & (params$scaling_method %in% c("none","deseqp","uqp","fqp","eff")))
-params = params[!is_screened,]
-
-
-# Scone: Filtered Params
-# ===
-head(params)
-
-
-# Scone: Run!
-# ===
-BiocParallel::register(BiocParallel::SerialParam())
-res <- scone(expr, 
-             imputation = imputation, impute_args = impute_args,
-             scaling=scaling,
-             qc=ppq, bio = bio,
-             ruv_negcon = negcon,
-             k_qc=3, k_ruv = 3, 
-             adjust_bio="no", 
-             eval_poscon = poscon, # Positive controls for evaluation
-             run=TRUE, params = params, # Additional params
-             eval_kclust = 2:6,stratified_pam = TRUE,
-             return_norm = "in_memory",
-             rezero = TRUE)
-
-
-# Scone: Output
-# ===
-names(res)
-
-
-# Scone: Interactive!
-# ===
-sconeReport(scone_res = res,
-            qc = ppq,
-            bio = bio,
-            negcon = negcon, poscon = poscon)
-
-
-# Select Variable Genes
-# ===
-pbmc.seurat <- MeanVarPlot(pbmc.seurat,fxn.x=expMean,fxn.y=logVarDivMean,
-                           x.low.cutoff=0.0125,x.high.cutoff=3,
-                           y.cutoff=0.5,do.contour=FALSE,do.plot=FALSE)
-
-
-# Select Variable Genes
-# ===
-length(pbmc.seurat@var.genes)
+# 2 minutes
+bipolar.seurat <- MeanVarPlot(bipolar.seurat,
+                              fxn.x=expMean,
+                              fxn.y=logVarDivMean,
+                              x.low.cutoff=0.0125,
+                              x.high.cutoff=3,
+                              y.cutoff=0.5, do.contour=FALSE,
+                              do.plot=FALSE)
+length(bipolar.seurat@var.genes)
 
 
 # Seurat: Performing PCA
 # ===
-# Select highly variable genese
-pbmc.seurat <- PCA(pbmc.seurat,pc.genes=pbmc.seurat@var.genes,do.print=FALSE)
+# class:small-code
+#
+# - Calculating PCA with the highly variable genes.
+
+# 9 minutes
+bipolar.seurat <- PCA(bipolar.seurat,
+                      pc.genes=bipolar.seurat@var.genes,
+                      do.print=FALSE)
+save(bipolar.seurat, file="./data/bipolar_seurat_pca.Robj")
 
 
 # Seurat: Performing PCA
 # ===
+# class:small-code
+
 # Calculate PCA projection
-pbmc.seurat <- ProjectPCA(pbmc.seurat)
+bipolar.seurat <- ProjectPCA(bipolar.seurat)
 
 
 # Seurat: Performing PCA
 # ===
+# class:small-code
+
 # Can plot top genes for top components
-PrintPCA(pbmc.seurat,pcs.print=1:2,genes.print=5,use.full=TRUE)
+PrintPCA(bipolar.seurat,
+         pcs.print=1:2,
+         genes.print=5,
+         use.full=TRUE)
 
 
 # Seurat: PCA Visualizations
 # ===
-VizPCA(pbmc.seurat, pcs.use=1:2)
+# class:small-code
+#
+# - Top 30 genes associated with the first two components.
+
+VizPCA(bipolar.seurat, pcs.use=1:2)
 
 
 # Seurat: PCA Visualizations
 # ===
-PCAPlot(pbmc.seurat, 1, 2)
+# class:small-code
+
+PCAPlot(bipolar.seurat, 1, 2)
 
 
 # Seurat: PCA Visualizations
 # ===
-PCHeatmap(pbmc.seurat, pc.use=1, cells.use=100, do.balanced=TRUE)
+# class:small-code
+# 
+# - Plot top 30 genes in top 100 cells for PC1.
+
+PCHeatmap(bipolar.seurat, pc.use=1, cells.use=100, do.balanced=TRUE)
 
 
 # Seurat: Choosing Components
 # ===
-# Scree (elbow) plot
-PCElbowPlot(pbmc.seurat)
+# class:small-code
+# 
+# Time Intensive
+# Jackstraw
+# # bipolar.seurat <- JackStraw(bipolar.seurat, num.replicate = 100, do.print = FALSE)
 
 
-# Seurat: Store Clusters
+# Seurat: Choosing Components
 # ===
-# 1 minute
-pbmc.seurat <- FindClusters(pbmc.seurat, pc.use = 1:10, resolution = 0.6, print.output = 0, save.SNN = TRUE)
+# class:small-code
+#
+# How do we choose how many components to use?
+#  - When there is diminishing returns to include it.
+#  - Selection is performed more liberally in our setting.
+# Time Efficient but more ad hoc
+# Scree (elbow) plot
+# 37 selected
+
+PCElbowPlot(bipolar.seurat, num.pc=40)
 
 
 # Seurat: Run t-SNE
 # ===
+# class:small-code
+# 
+# - Calculate and plot t-SNE on PC 1- 37.
+# - Can use Barnes-hut implementation.
+#
 # Calculate t-SNE Ordination
-pbmc.seurat <- RunTSNE(pbmc.seurat, dims.use = 1:10, do.fast = TRUE)
+# 7 minutes
+
+bipolar.seurat <- RunTSNE(bipolar.seurat,
+                          dims.use=1:37,
+                          do.fast=TRUE)
+
+
+# Seurat: Plot t-SNE
+# ===
+# class:small-code
+
 # Plot
-TSNEPlot(pbmc.seurat)
+TSNEPlot(bipolar.seurat)
+
+
+# Seurat: Plot t-SNE
+# ===
+# class:small-code
+
+# Plot
+TSNEPlot(bipolar.seurat)
+
+#
+# ---
+# 
+# This is not PCA
+# - Distance is best understood in close neighbors.
+# - The measurement of distance is difficult to understand.
 
 
 # Seurat: Plotting Genes Through Clusters
 # ===
-VlnPlot(pbmc.seurat, c("MS4A1","CD79A"))
+# class:small-code
+# 
+# Now that we have subclusters of cell populations plotting genes through subclusters is identical to before.
+# - Seurat stores and groups by subclusters automatically.
+
+VlnPlot(bipolar.seurat, "Prkca")
+
+
+# Seurat: Plotting Genes Through Clusters
+# ===
+# class:small-code
+
+VlnPlot(bipolar.seurat, "Glul")
+
+
+# Seurat: Store Clusters
+# ===
+# class:small-code
+#
+# - Determine subclusters for the plot.
+# - Separate graph based approach.
+#    - is not aware of the t-SNE projection.
+# - Using PC 1-37
+# 14 minutes
+# # bipolar.seurat <- FindClusters(bipolar.seurat,
+#                            pc.use=1:37,
+#                            resolution=0.6,
+#                            print.output=0,
+#                            save.SNN=TRUE)
+# # save(bipolar.seurat, file="./data/bipolar_cluster_seurat.Robj")
+
+load("./data/bipolar_cluster_seurat.Robj")
+
+
+# Seurat: Viewing de novo Groupings
+# ===
+# class:small-code
+
+TSNEPlot(bipolar.seurat)
+
+
+# Seurat: Viewing de novo Groupings
+# ===
+# class:small-code
+
+TSNEPlot(bipolar.seurat, do.label=TRUE)
 
 
 # Seurat: Plotting Genes on Clusters
 # ===
-FeaturePlot(pbmc.seurat, c("MS4A1","CD3E", "GNLY", "FCER1A"), cols.use = c("grey","blue"))
+# class:small-code
+#
+# You can also gene expression through out the cell ordination.
+# - Marker genes can help identify cell groups.
+#   - Rod Bipolar Cells (Prkca+ Scgn-)
+#   - Muller Glia (Glul+ Prkca- Scgn-)
+#   - Cone Bipolar Cells (Prkca- Scgn+)
+#   - On Cone Bipolar Cells (Prkca- Scgn+ Grm6+)
+# - Metadata can help visualize batch affects.
+
+FeaturePlot(bipolar.seurat,
+            c("Prkca","Glul", "Scgn", "Grm6"),
+            cols.use = c("grey","blue"))
 
 
 # QC the Clusters!
 # ===
-FeaturePlot(pbmc.seurat, c("nGene"), cols.use = c("grey","blue"))
+# class:small-code
+
+FeaturePlot(bipolar.seurat,
+            "nGene",
+            cols.use = c("grey","blue"))
 
 
 # QC the Clusters!
 # ===
+# class:small-code
+
+FeaturePlot(bipolar.seurat,
+            "percent.mitochodrial",
+            cols.use = c("grey","blue"))
+
+
+# QC the Clusters!
+# ===
+# class:small-code
+# 
+# Check for your batch affect.
+# - We are going to make a fake batch affect (site) and plot this as an example of how one can visualize unwanted signal.
+
 # Making Fake Data
-fake.sites <- as.integer(pbmc.seurat@ident %in% c(5,2,8,7))
-names(fake.sites) <- colnames(pbmc.seurat@data)
+fake.sites <- as.integer(bipolar.seurat@ident %in% c(0))
+names(fake.sites) <- names(bipolar.seurat@ident)
+
 # Add metadata
-pbmc.seurat <- AddMetaData(pbmc.seurat, fake.sites, "site")
+bipolar.seurat <- AddMetaData(bipolar.seurat, fake.sites, "site")
+
 # Plot feature
-FeaturePlot(pbmc.seurat, c("site"), cols.use = c("green","orange"))
+FeaturePlot(bipolar.seurat, c("site"), cols.use = c("green","orange"))
 
 
 # Seurat: Getting your labels
 # ===
-cell.labels <- pbmc.seurat@ident
+# class:small-code
+
+cell.labels <- bipolar.seurat@ident
 corner(cell.labels)
 
 
 # Seurat: Differential Expression
 # ===
-cluster1.markers <- FindMarkers(pbmc.seurat, ident.1 = 1, min.pct = 0.25)
-head(cluster1.markers, 5)
+# class:small-code
+#
+# - Default if one cluster again many tests.
+#   - Can specify an ident.2 test between clusters.
+# - Adding speed by exluding tests.
+#   - Min.pct - controls for sparsity
+#     - Min percentage in a group
+#   - Thresh.test - must have this difference in averages.
+# 2 minutes
+
+cluster5.markers <- FindMarkers(bipolar.seurat, ident.1=5, min.pct = 0.25)
+head(cluster5.markers, 30)
 
 
 # Seurat: Differential Expression
 # ===
-pbmc.markers <- FindAllMarkers(pbmc.seurat, only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25)
-pbmc.markers %>% group_by(cluster) %>% top_n(2, avg_diff)
+# class:small-code
+# - Find all cluster against all others.
+
+# bipolar.markers <- FindAllMarkers(bipolar.seurat, only.pos=TRUE, min.pct=0.25, thresh.use=0.25)
+# bipolar.markers %>% group_by(cluster) %>% top_n(2, avg_diff)
+
 
 # Seurat: Plotting DE Genes
 # ===
-pbmc.markers %>% group_by(cluster) %>% top_n(10, avg_diff) -> top10
-DoHeatmap(pbmc.seurat, genes.use = top10$gene, order.by.ident = TRUE, slim.col.label = TRUE, remove.key = TRUE)
+# class:small-code
+
+plot.genes <- head(rownames(cluster5.markers),30)
+DoHeatmap(bipolar.seurat,
+          genes.use=plot.genes,
+          order.by.ident=TRUE,
+          slim.col.label=TRUE,
+          remove.key=TRUE)
 
 
-
-
-# SCDE: Load Data
+# Dot Plots: Plotting Genes Through Clusters
 # ===
-data(es.mef.small)
+# class:small-code
+
+dot.plot(bipolar.seurat,
+         features.use=plot.genes)
 
 
-# SCDE: Filter
+# Dot Plots: Plotting Genes Through Clusters
 # ===
-dim(es.mef.small)
-cd <- clean.counts(es.mef.small, min.lib.size=1000, min.reads = 1, min.detected = 1)
-dim(cd)
+# class:small-code
+
+dot.plot(bipolar.seurat,
+         features.use=plot.genes)
 
 
-# SCDE: Create Labels
+# Dot Plots: Replicating Bipolar Results
 # ===
-## Setting up cells groups
-data.groups <- rep(NA, ncol(es.mef.small))
-data.groups[ grep("MEF", names(es.mef.small)) ] <- "MEF"
-data.groups[ grep("ESC", names(es.mef.small)) ] <- "ESC"
-data.groups <- factor(data.groups, levels = c("ESC","MEF"))
-names(data.groups) <- colnames(es.mef.small)
-table(data.groups)
+# class:small-code
+
+# Genes in tutorial
+plot.genes = c("Vsx2","Otx2","Scgn","Isl1","Grm6",
+               "Apoe","Pax6","Rho","Arr3","Tacr3",
+               "Syt2","Neto1","Irx6","Prkar2b",
+               "Grik1","Kcng4","Cabp5","Vsx1","Prkca")
+
+# Cell groups shown
+only.use.groups = c(7,9,10,12,8,14,3,13,6,11,5,4,16,0)
+
+# Plot
+dot.plot(bipolar.seurat,
+         features.use=plot.genes,
+         subset.group=only.use.groups)
 
 
-# SCDE: Calculate Error Models
+# MAST: Creating a Test Comparison
 # ===
-data(o.ifm)
+# class:small-code
+
+# Make a covariate to inform the test
+test.5 <- as.character(bipolar.seurat@ident)
+test.5[test.5 != "5"] <- "wild"
+test.5[test.5 == "5"] <- "test"
+names(test.5) <- names(bipolar.seurat@ident)
+test.5 <- factor(test.5, levels=c("wild","test"))
 
 
-# SCDE: Calculate Error Models
+# MAST: Prepping the Data
 # ===
-# Check number of cores
-detectCores()
+# class:small-code
+
+# Load into Mast Object
+# Mast object
+# Data frame of cell-level covariates
+# Data frame of feature-level covariates
+bipolar.mast <- FromMatrix(as.matrix(bipolar.seurat@data),
+                  cbind(bipolar.seurat@data.info,test.5),
+                  data.frame(primerid=rownames(bipolar.seurat@data)))
 
 
-# SCDE: Model Details
+# MAST
 # ===
-head(o.ifm)
+# class:small-code
+
+# Run test
+# 1 hr
+# zlm.test.5 <- zlm.SingleCellAssay(~ test.5, bipolar.mast)
+load("./data/mast_zlm.Robj")
+
+df.test.5 <- data.frame(summary(zlm.test.5, doLRT="test.5test"))
+summary.mast <- makeNice(df.test.5, val="test.5test")
 
 
-# SCDE: Filter Out Poor Fits
+# MAST
 # ===
-dim(o.ifm)
-valid.cells <- o.ifm$corr.a > 0
-table(valid.cells)
-o.ifm <- o.ifm[valid.cells, ]
-dim(o.ifm)
+# class:small-code
+
+summary.mast[abs(summary.mast[,5])>=1 & !is.na(summary.mast[,5]),]
 
 
-# SCDE: Estimate a Prior to Start
+# MAST
 # ===
-## Calculate the Prior (starting value)
-o.prior <- scde.expression.prior(models=o.ifm, counts=cd, length.out=400, show.plot=FALSE)
+# class:small-code
 
-
-# SCDE: Perform Differential Tests
-# ===
-## Setting up cells groups
-data.groups <- rep(NA, nrow(o.ifm))
-data.groups[ grep("MEF", rownames(o.ifm)) ] <- "MEF"
-data.groups[ grep("ESC", rownames(o.ifm)) ] <- "ESC"
-data.groups <- factor(data.groups, levels = c("ESC","MEF"))
-names(data.groups) <- row.names(o.ifm)
-
-## Perform T-test like analysis
-load("data/ediff.Robj")
-
-
-# SCDE: Top Upregulated Genes
-# ===
-head(ediff[order(ediff$Z, decreasing  =  TRUE), ])
-
-
-# SCDE: Write Data to Text File
-# ===
-write.table(ediff[order(abs(ediff$Z), decreasing = TRUE), ],
-            file = "data/scde_results.txt", row.names = TRUE, col.names = TRUE, sep = "\t", quote = FALSE)
-
-
-# SCDE: Plot a Gene
-# ===
-scde.test.gene.expression.difference("Tdh", models = o.ifm, counts = cd, prior = o.prior)
-
-
-# SCDE: Interactive Exploration
-# ===
-# scde.browse.diffexp(ediff, o.ifm, cd, o.prior, groups = groups, name = "diffexp1", port = 1299)
-
-
-# SCDE and Batch Affects
-# ===
-batch <- as.factor(ifelse(rbinom(nrow(o.ifm), 1, 0.5) == 1, "batch1", "batch2"))
-table(groups, batch)
-
-# SCDE and Batch Affects
-# ===
-scde.test.gene.expression.difference("Tdh", models = o.ifm, counts = cd, prior = o.prior, batch = batch)
-
-# Pagoda: Load Data
-# ===
-data(pollen)
-# Original genes and cells (count matrix)
-dim(pollen)
-# Filter poor cells
-pollen.clean <- clean.counts(pollen)
-# Cleaned matrix dimensions
-dim(pollen.clean)
-
-
-# Pagoda: Create a Color Legend
-# ===
-name.keys <- gsub("^Hi_(.*)_.*", "\\1", colnames(pollen.clean))
-name.keys
-
-
-# Pagoda: Create a Color Legend
-# ===
-l2cols <- c("coral4", "olivedrab3", "skyblue2", "slateblue3")[as.integer(factor(name.keys, levels = c("NPC", "GW16", "GW21", "GW21+3")))]
-l2cols
-
-
-# Pagoda: Create Error Models
-# ===
-# Precomputed data
-data(knn)
-
-
-# Pagoda: Normalize the Variance
-# ===
-load("data/varinfo.Robj")
-
-
-# Pagoda: Normalize the Variance
-# ===
-# list top overdispersed genes
-sort(varinfo$arv, decreasing = TRUE)[1:10]
-# Control for complexity
-varinfo <- pagoda.subtract.aspect(varinfo, colSums(pollen.clean[, rownames(knn)]>0))
-
-
-# Pagoda: Load Precomputed Gene Groups
-# ===
-library(org.Hs.eg.db)
-# Translate gene names to ids
-ids <- unlist(lapply(mget(rownames(pollen.clean), org.Hs.egALIAS2EG, ifnotfound = NA), function(x) x[1]))
-rids <- names(ids); names(rids) <- ids 
-
-
-# Pagoda: Load Precomputed Gene Groups
-# ===
-# convert GO lists from ids to gene names
-gos.interest <- unique(c(ls(org.Hs.egGO2ALLEGS)[1:100],"GO:0022008","GO:0048699", "GO:0000280", "GO:0007067")) 
-go.env <- lapply(mget(gos.interest, org.Hs.egGO2ALLEGS), function(x) as.character(na.omit(rids[x]))) 
-go.env <- clean.gos(go.env) # remove GOs with too few or too many genes
-go.env <- list2env(go.env) # convert to an environment
-
-
-# Pagoda: Known Gene Groups Overdispersion
-# ===
-# pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components = 1, n.cores = 1)
-load("data/pwpca.Robj")
-df <- pagoda.top.aspects(pwpca, return.table = TRUE, plot = TRUE, z.score = 1.96)
-
-
-# Pagoda: Known Gene Groups Overdispersion
-# ===
-head(df)
-
-
-# Pagoda: Novel Gene Group Overdispersion
-# ===
-load("data/clpca.Robj")
-
-
-# Pagoda: Novel Gene Group Overdispersion
-# ===
-df <- pagoda.top.aspects(pwpca, clpca, return.table = TRUE, plot = TRUE, z.score = 1.96)
-
-
-# Pagoda: Novel Gene Group Overdispersion
-# ===
-head(df)
-
-
-# Pagoda: Cell Clustering
-# ===
-# Get full info on the top aspects
-tam <- pagoda.top.aspects(pwpca, clpca, n.cells = NULL, z.score = qnorm(0.01/2, lower.tail = FALSE))
-# Determine overall cell clustering
-hc <- pagoda.cluster.cells(tam, varinfo)
-tamr <- pagoda.reduce.loading.redundancy(tam, pwpca, clpca)
-tamr2 <- pagoda.reduce.redundancy(tamr, distance.threshold = 0.9, plot = TRUE, cell.clustering = hc, labRow = NA, labCol = NA, box = TRUE, margins = c(0.5, 0.5), trim = 0)
-col.cols <- rbind(groups = cutree(hc, 3))
-
-
-# Pagoda: Visualize Clustering
-# ===
-pagoda.view.aspects(tamr2, cell.clustering = hc, box = TRUE, labCol = NA, margins = c(0.5, 20), col.cols = rbind(l2cols))
-
-
-# Pagoda: Interactive Clustering
-# ===
-# compile a browsable app, showing top three clusters with the top color bar
-app <- make.pagoda.app(tamr2, tam, varinfo, go.env, pwpca, clpca, col.cols = col.cols, cell.clustering = hc, title = "NPCs")
-# show app in the browser (port 1468)
-show.app(app, "pollen", browse = TRUE, port = 1468) 
-
-
-# Notes: to Make a PDF
-# ===
-# pdf( "data/my_file.pdf", useDingbats = FALSE ) # Start pdf
-# plot( 1:10, log(1:10 ) ) # plot in to the pdf file
-# plot( seq(0,.9,.1), sin(0:9) ) # another plot for the pdf file
-# dev.off() # Close pdf file ( very important )
-
+plot.genes = c("Cck","Pcp2","Scg2","Scgn", "Gngt2",
+               "Guk1","Pcp4","Pcp4l1","Vsx1")
+dot.plot(bipolar.seurat,
+         features.use=plot.genes)
