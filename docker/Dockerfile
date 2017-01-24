@@ -29,29 +29,33 @@ RUN apt-get update && \
 RUN apt-get install -y libssl-dev libcurl4-openssl-dev libxml2-dev libxt-dev libgstreamer0.10-0 libjpeg62 ibgstreamer-plugins-base0.10-0
 
 ##############
-## R for scone needs R >=3.3
 RUN echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | tee -a /etc/apt/sources.list && \
     gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9 && \
     gpg -a --export E084DAB9 | apt-key add - && \
-    apt-get update && \
-    apt-get install -y r-base=${R_VERSION} && \
-    apt-get install -y r-base-dev=${R_VERSION}
+    apt-get update && \ 
+    apt-get install -y r-recommended=${R_VERSION} && \
+    apt-get install -y r-base=${R_VERSION}
+#    apt-get install -y r-base-dev=${R_VERSION}
 
 ##############
 ## devtools
 ## seurat
-## FastProject
 RUN echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
-    echo "biocLite(\"devtools\")" >> ${SRC}/install_pkgs.R && \
+    echo "biocLite(\"devtools\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    echo "biocLite(\"RcppArmadillo\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    echo "biocLite(\"Rook\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    echo "biocLite(\"rjson\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    echo "biocLite(\"RMTstat\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    echo "biocLite(\"extRemes\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    echo "biocLite(\"pcaMethods\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    echo "biocLite(\"SummarizedExperiment\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    echo "biocLite(\"pheatmap\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    echo "biocLite(\"amap\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    echo "biocLite(\"useful\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    echo "biocLite(\"vioplot\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
     echo "biocLite()" >> ${SRC}/install_pkgs.R && \
-    echo "biocLite(\"YosefLab/scone\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
     echo "devtools::install_github(\"satijalab/seurat\")" >> ${SRC}/install_pkgs.R && \
-    echo "biocLite(c(\"RcppArmadillo\", \"Rook\", \"rjson\", \"RMTstat\", \"extRemes\", \"pcaMethods\", \"Cairo\"), dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
-    echo "biocLite(c(\"pheatmap\", \"amap\", \"useful\", \"vioplot\"), dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
-    echo "biocLite(c(\"org.Hs.eg.db\"), dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
-    echo "biocLite()" >> ${SRC}/install_pkgs.R && \
-    echo "biocLite(\"SummarizedExperiment\")" >> ${SRC}/install_pkgs.R && \
-    echo "install_github(\"RGLab/MAST@summarizedExpt\")" >> ${SRC}/install_pkgs.R && \
+    echo "devtools::install_github(\"RGLab/MAST@summarizedExpt\")" >> ${SRC}/install_pkgs.R && \
     Rscript ${SRC}/install_pkgs.R
 
 ## RStudio
