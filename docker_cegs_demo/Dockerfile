@@ -1,19 +1,23 @@
-FROM ubuntu:xenial
-MAINTAINER ttickle@broadinstitute.org
+FROM rocker/rstudio
+MAINTAINER ttickle@broadinstitute.org and Brian Haas (bhaas@broadinstitute.org)
 
 ######################
 ## Environment
 ######################
 
-## Constants
-### SOFTWARE versions
-ENV R_VERSION 3.3.1-1xenial0
-
 ### locations
 ENV BIN /usr/local/bin
-ENV R_DATA /usr/local/R/data
+ENV DATA /usr/local/data
 ENV R_STUDIO /usr/local/R
 ENV SRC /usr/local/src
+
+### User setup
+RUN groupadd -g 2000 training && useradd -m -u 2000 -g 2000 training
+RUN echo 'training:training' | chpasswd
+RUN chsh -s /bin/bash training
+ENV HOME=/home/training
+RUN echo "alias ll='ls -la -G'" >> /home/training/.profile
+RUN usermod -G training,www-data training
 
 ######################
 ## Dependencies and Tools
@@ -21,22 +25,9 @@ ENV SRC /usr/local/src
 ##############
 ## Helper tools
 RUN apt-get update && \
-    apt-get install -y unzip wget git
-
-##############
-## System tools
-## devtools: libssl-dev, libcurl4-openssl-dev, libxml2-dev
-## rstudio: libjpeg62, libgstreamer0.10-0, libgstreamer-plugins-base0.10-0
-RUN apt-get install -y libssl-dev libcurl4-openssl-dev libxml2-dev libxt-dev libgstreamer0.10-0 libjpeg62 ibgstreamer-plugins-base0.10-0
-
-##############
-RUN echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | tee -a /etc/apt/sources.list && \
-    gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9 && \
-    gpg -a --export E084DAB9 | apt-key add - && \
-    apt-get update && \ 
-    apt-get install -y r-recommended=${R_VERSION} && \
-    apt-get install -y r-base=${R_VERSION}
-#    apt-get install -y r-base-dev=${R_VERSION}
+    apt-get install -y unzip wget git \
+    r-base r-base-dev \
+    libssl-dev libcurl4-openssl-dev libxml2-dev libxt-dev libgstreamer0.10-0 ibgstreamer-plugins-base0.10-0 libcairo2-dev
 
 ##############
 ## devtools
@@ -57,16 +48,12 @@ RUN echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs
     echo "biocLite(\"vioplot\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
     echo "biocLite()" >> ${SRC}/install_pkgs.R && \
     echo "devtools::install_github(\"satijalab/seurat\")" >> ${SRC}/install_pkgs.R && \
-    echo "devtools::install_github(\"RGLab/MAST@summarizedExpt\")" >> ${SRC}/install_pkgs.R && \
-    Rscript ${SRC}/install_pkgs.R
+    echo "devtools::install_github(\"RGLab/MAST@summarizedExpt\")" >> ${SRC}/install_pkgs.R
 
-## RStudio
-WORKDIR ${R_STUDIO}
-RUN wget https://download1.rstudio.org/rstudio-0.99.903-amd64.deb && \
-    dpkg -i rstudio-0.99.903-amd64.deb
+RUN Rscript ${SRC}/install_pkgs.R
 
 ## Pull in data from ftp
-WORKDIR ${R_DATA}
+WORKDIR ${R_STUDIO}/data
 RUN wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/bipolar_demo_cluster_seurat.Robj && \
     wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/small_bipolar.Robj && \
     wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/bipolar_demo_seurat_pca.Robj && \
@@ -75,3 +62,10 @@ RUN wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/
 WORKDIR ${R_STUDIO}/src
 RUN wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/src/dotplot.R && \
     wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/src/makeNiceMAST.R
+
+# Ports
+EXPOSE 8787
+
+## for seurat, needs java and unfortunately writes to /usr/local/lib/R/site-library! and needs open permissions
+RUN apt-get update && apt-get install -y default-jre htop && apt-get clean
+RUN chmod 777 /usr/local/lib/R/site-library
