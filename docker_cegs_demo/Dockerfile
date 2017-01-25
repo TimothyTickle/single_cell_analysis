@@ -32,7 +32,8 @@ RUN apt-get update && \
 ##############
 ## devtools
 ## seurat
-RUN echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"devtools\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
     echo "biocLite(\"RcppArmadillo\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
     echo "biocLite(\"reshape\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
@@ -48,9 +49,8 @@ RUN echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs
     echo "biocLite(\"vioplot\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
     echo "biocLite()" >> ${SRC}/install_pkgs.R && \
     echo "devtools::install_github(\"satijalab/seurat\")" >> ${SRC}/install_pkgs.R && \
-    echo "devtools::install_github(\"RGLab/MAST@summarizedExpt\")" >> ${SRC}/install_pkgs.R
-
-RUN Rscript ${SRC}/install_pkgs.R
+    echo "devtools::install_github(\"RGLab/MAST@summarizedExpt\")" >> ${SRC}/install_pkgs.R && \
+    Rscript ${SRC}/install_pkgs.R
 
 ## Pull in data from ftp
 WORKDIR ${R_STUDIO}/data
@@ -66,6 +66,6 @@ RUN wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/src/d
 # Ports
 EXPOSE 8787
 
-## for seurat, needs java and unfortunately writes to /usr/local/lib/R/site-library! and needs open permissions
+## For seurat, needs java and unfortunately writes to /usr/local/lib/R/site-library! and needs open permissions
 RUN apt-get update && apt-get install -y default-jre htop && apt-get clean
 RUN chmod 777 /usr/local/lib/R/site-library
