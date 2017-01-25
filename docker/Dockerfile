@@ -44,6 +44,7 @@ RUN echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | tee -a /etc/ap
 RUN echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"devtools\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
     echo "biocLite(\"RcppArmadillo\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    echo "biocLite(\"reshape\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
     echo "biocLite(\"Rook\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
     echo "biocLite(\"rjson\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
     echo "biocLite(\"RMTstat\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
@@ -70,3 +71,10 @@ RUN wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/
     wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/bipolar_raw.Robj && \
     wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/bipolar_seurat_pca.Robj && \
     wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/mast_zlm.Robj
+
+WORKDIR ${R_STUDIO}/src
+RUN wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/src/dotplot.R && \
+    wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/src/makeNiceMAST.R
+
+WORKDIR ${R_STUDIO}
+RUN wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/cut_and_paste.txt

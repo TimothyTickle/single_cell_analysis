@@ -79,7 +79,7 @@ What is in a Seurat Object?
 ===
 class:small-code
 
-So far, raw sparse matrix
+- So far, raw sparse matrix.
 
 ```{r, eval=TRUE, echo=TRUE, tidy=FALSE}
 head(bipolar.seurat.raw@raw.data)
@@ -89,7 +89,7 @@ What is in a Seurat Object?
 ===
 class:small-code
 
-So far, raw sparse matrix
+- So far, raw sparse matrix.
 
 ```{r, eval=TRUE, echo=TRUE, tidy=FALSE}
 head(bipolar.seurat.raw@data)
@@ -101,20 +101,12 @@ What is in a Seurat Object?
 ===
 class:small-code
 
-- __var.genes__ Variable genes across cells
-- __data.info__ Misc info including complexity (nGene)
-- __cell.names__ Column (cell) names
-- __gene.names__ Row (gene) names
+- __var.genes__ Variable genes across cells.
+- __data.info__ Misc info including complexity (nGene).
+- __cell.names__ Column (cell) names.
+- __gene.names__ Row (gene) names.
 
 ```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
-?seurat
-```
-
-What is in a Seurat Object?
-===
-class:small-code
-
-```{r, eval=TRUE, echo=TRUE, tidy=FALSE}
 ?seurat
 ```
 
@@ -168,13 +160,16 @@ class:small-code
 # Plot genes per cell
 # How many genes expressed per cells
 # 3 Minutes
-complexity.per.cell <- apply(bipolar.seurat.raw@raw.data, 2, function(x) sum(x>0))
+complexity.per.cell <- apply(bipolar.seurat.raw@raw.data,
+                             2, function(x) sum(x>0))
 # Mean count per cell.
 # 3 minutes
-mean.count.per.cell <- apply(bipolar.seurat.raw@raw.data, 2, function(x) mean(x))
+mean.count.per.cell <- apply(bipolar.seurat.raw@raw.data,
+                             2, function(x) mean(x))
 # Gene prevalence
 # 5 minutes
-gene.prevalence <- apply(bipolar.seurat.raw@raw.data, 1, function(x) sum(x>0))
+gene.prevalence <- apply(bipolar.seurat.raw@raw.data,
+                         1, function(x) sum(x>0))
 ```
 
 Store Technical Batches for Later
@@ -234,10 +229,14 @@ class:small-code
 
 ```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
 # Plot cell complexity, sorted by complexity
-plot(1:length(complexity.per.cell), sort(complexity.per.cell))
+plot(1:length(complexity.per.cell),
+     sort(complexity.per.cell),
+     xlab="Cells ranked by complexity (Less to More)",
+     ylab="Complexity")
 # Add lines
 abline(h=500, col="orange")
 abline(h=3000, col="green")
+title("Complexity from Less to More")
 ```
 
 How Many Expressed Genes?
@@ -282,12 +281,12 @@ title("Study Complexity")
 axis(side=1,at=1,labels=c("Study"))
 ```
 
-Identifying Outliers?
+Identifying Outlier Cells?
 ===
 class:small-code
 
-- Cells that are unusually simple (or no counts)
-- Cells that are unusually complex (doublets?)
+- Cells that are unusually simple (or no counts).
+- Cells that are unusually complex (doublets?).
 - We will filter in a standard way, we are just describing the data.
 
 ```{r, eval=FALSE, echo=TRUE, tidy=FALSE}
@@ -299,7 +298,7 @@ abline(v=500, col="orange")
 abline(v=3000, col="green")
 ```
 
-Identifying Outliers?
+Identifying Outlier Cells?
 ===
 class:small-code
 
@@ -309,7 +308,7 @@ abline(v=500, col="orange")
 abline(v=3000, col="green")
 ```
 
-Identifying Noise?
+Identifying Noisey Genes?
 ===
 class:small-code
 
@@ -324,7 +323,7 @@ hist(log2(gene.prevalence), breaks=100)
 abline(v=log(30), col="orange")
 ```
 
-Identifying Noise?
+Identifying Noisey Genes?
 ===
 class:small-code
 
@@ -333,13 +332,13 @@ hist(log2(gene.prevalence), breaks=100)
 abline(v=log(30), col="orange")
 ```
 
-Filter Cells: Removing the Outlier Cells
+Filter Cells: Removing the Outliers and Noise
 ===
 class:small-code
 
 - Genes must be in 30 cells.
 - Cells must have alteast 500 genes.
-- Scaled by 1000 (Total Sum Scaling)
+- Scaled by 1000 (Total Sum Scaling).
 
 ```{r, eval=TRUE, echo=TRUE, tidy=FALSE}
 # From 24904 x 44994 to 14575 x 30673
@@ -514,7 +513,7 @@ Saving as an R Object
 ===
 class:small-code
 
-Saving the Seurat object
+Saving the Seurat object.
 - Contains all manipulation so far.
 - Can be loaded or shared.
 - Does not contain environment.
@@ -545,7 +544,7 @@ Seurat: Viewing Specific Genes
 ===
 class:small-code
 
-Plotting genes across groups
+Plotting genes across groups.
 - Check the identity of the cells!!!
 
 ```{r,eval=FALSE, echo=TRUE, tidy=FALSE}
@@ -640,7 +639,7 @@ class:small-code
 bipolar.seurat <- PCA(bipolar.seurat,
                       pc.genes=bipolar.seurat@var.genes,
                       do.print=FALSE)
-save(bipolar.seurat, file="./data/bipolar_seurat_pca.Robj")
+# save(bipolar.seurat, file="./data/bipolar_seurat_pca.Robj")
 ```
 
 Seurat: Performing PCA
@@ -686,9 +685,9 @@ Seurat: Check your Batch Correction
 ===
 class:small-code
 
-How can we component loadings?
-- Can check components to see if gene show up that are enriched in components.
-- Using the scores you can perform GE analysis to decribe the component.
+How can we use component loadings?
+- Can check components to see if genes show up that are enriched in components.
+- Using the scores you can perform enrichment analysis to decribe the component.
 
 Seurat: PCA Visualizations
 ===
@@ -823,42 +822,7 @@ PCAPlot(bipolar.seurat, 1, 2)
 TSNEPlot(bipolar.seurat)
 ```
 
-Seurat: Plotting Genes Through Clusters
-===
-class:small-code
-
-Now that we have subclusters of cell populations plotting genes through subclusters is identical to before.
-- Seurat stores and groups by subclusters automatically.
-
-```{r, eval=FALSE, echo=TRUE, tidy=FALSE, fig.align="center"}
-VlnPlot(bipolar.seurat, "Prkca")
-```
-
-Seurat: Plotting Genes Through Clusters
-===
-class:small-code
-
-```{r, eval=TRUE, echo=FALSE, tidy=FALSE, fig.align="center"}
-VlnPlot(bipolar.seurat, "Prkca")
-```
-
-Seurat: Plotting Genes Through Clusters
-===
-class:small-code
-
-```{r, eval=FALSE, echo=TRUE, tidy=FALSE, fig.align="center"}
-VlnPlot(bipolar.seurat, "Glul")
-```
-
-Seurat: Plotting Genes Through Clusters
-===
-class:small-code
-
-```{r, eval=TRUE, echo=FALSE, tidy=FALSE, fig.align="center"}
-VlnPlot(bipolar.seurat, "Glul")
-```
-
-Seurat: Store Clusters
+Seurat: Calculate Clusters
 ===
 class:small-code
 
@@ -909,16 +873,51 @@ class:small-code
 TSNEPlot(bipolar.seurat, do.label=TRUE)
 ```
 
+Seurat: Plotting Genes Through Clusters
+===
+class:small-code
+
+Now that we have subclusters of cell populations, plotting genes through subclusters is identical to before.
+- Seurat stores and groups by subclusters automatically.
+
+```{r, eval=FALSE, echo=TRUE, tidy=FALSE, fig.align="center"}
+VlnPlot(bipolar.seurat, "Prkca")
+```
+
+Seurat: Plotting Genes Through Clusters
+===
+class:small-code
+
+```{r, eval=TRUE, echo=FALSE, tidy=FALSE, fig.align="center"}
+VlnPlot(bipolar.seurat, "Prkca")
+```
+
+Seurat: Plotting Genes Through Clusters
+===
+class:small-code
+
+```{r, eval=FALSE, echo=TRUE, tidy=FALSE, fig.align="center"}
+VlnPlot(bipolar.seurat, "Glul")
+```
+
+Seurat: Plotting Genes Through Clusters
+===
+class:small-code
+
+```{r, eval=TRUE, echo=FALSE, tidy=FALSE, fig.align="center"}
+VlnPlot(bipolar.seurat, "Glul")
+```
+
 Seurat: Plotting Genes on Clusters
 ===
 class:small-code
 
 You can also gene expression through out the cell ordination.
 - Marker genes can help identify cell groups.
-  - Rod Bipolar Cells (Prkca+ Scgn-)
-  - Muller Glia (Glul+ Prkca- Scgn-)
-  - Cone Bipolar Cells (Prkca- Scgn+)
-  - On Cone Bipolar Cells (Prkca- Scgn+ Grm6+)
+  - Rod Bipolar Cells (Prkca+ Scgn-).
+  - Muller Glia (Glul+ Prkca- Scgn-).
+  - Cone Bipolar Cells (Prkca- Scgn+).
+  - On Cone Bipolar Cells (Prkca- Scgn+ Grm6+).
 - Metadata can help visualize batch affects.
 
 ```{r, eval=FALSE, echo=TRUE, tidy=FALSE, fig.align="center"}
@@ -1027,14 +1026,24 @@ Seurat: Differential Expression
 ===
 class:small-code
 
-- Default if one cluster again many tests.
+- Default is one cluster against many tests.
   - Can specify an ident.2 test between clusters.
-- Adding speed by exluding tests.
-  - Min.pct - controls for sparsity
-    - Min percentage in a group
+- Adding speed by excluding tests.
+  - Min.pct - controls for sparsity.
+    - Min percentage in a group.
   - Thresh.test - must have this difference in averages.
 
-```{r,eval=TRUE, echo=TRUE, tidy=FALSE}
+```{r,eval=FALSE, echo=TRUE, tidy=FALSE}
+# 2 minutes
+cluster5.markers <- FindMarkers(bipolar.seurat, ident.1=5, min.pct = 0.25)
+head(cluster5.markers, 30)
+```
+
+Seurat: Differential Expression
+===
+class:small-code
+
+```{r,eval=TRUE, echo=FALSE, tidy=FALSE}
 # 2 minutes
 cluster5.markers <- FindMarkers(bipolar.seurat, ident.1=5, min.pct = 0.25)
 head(cluster5.markers, 30)
@@ -1174,9 +1183,13 @@ bipolar.mast <- FromMatrix(as.matrix(bipolar.seurat@data),
                   data.frame(primerid=rownames(bipolar.seurat@data)))
 ```
 
-MAST
+MAST: Create the Model
 ===
 class:small-code
+
+- Create the model, here we load data for time.
+- Perform test for our contrast.
+- Format results for easier use.
 
 ```{r, eval=TRUE, echo=TRUE, tidy=FALSE}
 # Run test
@@ -1188,21 +1201,24 @@ df.test.5 <- data.frame(summary(zlm.test.5, doLRT="test.5test"))
 summary.mast <- makeNice(df.test.5, val="test.5test")
 ```
 
-MAST
+MAST: View Results
 ===
 class:small-code
+
+- Results from test.
+- Some overlapping genes.
 
 ```{r, eval=TRUE, echo=TRUE, tidy=FALSE}
 summary.mast[abs(summary.mast[,5])>=1 & !is.na(summary.mast[,5]),]
 ```
 
-MAST
+MAST: Plot Results
 ===
 class:small-code
 
 ```{r, eval=TRUE, echo=TRUE, tidy=FALSE, fig.align="center"}
-plot.genes = c("Cck","Pcp2","Scg2","Scgn", "Gngt2",
-               "Guk1","Pcp4","Pcp4l1","Vsx1")
+plot.genes = c("Scg2","Scgn","Cck","Vsx1","Guk1",
+               "Gngt2","Pcp4l1","Pcp4","Pcp2")
 dot.plot(bipolar.seurat,
          features.use=plot.genes)
 ```
