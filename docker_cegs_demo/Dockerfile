@@ -35,20 +35,84 @@ RUN apt-get update && \
 RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
     echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"devtools\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    Rscript ${SRC}/install_pkgs.R
+
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"RcppArmadillo\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    Rscript ${SRC}/install_pkgs.R
+
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"reshape\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    Rscript ${SRC}/install_pkgs.R
+
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"Rook\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    Rscript ${SRC}/install_pkgs.R
+
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"rjson\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    Rscript ${SRC}/install_pkgs.R
+
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"RMTstat\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    Rscript ${SRC}/install_pkgs.R
+
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"extRemes\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    Rscript ${SRC}/install_pkgs.R
+
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"pcaMethods\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    Rscript ${SRC}/install_pkgs.R
+
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"SummarizedExperiment\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    Rscript ${SRC}/install_pkgs.R
+
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"pheatmap\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    Rscript ${SRC}/install_pkgs.R
+
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"amap\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    Rscript ${SRC}/install_pkgs.R
+
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"useful\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    Rscript ${SRC}/install_pkgs.R
+
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"vioplot\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
-    echo "biocLite()" >> ${SRC}/install_pkgs.R && \
+    Rscript ${SRC}/install_pkgs.R
+
+#    echo "biocLite()" >> ${SRC}/install_pkgs.R && \
+
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
+    echo "biocLite(\"codetools\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
+    Rscript ${SRC}/install_pkgs.R
+
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "devtools::install_github(\"satijalab/seurat\")" >> ${SRC}/install_pkgs.R && \
+    wget https://cran.r-project.org/src/contrib/Archive/nlme/nlme_3.1-123.tar.gz && \
+    R CMD INSTALL nlme_3.1-123.tar.gz && \
+    Rscript ${SRC}/install_pkgs.R
+
+RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
+    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "devtools::install_github(\"RGLab/MAST@summarizedExpt\")" >> ${SRC}/install_pkgs.R && \
     Rscript ${SRC}/install_pkgs.R
 
