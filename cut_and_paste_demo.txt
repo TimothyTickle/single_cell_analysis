@@ -10,6 +10,7 @@
 library(dplyr) # Dataframe manipulation
 library(MAST) # For DE
 library(Matrix) # Sparse matrices
+library(useful) # corner function
 library(vioplot) # Violin pots
 library(Seurat) # Single cell Analysis
 
@@ -110,6 +111,14 @@ dim(bipolar.seurat.raw@raw.data)
 
 # The full data will be too large to see
 head(as.matrix(bipolar.seurat.raw@raw.data))
+
+
+# How to Show Counts?
+# ===
+# class:small-code
+
+# The full data will be too large to see
+corner(as.matrix(bipolar.seurat.raw@raw.data))
 
 
 # How Many Expressed Genes?
@@ -365,9 +374,9 @@ object.size(bipolar.seurat)
 # - Does not contain environment.
 
 # 3.16 GB
-# save(bipolar.seurat, file="./data/bipolar_seurat.Robj")
+# save(bipolar.seurat, file="./data/bipolar_seurat_demo.Robj")
 
-# load("./data/bipolar_seurat.Robj")
+# load("./data/bipolar_seurat_demo.Robj")
 
 
 # Saving as Text Files
@@ -377,7 +386,7 @@ object.size(bipolar.seurat)
 # You may need to export data to import into other applications.
 
 # Log-scale expression matrix
-# 5 minutes (1.2 GB)
+# (1.2 GB)
 # write.table(as.matrix(bipolar.seurat@data), file="bipolar_data.txt")
 
 # Study metadata (1.2 MB)
@@ -421,7 +430,6 @@ batch.effect[batch.effect %in% c(5,6)] <- 2
 bipolar.seurat <- AddMetaData(bipolar.seurat, batch.effect, "batch.effect")
 
 # Regress on metadata
-# 5 minutes
 bipolar.seurat <- RegressOut(bipolar.seurat, latent.vars="batch.effect")
 
 
@@ -455,7 +463,7 @@ length(bipolar.seurat@var.genes)
 bipolar.seurat <- PCA(bipolar.seurat,
                       pc.genes=bipolar.seurat@var.genes,
                       do.print=FALSE)
-# save(bipolar.seurat, file="./data/bipolar_seurat_pca.Robj")
+# save(bipolar.seurat, file="./data/bipolar_seurat_pca_demo.Robj")
 
 
 # Seurat: Performing PCA
@@ -586,14 +594,13 @@ VlnPlot(bipolar.seurat, "Glul")
 # - Separate graph based approach.
 #    - is not aware of the t-SNE projection.
 # - Using PC 1-37
-# 2 minutes
 bipolar.seurat <- FindClusters(bipolar.seurat,
                             pc.use=1:37,
                             resolution=0.6,
                             print.output=0,
                             save.SNN=TRUE)
-# # save(bipolar.seurat, file="./data/bipolar_cluster_seurat.Robj")
-# load("./data/bipolar_cluster_seurat.Robj")
+# # save(bipolar.seurat, file="./data/bipolar_cluster_seurat_demo.Robj")
+# load("./data/bipolar_cluster_seurat_demo.Robj")
 
 
 # Seurat: Viewing de novo Groupings
@@ -668,7 +675,7 @@ FeaturePlot(bipolar.seurat, c("site"), cols.use = c("green","orange"))
 # class:small-code
 
 cell.labels <- bipolar.seurat@ident
-header(cell.labels)
+corner(cell.labels)
 
 
 # Seurat: Differential Expression
@@ -681,7 +688,6 @@ header(cell.labels)
 #   - Min.pct - controls for sparsity
 #     - Min percentage in a group
 #   - Thresh.test - must have this difference in averages.
-# 2 minutes
 
 cluster5.markers <- FindMarkers(bipolar.seurat, ident.1=5, min.pct = 0.25)
 head(cluster5.markers, 30)
