@@ -10,27 +10,27 @@
 library(dplyr) # Dataframe manipulation
 library(MAST) # For DE
 library(Matrix) # Sparse matrices
-library(useful) # Corner function
 library(vioplot) # Violin pots
 library(Seurat) # Single cell Analysis
 
+# need to update or copy paste from website
 source("./src/dotplot.R")
 source("./src/makeNiceMAST.R")
 
-load("./data/bipolar_raw.Robj")
+load("./data/small_bipolar.Robj")
 
 
 # Representing Sparse Matrices
 # ===
 # class:small-code
 
-# 24904 x 44994 (1 minute)
+# 24904 x 5000
 bipolar.data <- Matrix(as.matrix(bipolar_dge), sparse=TRUE)
 # Memory use as a normal matrix
 object.size(bipolar_dge)
 
 # Memory use as a sparse matrix
-# ~23 X less
+# ~22 X less
 object.size(bipolar.data)
 bipolar_dge <- NULL
 
@@ -97,7 +97,7 @@ length(row.names(bipolar.seurat.raw@raw.data))
 # ===
 # class:small-code
 
-# Column names # 24904 x 44994
+# Column names # 24904 x 5000
 # Sample / Cell names / Barcodes
 head(colnames(bipolar.seurat.raw@raw.data),3)
 length(colnames(bipolar.seurat.raw@raw.data))
@@ -108,9 +108,8 @@ dim(bipolar.seurat.raw@raw.data)
 # ===
 # class:small-code
 
-# Only the corner
 # The full data will be too large to see
-corner(as.matrix(bipolar.seurat.raw@raw.data))
+head(as.matrix(bipolar.seurat.raw@raw.data))
 
 
 # How Many Expressed Genes?
@@ -119,13 +118,12 @@ corner(as.matrix(bipolar.seurat.raw@raw.data))
 
 # Plot genes per cell
 # How many genes expressed per cells
-# 3 Minutes
 complexity.per.cell <- apply(bipolar.seurat.raw@raw.data, 2, function(x) sum(x>0))
+
 # Mean count per cell.
-# 3 minutes
 mean.count.per.cell <- apply(bipolar.seurat.raw@raw.data, 2, function(x) mean(x))
+
 # Gene prevalence
-# 5 minutes
 gene.prevalence <- apply(bipolar.seurat.raw@raw.data, 1, function(x) sum(x>0))
 
 
@@ -229,10 +227,9 @@ abline(v=log(30), col="orange")
 # - Cells must have alteast 500 genes.
 # - Scaled by 1000 (Total Sum Scaling)
 
-# From 24904 x 44994 to 14575 x 30673
-# 5 minutes
+# From 24904 x 3384
 bipolar.seurat <- Setup(bipolar.seurat.raw,
-                    min.cells=30, min.genes=500,
+                    min.cells=6, min.genes=500,
                     do.logNormalize=TRUE,
                     total.expr=1e4,
                     project="Tutorial")
@@ -341,7 +338,6 @@ GenePlot(bipolar.seurat, "nUMI", "percent.mitochodrial")
 # Filter libraries with more than 10% mitochondrially derived transcripts
 # From 14575 x 30673 to 14575 x 27489
 dim(bipolar.seurat@data)
-# 1 Minute
 # Filter max complexity
 bipolar.seurat <- SubsetData(bipolar.seurat, subset.name="nGene", accept.high=3000)
 
@@ -425,6 +421,7 @@ batch.effect[batch.effect %in% c(5,6)] <- 2
 bipolar.seurat <- AddMetaData(bipolar.seurat, batch.effect, "batch.effect")
 
 # Regress on metadata
+# 5 minutes
 bipolar.seurat <- RegressOut(bipolar.seurat, latent.vars="batch.effect")
 
 
@@ -439,7 +436,6 @@ bipolar.seurat <- RegressOut(bipolar.seurat, latent.vars="batch.effect")
 # - fxn.x and fxn.y allow one to change the measurements.
 #   - Cut.offs are high and low, X and Y.
 
-# 2 minutes
 bipolar.seurat <- MeanVarPlot(bipolar.seurat,
                               fxn.x=expMean,
                               fxn.y=logVarDivMean,
@@ -456,11 +452,10 @@ length(bipolar.seurat@var.genes)
 #
 # - Calculating PCA with the highly variable genes.
 
-# 9 minutes
 bipolar.seurat <- PCA(bipolar.seurat,
                       pc.genes=bipolar.seurat@var.genes,
                       do.print=FALSE)
-save(bipolar.seurat, file="./data/bipolar_seurat_pca.Robj")
+# save(bipolar.seurat, file="./data/bipolar_seurat_pca.Robj")
 
 
 # Seurat: Performing PCA
@@ -538,8 +533,6 @@ PCElbowPlot(bipolar.seurat, num.pc=40)
 # - Can use Barnes-hut implementation.
 #
 # Calculate t-SNE Ordination
-# 7 minutes
-
 bipolar.seurat <- RunTSNE(bipolar.seurat,
                           dims.use=1:37,
                           do.fast=TRUE)
@@ -593,15 +586,14 @@ VlnPlot(bipolar.seurat, "Glul")
 # - Separate graph based approach.
 #    - is not aware of the t-SNE projection.
 # - Using PC 1-37
-# 14 minutes
-# # bipolar.seurat <- FindClusters(bipolar.seurat,
-#                            pc.use=1:37,
-#                            resolution=0.6,
-#                            print.output=0,
-#                            save.SNN=TRUE)
+# 2 minutes
+bipolar.seurat <- FindClusters(bipolar.seurat,
+                            pc.use=1:37,
+                            resolution=0.6,
+                            print.output=0,
+                            save.SNN=TRUE)
 # # save(bipolar.seurat, file="./data/bipolar_cluster_seurat.Robj")
-
-load("./data/bipolar_cluster_seurat.Robj")
+# load("./data/bipolar_cluster_seurat.Robj")
 
 
 # Seurat: Viewing de novo Groupings
@@ -676,7 +668,7 @@ FeaturePlot(bipolar.seurat, c("site"), cols.use = c("green","orange"))
 # class:small-code
 
 cell.labels <- bipolar.seurat@ident
-corner(cell.labels)
+header(cell.labels)
 
 
 # Seurat: Differential Expression
@@ -783,7 +775,7 @@ bipolar.mast <- FromMatrix(as.matrix(bipolar.seurat@data),
 # Run test
 # 1 hr
 # zlm.test.5 <- zlm.SingleCellAssay(~ test.5, bipolar.mast)
-load("./data/mast_zlm.Robj")
+load("./data/mast_zlm_demo.Robj")
 
 df.test.5 <- data.frame(summary(zlm.test.5, doLRT="test.5test"))
 summary.mast <- makeNice(df.test.5, val="test.5test")
