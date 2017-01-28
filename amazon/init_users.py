@@ -26,8 +26,6 @@ def main():
     args = parser.parse_args()
 
     
-    apache_user_port = args.apache_base_port
-    gateone_user_port = args.gateone_base_port
     rstudio_user_port = args.rstudio_base_port
 
     users_basedir = os.path.abspath("user_spaces")
