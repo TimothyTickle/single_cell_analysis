@@ -37,7 +37,7 @@ def main():
 
     user_id_start = args.user_id_start
     
-    for i in range(user_id_start, user_id_start + args.num_users + 1):
+    for i in range(user_id_start, user_id_start + args.num_users):
         
         # create user directory
         user = "user_{:02d}".format(i)
