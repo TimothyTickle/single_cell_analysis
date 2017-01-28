@@ -20,7 +20,7 @@ then, click 'Next: Add Storage'
 
 * Step 6: 'Configure Security Group': Click 'Add Rule', and add:
 
-    Custom TCP Rule      TCP      8787      Anywhere
+    Custom TCP Rule      TCP      8787      Anywhere    0.0.0.0/0
 
 * You're done.  Click 'Review and Launch', followed by Launch.
 
@@ -60,4 +60,31 @@ From within your web browser, go to the link http://${IPv4_Public_IP}:8787 using
 Assuming RStudio runs within your browser, it may prompt you for user/password, in which case you can use 'training/training'.
 
 Now you're ready to run through the workshop exercises.  Good luck!
+
+
+# Modifications to support multiple users on a single EC2 instance
+
+If you're hosting a workshop containing a number of attendees, you can set up separate RStudio instances for each fo the attendees, all running from the same EC2 machine.  Each user will require ~5 GB RAM and ~2 cores, so when you launch an EC2 instance, choose a machine that's suitably sized for your workshop. If needed, launch multiple large machines and partition them among your students.
+
+In this setting, you'll be launching a separate Docker container for each of your students, and each will be assigned to a different port.  In the example below, we'll assume 20 students, and we'll assign ports in the range of 9000-9019.  You can do this as follows:
+
+*  When configuring your EC2 instance, under 'Configure Security Group' include the following open ports:
+
+    Custom TCP Rule      TCP     9000-9019       Anywhere    0.0.0.0/0
+
+*  Perform the 'git clone' and 'docker pull' commands as described above, but do *not* run the 'docker run' command. We'll launch docker containers differently below.
+
+*  To launch a separate docker container for each student, run the following:
+
+    ./single_cell_analysis/amazon/init_users.py  --num_users 20 --ip_addr ${IPv4_Public_IP} --user_id_start 1 --rstudio_base_port 9000 | bash
+
+Then assign each of your students to an RStudio URL of the format:  http://${IPv4_Public_IP}:${port_no}  where each student is given a port number ranging from 9000 to 9019
+
+## Removing user docker containers
+
+If you ever want to stop and remove the various user docker containers, you can run:
+
+    ./single_cell_analysis/amazon/remove_user_dockers.sh
+
+which will stop and remove the docker containers.
 
