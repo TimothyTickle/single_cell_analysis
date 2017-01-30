@@ -123,10 +123,12 @@ EXPOSE 8787
 
 ## Pull in data from ftp
 WORKDIR ${R_STUDIO}/data
-RUN wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/bipolar_demo_cluster_seurat.Robj && \
-    wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/small_bipolar.Robj && \
+RUN wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/bipolar_cluster_seurat_demo.Robj && \
     wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/bipolar_demo_seurat_pca.Robj && \
-    wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/mast_zlm_demo.Robj
+    wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/bipolar_regress_demo.Robj && \
+    wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/bipolar_seurat_demo.Robj && \
+    wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/mast_zlm_demo.Robj && \
+    wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/data/small_bipolar.Robj
 
 WORKDIR ${R_STUDIO}/src
 RUN wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/src/dotplot.R && \
