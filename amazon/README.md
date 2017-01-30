@@ -49,8 +49,9 @@ Complete the following steps below to pull down the code and data from github, p
 
 ### Launch single container for testing
 
-    docker run --rm -p 8787:8787 -v `pwd`/single_cell_analysis/src:/home/training/src:ro --name my_rstudio_docker -d trinityctat/cegs_demo
+    docker run --rm -p 8787:8787 -v `pwd`/single_cell_analysis/src:/home/training/src:ro --name my_rstudio_docker trinityctat/cegs_demo
 
+    (type cntrl-c to stop it once you're done)
 
 
 ## Run RStudio
