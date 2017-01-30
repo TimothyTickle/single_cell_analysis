@@ -1,4 +1,4 @@
-FROM rocker/rstudio
+FROM rocker/rstudio:3.3.2
 MAINTAINER ttickle@broadinstitute.org and Brian Haas (bhaas@broadinstitute.org)
 
 ######################
@@ -89,15 +89,8 @@ RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/libra
 
 RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
     echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
-    echo "biocLite(\"useful\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
-    Rscript ${SRC}/install_pkgs.R
-
-RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
-    echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
     echo "biocLite(\"vioplot\", dependencies=TRUE)" >> ${SRC}/install_pkgs.R && \
     Rscript ${SRC}/install_pkgs.R
-
-#    echo "biocLite()" >> ${SRC}/install_pkgs.R && \
 
 RUN echo ".libPaths(c(\"/usr/local/lib/R/site-library\",\"/usr/local/lib/R/library\"))" > ${SRC}/install_pkgs.R && \
     echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_pkgs.R && \
@@ -127,9 +120,16 @@ WORKDIR ${R_STUDIO}/src
 RUN wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/src/dotplot.R && \
     wget https://data.broadinstitute.org/Trinity/CTAT/single_cell_workshop/src/makeNiceMAST.R
 
+WORKDIR ${SRC}
+RUN git clone https://github.com/TimothyTickle/single_cell_analysis.git
+
 # Ports
 EXPOSE 8787
 
 ## For seurat, needs java and unfortunately writes to /usr/local/lib/R/site-library! and needs open permissions
 RUN apt-get update && apt-get install -y default-jre htop && apt-get clean
 RUN chmod 777 /usr/local/lib/R/site-library
+
+## Rstudio is hard coded to look for /usr/bin/R but I need to the /usr/local/bin/R
+## And cringe the solution...
+RUN rm /usr/bin/R && ln -s /usr/local/bin/R /usr/bin/R
