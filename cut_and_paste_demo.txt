@@ -365,7 +365,7 @@ object.size(bipolar.seurat)
 # - Does not contain environment.
 
 # save(bipolar.seurat, file="data/bipolar_seurat_demo.Robj")
-# load("data/bipolar_seurat_demo.Robj")
+# load("/usr/local/R/data/bipolar_seurat_demo.Robj")
 
 
 # Saving as Text Files
@@ -421,7 +421,7 @@ bipolar.seurat <- AddMetaData(bipolar.seurat, batch.effect, "batch.effect")
 # Regress on metadata
 bipolar.seurat <- RegressOut(bipolar.seurat, latent.vars="batch.effect")
 # save(bipolar.seurat, file="data/bipolar_regress_demo.Robj")
-# load("data/bipolar_regress_demo.Robj")
+# load("/usr/local/R/data/bipolar_regress_demo.Robj")
 
 # Seurat: Select Variable Genes
 # ===
@@ -452,7 +452,7 @@ bipolar.seurat <- PCA(bipolar.seurat,
                       pc.genes=bipolar.seurat@var.genes,
                       do.print=FALSE)
 # save(bipolar.seurat, file="data/bipolar_demo_seurat_pca.Robj")
-# load("data/bipolar_demo_seurat_pca.Robj")
+# load("/usr/local/R/data/bipolar_demo_seurat_pca.Robj")
 
 # Seurat: Performing PCA
 # ===
@@ -556,7 +556,7 @@ bipolar.seurat <- FindClusters(bipolar.seurat,
                             print.output=0,
                             save.SNN=TRUE)
 # save(bipolar.seurat, file="data/bipolar_cluster_seurat_demo.Robj")
-# load("data/bipolar_cluster_seurat_demo.Robj")
+# load("/usr/local/R/data/bipolar_cluster_seurat_demo.Robj")
 
 # Seurat: Plotting Genes Through Clusters
 # ===
