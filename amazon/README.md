@@ -38,13 +38,18 @@ using the IP address from the corresponding column in the EC2 dashboard as descr
 
 Complete the following steps below to pull down the code and data from github, pull down the Docker container, and launch the docker container.
 
+### simple updates to the VM
+
+    sudo apt-get update && sudo apt-get install -y python 
+
+
 ### pull single cell demo code from github
 
     git clone https://github.com/TimothyTickle/single_cell_analysis.git
 
 ### pull docker image from docker hub
 
-    docker pull trinityctat/cegs_demo
+    docker pull trinityctat/cegs_demo:latest
 
 
 ### Launch single container for testing

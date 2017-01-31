@@ -18,7 +18,7 @@ library(useful) # corner
 source("src/dotplot.R")
 source("src/makeNiceMAST.R")
 
-load("data/small_bipolar.Robj")
+load("/usr/local/R/data/small_bipolar.Robj")
 
 
 # Representing Sparse Matrices
@@ -746,7 +746,7 @@ bipolar.mast <- FromMatrix(as.matrix(bipolar.seurat@data),
 # 1 hr
 # zlm.test.2 <- zlm.SingleCellAssay(~ test.2, bipolar.mast)
 # save(zlm.test.2, file="data/mast_zlm_demo.Robj")
-load("data/mast_zlm_demo.Robj")
+load("/usr/local/R/data/mast_zlm_demo.Robj")
 
 df.test.2 <- data.frame(summary(zlm.test.2, doLRT="test.2test"))
 summary.mast <- makeNice(df.test.2, val="test.2test")

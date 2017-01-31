@@ -32,8 +32,8 @@ def main():
     if not os.path.isdir(users_basedir):
         os.makedirs(users_basedir)
 
-    print("sudo chown -R training user_spaces")
-    print("sudo chgrp -R training user_spaces")
+    #print("sudo chown -R training user_spaces")
+    #print("sudo chgrp -R training user_spaces")
 
     user_id_start = args.user_id_start
     
