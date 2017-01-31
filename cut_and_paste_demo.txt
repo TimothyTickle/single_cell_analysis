@@ -12,6 +12,7 @@ library(MAST) # For DE
 library(Matrix) # Sparse matrices
 library(vioplot) # Violin pots
 library(Seurat) # Single cell Analysis
+library(useful) # corner
 
 # need to update or copy paste from website
 source("src/dotplot.R")
@@ -24,7 +25,6 @@ load("data/small_bipolar.Robj")
 # ===
 # class:small-code
 
-# 24904 x 5000
 bipolar.data <- Matrix(as.matrix(bipolar_dge), sparse=TRUE)
 # Memory use as a normal matrix
 object.size(bipolar_dge)
@@ -79,7 +79,6 @@ head(bipolar.seurat.raw@var.genes)
 # - __var.genes__ Variable genes across cells
 # - __data.info__ Misc info including complexity (nGene)
 # - __cell.names__ Column (cell) names
-# - __gene.names__ Row (gene) names
 
 ?seurat
 
@@ -109,7 +108,7 @@ dim(bipolar.seurat.raw@raw.data)
 # class:small-code
 
 # The full data will be too large to see
-head(as.matrix(bipolar.seurat.raw@raw.data))
+corner(as.matrix(bipolar.seurat.raw@raw.data))
 
 
 # How Many Expressed Genes?
@@ -154,7 +153,7 @@ stripchart(complexity.per.cell, add=TRUE, vertical=TRUE, method="jitter", jitter
 
 # Add lines for reference
 abline(h=500, col="orange")
-abline(h=3000, col="green")
+abline(h=2000, col="green")
 
 # Add text
 title("Study Complexity")
@@ -166,11 +165,11 @@ axis(side=1,at=1,labels=c("Study"))
 # class:small-code
 
 # Plot cell complexity, sorted by complexity
-plot(1:length(complexity.per.cell), sort(complexity.per.cell))
+plot(sort(complexity.per.cell))
 # Add lines
 abline(h=500, col="orange")
-abline(h=3000, col="green")
-
+abline(h=2000, col="green")
+title("Complexity from Less to More")
 
 # How Many Expressed Genes By Batch?
 # ===
@@ -182,11 +181,10 @@ plot(complexity.per.cell ~ jitter(technical_batches,2))
 
 # Add line
 abline(h=500, col="orange")
-abline(h=3000, col="green")
+abline(h=2000, col="green")
 
 # Add text
 title("Study Complexity")
-axis(side=1,at=1,labels=c("Study"))
 
 
 # Identifying Outliers?
@@ -202,7 +200,7 @@ plot(complexity.per.cell, mean.count.per.cell)
 
 # Add lines
 abline(v=500, col="orange")
-abline(v=3000, col="green")
+abline(v=2000, col="green")
 
 
 # Identifying Noise?
@@ -216,15 +214,15 @@ abline(v=3000, col="green")
 hist(log2(gene.prevalence), breaks=100)
 
 # add line
-abline(v=log(30), col="orange")
-abline(v=log(6), col="green")
+abline(v=log2(30), col="orange")
+abline(v=log2(6), col="green")
 
 
 # Filter Cells: Removing the Outlier Cells
 # ===
 # class:small-code
 #
-# - Genes must be in 30 cells.
+# - Genes must be in 6 cells.
 # - Cells must have alteast 500 genes.
 # - Scaled by 1000 (Total Sum Scaling)
 
@@ -339,14 +337,13 @@ GenePlot(bipolar.seurat, "nUMI", "percent.mitochodrial")
 # class:small-code
 
 # Filter libraries with more than 10% mitochondrially derived transcripts
-# From 14575 x 30673 to 14575 x 27489
 dim(bipolar.seurat@data)
 # Filter max complexity
-bipolar.seurat <- SubsetData(bipolar.seurat, subset.name="nGene", accept.high=3000)
+bipolar.seurat <- SubsetData(bipolar.seurat, subset.name="nGene", accept.high=2000)
 
 # Filter percent percent mitochondrial reads
 bipolar.seurat <- SubsetData(bipolar.seurat, subset.name="percent.mitochodrial", accept.high=0.1)
-
+dim(bipolar.seurat@data)
 
 # Seurat: Filtering on Metadata
 # ===
@@ -354,7 +351,7 @@ bipolar.seurat <- SubsetData(bipolar.seurat, subset.name="percent.mitochodrial",
 
 dim(bipolar.seurat@data)
 table(bipolar.seurat@data.info[["orig.ident"]])
-# Original standard matrix 8,971,430,520 bytes
+
 object.size(bipolar.seurat)
 
 
@@ -413,12 +410,12 @@ GenePlot(bipolar.seurat,"Isl1","Grm6",cex.use=1)
 # ===
 # class:small-code
 
-# Create batch affect (5 and 6 as a group)
+# Create batch effect (5 and 6 as a group)
 batch.effect <- technical_batches[row.names(bipolar.seurat@data.info)]
 batch.effect[batch.effect %in% c(1,2,3,4)] <- 1
 batch.effect[batch.effect %in% c(5,6)] <- 2
 
-# Add batch affect
+# Add batch effect
 bipolar.seurat <- AddMetaData(bipolar.seurat, batch.effect, "batch.effect")
 
 # Regress on metadata
@@ -436,13 +433,11 @@ bipolar.seurat <- RegressOut(bipolar.seurat, latent.vars="batch.effect")
 #   - Z-score for dispersion.
 # - fxn.x and fxn.y allow one to change the measurements.
 #   - Cut.offs are high and low, X and Y.
-
+# Update
 bipolar.seurat <- MeanVarPlot(bipolar.seurat,
                               fxn.x=expMean,
                               fxn.y=logVarDivMean,
-                              x.low.cutoff=0.0125,
-                              x.high.cutoff=3,
-                              y.cutoff=0.5, do.contour=FALSE,
+                              do.contour=FALSE,
                               do.plot=FALSE)
 length(bipolar.seurat@var.genes)
 
@@ -558,7 +553,6 @@ TSNEPlot(bipolar.seurat)
 # 6 min - 12 cluster
 bipolar.seurat <- FindClusters(bipolar.seurat,
                             pc.use=1:37,
-                            resolution=0.6,
                             print.output=0,
                             save.SNN=TRUE)
 # save(bipolar.seurat, file="data/bipolar_cluster_seurat_demo.Robj")
@@ -605,7 +599,7 @@ TSNEPlot(bipolar.seurat, do.label=TRUE)
 #   - Muller Glia (Glul+ Prkca- Scgn-)
 #   - Cone Bipolar Cells (Prkca- Scgn+)
 #   - On Cone Bipolar Cells (Prkca- Scgn+ Grm6+)
-# - Metadata can help visualize batch affects.
+# - Metadata can help visualize batch effects.
 
 FeaturePlot(bipolar.seurat,
             c("Prkca","Glul", "Scgn", "Grm6"),
@@ -634,8 +628,8 @@ FeaturePlot(bipolar.seurat,
 # ===
 # class:small-code
 # 
-# Check for your batch affect.
-# - We are going to make a fake batch affect (site) and plot this as an example of how one can visualize unwanted signal.
+# Check for your batch effect.
+# - We are going to make a fake batch effect (site) and plot this as an example of how one can visualize unwanted signal.
 
 # Making Fake Data
 fake.sites <- as.integer(bipolar.seurat@ident %in% c(0,1))
@@ -711,7 +705,7 @@ plot.genes = c("Vsx2","Otx2","Scgn","Isl1","Grm6",
                "Grik1","Kcng4","Cabp5","Vsx1","Prkca")
 
 # Cell groups shown
-only.use.groups = c(8,10,11,7,4,3,6,5,0,1)
+only.use.groups = c(7,9,10,8,4,3,6,5,1,0)
 
 # Plot
 dot.plot(bipolar.seurat,
